@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html class="" lang="de">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>{{HOSTNAME}} - Systemprotokoll</title>
+
+<script>
+	var x = null,
+		lt, to, tp, pc = '';
+	var sn = 0;
+	var id = 0;
+
+	function l(p) {
+		var c, o, t;
+		clearTimeout(lt);
+		o = '';
+		t = document.getElementById('t1');
+		if (p == 1) {
+			c = document.getElementById('c1');
+			o = '&c1=' + encodeURIComponent(c.value);
+			c.value = '';
+			t.scrollTop = sn;
+		}
+		if (t.scrollTop >= sn) {
+			if (x != null) {
+				x.abort();
+			}
+			x = new XMLHttpRequest();
+			x.onreadystatechange = function() {
+				if (x.readyState == 4 && x.status == 200) {
+					var z, d;
+					d = x.responseText.split(/}1/);
+					id = d.shift();
+					if (d.shift() == 0) {
+						t.value = '';
+					}
+					z = d.shift();
+					if (z.length > 0) {
+						t.value += z;
+					}
+					t.scrollTop = 99999;
+					sn = t.scrollTop;
+				}
+			};
+			x.open('GET', 'cs?c2=' + id + o, true);
+			x.send();
+		}
+		lt = setTimeout(l, 2345);
+		return false;
+	}
+	window.onload = l;
+</script>
+
+<style>
+{{CSS}}
+</style>
+</head>
+
+<body>
+<body>
+	<div style="text-align:left;display:inline-block;min-width:340px;">
+		<div style="text-align:center;">
+			<noscript>Bitte aktivieren Sie JavaScript<br/></noscript>
+			<h3>OnsenPID</h3>
+			<h2>{{HOSTNAME}}</h2>
+		</div>
+		<br /><textarea readonly id='t1' name='t1' cols='340' wrap='off'></textarea><br /><br />
+		<div></div>
+		<p><form action='/' method='get'><button>Zurück</button></form>	</p><br />
+		<div style='text-align:right;font-size:11px;'><hr /><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>OnsenPID by Franz Hoffmann</a></div>
+	</div>
+</body>
+
+</html>
