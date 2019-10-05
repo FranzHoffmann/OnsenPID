@@ -50,7 +50,26 @@
 		lt = setTimeout(l, 2345);
 		return false;
 	}
-	window.onload = l;
+	//window.onload = l;
+	
+	var req = null;
+
+function read_state() {
+	if (req != null) {
+		req.abort();
+	}
+	req = new XMLHttpRequest();
+	req.onreadystatechange = function() {
+		if (req.readyState == 4 && req.status == 200) {
+			document.getElementById('t1').innerHTML += req.responseText;
+		}
+	};
+	req.open('GET', '/logd?idx=0', true);
+	req.send();
+	setTimeout(read_state, 2345);
+}
+
+window.onload = read_state();
 </script>
 
 <style>

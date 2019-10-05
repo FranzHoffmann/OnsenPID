@@ -13,6 +13,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
+#include "MemoryInfo.h"
 
 #define HOSTNAME "onsen"
 
@@ -46,7 +47,7 @@ typedef enum BtnEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE} Button;
 #define SCREEN_COUNT 7
 
 #define DEGC '\1' << 'C'   // custom caracter for degree
-#define ARROW '\2'
+#define ARROW '\2'         // custom character for up/down arrow
 
 #define PWM_PORT D4
 
@@ -168,11 +169,30 @@ int task_statistics() {
       init_stats(&tasklist[i]);
     }
   }
-  return 10000;
+  logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
+  return 60000;
 }
 
 // -------------------------------------------------------------------------- Recipe Task
 int task_recipe() {
+  static State oldstate;
+  if (oldstate != p.state) {
+    oldstate = p.state;
+    switch (p.state) {
+      case STATE_IDLE:
+        logger << "Grundzustand" << endl;
+        break;
+      case STATE_COOKING:
+        logger << "Kochen gestartet" << endl;
+        break;
+      case STATE_FINISHED:
+        logger << "Kochen abgeschlossen" << endl;
+        break;
+      case STATE_ERROR:
+        logger << "Systemfehler erkannt" << endl;
+        break;
+    }
+  }
   if (p.state == STATE_COOKING) {
     p.act_time += 1;
     if (p.act_time >= p.set_time) {
@@ -272,7 +292,6 @@ void loop() {
       tasklist[i].tmax = max(tasklist[i].tmax, dt);
     }
   }
-  delay(1);
 }
 
     

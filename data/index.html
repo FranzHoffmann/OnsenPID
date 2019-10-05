@@ -7,21 +7,21 @@
 <title>{{HOSTNAME}} - Hauptmenü</title>
 
 <script>
-var x = null, lt;
+var req = null;
 
-function read_state(p) {
-	if (x != null) {
-		x.abort();
+function read_state() {
+	if (req != null) {
+		req.abort();
 	}
-	x = new XMLHttpRequest();
-	x.onreadystatechange = function() {
-		if (x.readyState == 4 && x.status == 200) {
-			document.getElementById('l1').innerHTML = x.responseText;
+	req = new XMLHttpRequest();
+	req.onreadystatechange = function() {
+		if (req.readyState == 4 && req.status == 200) {
+			document.getElementById('l1').innerHTML = req.responseText;
 		}
 	};
-	x.open('GET', '/s', true);
-	x.send();
-	lt = setTimeout(la, 2345);
+	req.open('GET', '/s', true);
+	req.send();
+	setTimeout(read_state, 2345);
 }
 
 window.onload = read_state();
@@ -49,7 +49,7 @@ window.onload = read_state();
 				</tbody>
 			</table>
 		</div>
-		<table style="width:100%"><tbody><tr><td style="width:100%"><button onclick='read_state("&amp;o=1");'>Toggle</button></td></tr></tbody></table>
+		<table style="width:100%"><tbody><tr><td style="width:100%"><button onclick='read_state();'>Toggle</button></td></tr></tbody></table>
 		<div></div>
 		<p></p>
 		<form action="cfg" method="get"><button>Parameter</button></form>
