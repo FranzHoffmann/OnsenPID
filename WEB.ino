@@ -172,7 +172,7 @@ void handleWifi()   {
 }
 
 void handleAjax()   {
-  send_file("/index_status.html");
+  send_file("/ajax.json");
   //TODO
 }
 
