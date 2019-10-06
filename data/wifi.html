@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de" class="">
+
+<head>
+	<meta charset='utf-8'>
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+	<title>{{HOSTNAME}} - WiFi einrichten</title>
+	
+<script>
+	var x = null,
+		lt, to, tp, pc = '';
+
+	function use_ssid(l) {
+		document.getElementById('ssid').value = l.innerText || l.textContent;
+		document.getElementById('pwd').focus();
+	}
+</script>
+
+<style>
+{{CSS}}
+</style>
+</head>
+
+<body>
+	<div style='text-align:left;display:inline-block;min-width:340px;'>
+		<div style='text-align:center;'><noscript>Bitte aktivieren Sie JavaScript<br /></noscript>
+			<h3>OnsenPID</h3>
+			<h2>{{HOSTNAME}}</h2>
+		</div>
+		<div><a href='/wi?scan='>Scan for wifi networks</a></div><br />
+		<div><a href='#p' onclick='use_ssid(this)'>Demo 1</a></div>
+		<div><a href='#p' onclick='use_ssid(this)'>Unitymedia WifiSpot</a></div>
+		<div><a href='#p' onclick='use_ssid(this)'>FRITZ!Box Demo 3</a></div>
+		<div><a href='#p' onclick='use_ssid(this)'>WLAN-191818 Demo 4</a></div><br />
+		<fieldset>
+			<legend><b>&nbsp;Wifi-Parameter&nbsp;</b></legend>
+			<form method='get' action='wifi'>
+				<p><b>SSId</b><br /><input id='ssid' name='ssid' placeholder='' value='{{SSID}}'></p>
+				<p><b>Passwort</b><br /><input id='pwd' name='pwd' type='password' placeholder='Passwort' value='****'></p>
+				<p><b>Hostname</b><br /><input id='hn' name='hn' value='{{HOSTNAME}}'></p>
+				<br /><button name='save' type='submit' class='button bgrn'>Save</button>
+			</form>
+		</fieldset>
+		<div></div>
+		<p><form action='/' method='get'><button>Zurück</button></form>	</p><br />
+		<div style='text-align:right;font-size:11px;'><hr /><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>OnsenPID by Franz Hoffmann</a></div>
+	</div>
+</body>
+
+</html>

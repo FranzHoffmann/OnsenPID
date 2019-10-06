@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="de" class="">
+
+<head>
+<meta charset='utf-8'>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<title>{{HOSTNAME}} - Kurven</title>
+<style>
+{{CSS}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+<script>
+var data = [
+	{"t":0, "act":"14.62", "set":"42.00", "out":"97.13"}
+];
+
+var config = {
+	type: 'line',
+	data: {
+		labels: [],
+		datasets: [{
+			label: 'Temperatur',
+			borderColor: chartColors.green_opaque,
+			backgroundColor: chartColors.green_opaque,
+			pointRadius: 0,
+			fill: false,
+			data: []
+		},
+		{
+			label: 'Solltemperatur',
+			borderColor: chartColors.blue_opaque,
+			backgroundColor: chartColors.blue_opaque,
+			pointRadius: 0,
+			fill: false,
+			data: []
+		},
+		{
+			label: 'Leistung',
+			borderColor: chartColors.red_opaque,
+			backgroundColor: chartColors.red_opaque,
+			pointRadius: 0,
+			fill: false,
+			data: []
+		}]
+	},
+	options: {
+		legend: {display: true},
+		scales: {
+			xAxes: [{
+				type: "time",
+				scaleLabel: {
+					display: true,
+					labelString: 'Uhrzeit'
+				},
+				time: {
+					displayFormats: {hour: "H:mm"},
+					min: '2019-10-06 03:00:00Z',
+					max: '2019-10-06 20:00:00Z',
+				}
+			}],
+			yAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: 'Leistung',
+				},
+				ticks: {suggestedMax: 7000}
+			}]
+		},
+		responsive: true,
+		maintainAspectRatio: false,
+	}
+};
+
+// push generated data into config structure
+for (var i = 0; i < dbdata.length; i++) {
+	config.data.datasets[0].data.push({t: dbdata[i].t, y: round(dbdata[i].p1, 2)});
+	config.data.datasets[1].data.push({t: dbdata[i].t, y: round(dbdata[i].p2, 2)});
+	config.data.datasets[2].data.push({t: dbdata[i].t, y: round(dbdata[i].p1+dbdata[i].p2, 2)});
+}
+
+
+window.onload = function() {
+	var ctx = document.getElementById('canvas').getContext('2d');
+	window.myLine = new Chart(ctx, config);
+};
+
+</head>
+
+<body>
+<div style='text-align:left;display:inline-block;min-width:340px;'>
+	<div style='text-align:center;'><noscript>Bitte aktivieren Sie JavaScript<br /></noscript>
+		<h3>OnsenPID</h3>
+		<h2>{{HOSTNAME}}</h2>
+	</div>
+	<fieldset>
+		<legend><b>&nbsp;Rezept&nbsp;</b></legend>
+		<div class="chart-container">
+			<!-- note: height/width for spect ratio only -->
+			<canvas id="canvas" height="20px" width="30px"></canvas>
+		</div>
+	</fieldset>
+	<div></div>
+	<p><form action='/' method='get'><button>Zurück</button></form>	</p><br />
+	<div style='text-align:right;font-size:11px;'><hr /><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>OnsenPID by Franz Hoffmann</a></div>
+</div>
+</body>
+
+</html>

@@ -7,6 +7,7 @@ void setup_OTA() {
       type = "sketch";
     } else { // U_SPIFFS
       type = "filesystem";
+      filesystem->end();
       // TODO: SPIFFS.end()
     }
     logger << "Start updating " << type << endl;
