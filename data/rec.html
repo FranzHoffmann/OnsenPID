@@ -4,7 +4,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-<title>{{HOSTNAME}} - Parameter</title>
+<title>{{HOSTNAME}} - Rezept</title>
 <style>
 {{CSS}}
 </style>
@@ -17,13 +17,10 @@
 		<h2>{{HOSTNAME}}</h2>
 	</div>
 	<fieldset>
-		<legend><b>&nbsp;Parameter&nbsp;</b></legend>
-		<form method='get' action='cfg'>
-			<p><b>Verstärkung Kp (%/\deg;C)</b><br /><input id='kp' name='kp' value='{{KP}}'></p>
-			<p><b>Nachstellzeit Tn (s)</b><br /><input id='tn' name='tn' value='{{TN}}'></p>
-			<p><b>Vorhaltezeit Tv (s)</b><br /><input id='tv' name='tv' value='{{TV}}'></p>
-			<div></div>
-			<p><b>UTC Offset</b><br /><input id='tz' name='tz' value='{{TZ}}'></p>
+		<legend><b>&nbsp;Rezept&nbsp;</b></legend>
+		<form method='get' action='rec'>
+			<p><b>Temperatur (&deg;C)</b><br /><input id='temp' name='temp' value='{{SET}}'></p>
+			<p><b>Kochzeit (min)</b><br /><input id='ttime' name='time' value='{{TIME_SET}}'></p>
 			<br /><button name='save' type='submit' class='button bgrn'>Übernehmen</button>
 		</form>
 	</fieldset>

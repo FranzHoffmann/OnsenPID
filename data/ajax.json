@@ -1,1 +1,6 @@
-Aktuell: {{ACT}}&deg;C Soll: {{SET}}&deg;C Leistung: {{OUT}}% {OUT}
+{
+	"act":"{{ACT}}", 
+	"set":"{{SET}}",
+	"out":"{{OUT}}",
+	"time":"{{TIME_LEFT}}"
+}

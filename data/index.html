@@ -33,42 +33,39 @@ window.onload = read_state();
 </head>
 
 <body>
-	<div style="text-align:left;display:inline-block;min-width:340px;">
-		<div style="text-align:center;">
-			<noscript>Bitte aktivieren Sie JavaScript<br/></noscript>
-			<h3>OnsenPID</h3>
-			<h2>{{HOSTNAME}}</h2>
-		</div>
-		<div id="l1" name="l1">
-			<!--<table style="width:100%"></table>-->
-			<table style="width:100%">
-				<tbody>
-					<tr>
-						<td style="width:100%"><div style="text-align:center;font-weight:normal;font-size:62px">OFF</div></td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-		<table style="width:100%"><tbody><tr><td style="width:100%"><button onclick='read_state();'>Toggle</button></td></tr></tbody></table>
-		<div></div>
-		<p></p>
-		<form action="cfg" method="get"><button>Parameter</button></form>
-		<p></p>
-		<p></p>
-		<form action="wifi" method="get"><button>WiFi einrichten</button></form>
-		<p></p>
-		<p></p>
-		<form action="log" method="get"><button>Kurven</button></form>
-		<p></p>
-		<p></p>
-		<form action="log" method="get"><button>Systemprotokoll</button></form>
-		<p></p>
-		<p></p>
-		<form action="." method="get" onsubmit='return confirm("Confirm Restart");'><button name="rst" class="button bred">Neustart</button></form>
-		<p></p>
-		<br>
-		<div style="text-align:right;font-size:11px;"><hr><a href="https://bit.ly/tasmota" target="_blank" style="color:#aaa;">OnsenPID by Franz Hoffmann</a></div>
+<div style="text-align:left;display:inline-block;min-width:340px;">
+	<div style="text-align:center;">
+		<noscript>Bitte aktivieren Sie JavaScript<br/></noscript>
+		<h3>OnsenPID</h3>
+		<h2>{{HOSTNAME}}</h2>
 	</div>
+	<div id="l1" name="l1">
+	{{STATUS}}
+	</div>
+	<table style="width:100%"><tbody><tr><td style="width:100%"><button onclick='read_state();'>Einschalten!</button></td></tr></tbody></table>
+	<div></div>
+	<p></p>
+	<form action="rec" method="get"><button>Rezept</button></form>
+	<p></p>
+	<p></p>
+	<form action="data" method="get"><button>Kurven</button></form>
+	<p></p>
+	<p></p>
+	<div></div>
+	<form action="cfg" method="get"><button>Parameter</button></form>
+	<p></p>
+	<p></p>
+	<form action="wifi" method="get"><button>WiFi</button></form>
+	<p></p>
+	<p></p>
+	<form action="log" method="get"><button>Systemprotokoll</button></form>
+	<p></p>
+	<p></p>
+	<form action="." method="get" onsubmit='return confirm("Confirm Restart");'><button name="rst" class="button bred">Neustart</button></form>
+	<p></p>
+	<br>
+	<div style="text-align:right;font-size:11px;"><hr><a href="https://bit.ly/tasmota" target="_blank" style="color:#aaa;">OnsenPID by Franz Hoffmann</a></div>
+</div>
 </body>
 </html>
 

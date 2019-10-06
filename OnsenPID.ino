@@ -61,6 +61,7 @@ struct param {
   int screen;                   // active screen
   char ssid[33], pw[33];
   WiFiEnum AP_mode;
+  int tzoffset;
 } p;
 
 char buf[4][17];
