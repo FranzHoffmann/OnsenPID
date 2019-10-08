@@ -52,24 +52,63 @@
 	}
 	//window.onload = l;
 	
-	var req = null;
+
+function pad(value) {
+    if (value <= 9) {
+        return "0" + value;
+    }
+    return value;
+}
+
+function addOneLine(value) {
+    let ts = value.ts;
+    let msg = value.msg;
+    let d = new Date(ts * 1000);
+    document.getElementById('t1').innerHTML +=
+		d + ": " + msg + '\\r';
+
+		/*d.getFullYear()
+		+ "-" + pad(d.getMonth() + 1)
+		+ "-" + pad(d.getDate())
+		+ " " + pad(d.getHours())
+		+ ":" + pad(d.getMinutes())
+		+ ":" + pad(d.getSeconds())*/
+}
+
+var req = null;
 
 function read_state() {
-	if (req != null) {
-		req.abort();
-	}
-	req = new XMLHttpRequest();
-	req.onreadystatechange = function() {
-		if (req.readyState == 4 && req.status == 200) {
-			document.getElementById('t1').innerHTML += req.responseText;
-		}
-	};
-	req.open('GET', '/logd?idx=0', true);
-	req.send();
-	setTimeout(read_state, 2345);
+    if (req != null) {
+        req.abort();
+    }
+    req = new XMLHttpRequest();
+    req.onreadystatechange = function() {
+        if (req.readyState == 4 && req.status == 200) {
+            var obj = JSON.parse(req.responseText);
+            obj.log.forEach(addOneLine);
+        }
+    };
+    req.open('GET', '/logd?t=0', true);
+    req.send();
+    setTimeout(read_state, 2345);
+}
+
+simreq = {"log":[{"ts":7203, "msg":"WiFi connected (IP: 192.168.0.157)"}
+,{"ts":7203, "msg":"OTA ready (192.168.0.157)"}
+,{"ts":1570571455, "msg":"Free RAM: 44896, largest: 44888"}
+,{"ts":1570571476, "msg":"send_file(): /log.html"}
+,{"ts":1570571513, "msg":"send_file(): /log.html"}
+,{"ts":1570571515, "msg":"Free RAM: 44128, largest: 43848"}
+]};
+
+function sim() {
+	var obj = simreq;
+	obj.log.forEach(addOneLine);
 }
 
 window.onload = read_state();
+//setTimeout(sim, 3000);
+
 </script>
 
 <style>

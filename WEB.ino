@@ -61,11 +61,11 @@ String subst(String var) {
 
 
 bool readFile(const String &filename, String &content, bool substitute) {
-  if (!filesystem->exists(filename)) {
+  if (!filesystem.exists(filename)) {
     logger << "readFile(): file not found: " << filename << endl;
     return false;
   }
-  File f = filesystem->open(filename, "r");
+  File f = filesystem.open(filename, "r");
   if (!f) {
     logger << "readFile(): could not open file" << filename << endl;
     return false;
@@ -131,7 +131,8 @@ bool readFile(const String &filename, String &content, bool substitute) {
       }
     }
   } 
-  f.close();  
+  f.close();
+  return true;
 }
 /* 
  *  read a file, substitute variable like {{ACT}} and {{SET}}, and send to web server
@@ -139,6 +140,7 @@ bool readFile(const String &filename, String &content, bool substitute) {
  *  use escape character '\' in file to output {{: \{\{
  */
 void send_file(String filename) {
+  logger << "send_file(): " << filename << endl;
   String reply; reply.reserve(8192);
   if (!readFile(filename, reply, true)) {
     return fail("file not found: " + filename);
@@ -163,6 +165,7 @@ void handleNotFound() {
 }
 
 void handleRoot()   {
+  logger << "handleRoot()" << endl;
   send_file("/index.html");
 }
 
@@ -195,18 +198,53 @@ void handleData()   {
   //TODO
 }
 
+/*
+unsigned long strtoul(char *s) {
+  unsigned long val = 0;
+  for (int i=0; isdigit(s[i]); i++) {
+    val = 10 * val + (s[i] - '0');
+  }
+  return val;
+  Serial << val << endl;
+}
+*/
+
+int indexof(char c, char *s) {
+    for (int i=0; s[i]!='\0'; i++) {
+      if (s[i] == ';') {
+        return i;
+      }
+    }
+  return -1;
+}
 
 void handleLogData() {
-  String reply; reply.reserve(8192);
-  // TODO: Schrittweise übergeben, Speicher beachten
+  char buf[100];
+  char *ts, *msg;
+  String s;
+  bool first = true;
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send(200, "text/json", String(""));
+  server.sendContent("{\"log\":[");
   logger.rewind();
   while (logger.hasMore()) {
-    char line[80];
-    logger.readNextMsg(line, sizeof(line));
-    reply += line;
-    reply += "\r\n";
+    if (!first) {
+      server.sendContent(",");
+    } else {
+      first = false;
+    }
+    logger.getNext(buf, sizeof(buf));
+    int idx = indexof(';', buf);
+    if (idx > 0) {
+      ts = &buf[0];
+      msg = &buf[idx+1];
+      buf[idx] = '\0';
+    }
+    s = "{\"ts\":" + String(ts) + ", \"msg\":\"" + String(msg) + "\"}\r";
+    Serial << s;
+    server.sendContent(s);
   }
-  server.send(200, "text/plain", reply);
+  server.sendContent("]}");
 }
 
 

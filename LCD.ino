@@ -1,6 +1,6 @@
-Button readKey(int port) {
-  static Button previous;
-  static Button pressed;
+ButtonEnum readKey(int port) {
+  static ButtonEnum previous;
+  static ButtonEnum pressed;
   static int count = 0;
 
   int ai = analogRead(port);
@@ -24,7 +24,7 @@ Button readKey(int port) {
 // -------------------------------------------------------------------------- LCD UI Task
 /* read keyboard and write menu */
 int task_keyboard() {
-  Button b = readKey(A0);
+  ButtonEnum b = readKey(A0);
 
   // generally: left/right switch p.screen.
   // all other buttons handled seperatuely for each p.screen

@@ -8,7 +8,7 @@
 #include <WiFiUdp.h>
 #include <LiquidCrystal.h>
 #include <PString.h>
-#include "Log2.h"
+#include "Logfile.h"
 #include <FS.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
@@ -17,10 +17,12 @@
 
 #define HOSTNAME "onsen"
 
-Log2 logger;
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
 ESP8266WebServer server(80);
-
-FS* filesystem = &SPIFFS;
+FS filesystem = SPIFFS;
+Logfile logger(filesystem, Serial, timeClient);
+LiquidCrystal lcd(D5, D6, D0, D1, D2, D3);      // lcd(rs, en, d4, d5, d6, d7);
 
 /* simple scheduler */
 #define MAX_TASKS 10
@@ -34,9 +36,9 @@ struct task_t {
 task_t tasklist[MAX_TASKS];
 
 /* Buttons and menu p.screens */
-typedef enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE} WiFiEnum;
-typedef enum StateEnum {STATE_IDLE, STATE_COOKING, STATE_FINISHED, STATE_ERROR} State;
-typedef enum BtnEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE} Button;
+enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
+enum StateEnum {STATE_IDLE, STATE_COOKING, STATE_FINISHED, STATE_ERROR};
+enum ButtonEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE};
 #define DISP_MAIN 0
 #define DISP_SET_SET 1
 #define DISP_SET_TIME 2
@@ -52,7 +54,8 @@ typedef enum BtnEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE} Button;
 #define PWM_PORT D4
 
 struct param {
-  State state;                  // global state
+  StateEnum state;                  // global state
+  WiFiEnum AP_mode;
   int set_time, act_time;       // remaining time (s)
   double set, act, out;         // controller i/o
   double kp, tn, tv;            // controller parameter
@@ -60,7 +63,6 @@ struct param {
   boolean out_b;                // heater is on
   int screen;                   // active screen
   char ssid[33], pw[33];
-  WiFiEnum AP_mode;
   int tzoffset;
 } p;
 
@@ -71,9 +73,6 @@ PString line1_old(buf[2], sizeof(buf[2]));
 PString line2_old(buf[3], sizeof(buf[3]));
 
 
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, 7200);
-LiquidCrystal lcd(D5, D6, D0, D1, D2, D3);      // lcd(rs, en, d4, d5, d6, d7);
 
 
 // ------------------------------------------------------------------------ useful functions
@@ -170,13 +169,22 @@ int task_statistics() {
       init_stats(&tasklist[i]);
     }
   }
+  {
+    Dir dir = filesystem.openDir("/");
+    while (dir.next()) {
+      String fileName = dir.fileName();
+      size_t fileSize = dir.fileSize();
+      Serial << "FS File: " << fileName << " size: " << fileSize << endl;
+    }
   logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
+  }
+
   return 60000;
 }
 
 // -------------------------------------------------------------------------- Recipe Task
 int task_recipe() {
-  static State oldstate;
+  static StateEnum oldstate;
   if (oldstate != p.state) {
     oldstate = p.state;
     switch (p.state) {
@@ -340,15 +348,7 @@ void setup() {
   pinMode(PWM_PORT, OUTPUT);
   Serial.begin(115200);
 
-  filesystem->begin();
-  {
-    Dir dir = filesystem->openDir("/");
-    while (dir.next()) {
-      String fileName = dir.fileName();
-      size_t fileSize = dir.fileSize();
-      logger << "FS File: " << fileName << " size: " << fileSize << endl;
-    }
-  }
+  filesystem.begin();
 
   lcd.begin(16, 2);
   byte char_deg[8] = {6,9,9,6,0,0,0,0};
