@@ -22,10 +22,13 @@ class Logfile : public  Print {                                       // extend 
 
 
     // primitive iterator-like interface
-    void rewind();
+    //void rewind();
+    void rewind(unsigned long after);
     bool hasMore();
-    void getNext(char *buf, size_t buflen);
-    void getNewMessag(char &buf, size_t buflen, unsigned long timestamp);
+    //void getNext(char *buf, size_t buflen);
+    String getNext();
+    //String getNext(unsigned long after);
+    Logfile::LogEntryStruct strToEntry(String s);
     
 
     Logfile(FS &fs_ref, Stream &stream_ref, NTPClient &ntp_ref);      // Constructor
@@ -35,11 +38,12 @@ class Logfile : public  Print {                                       // extend 
     FS *fs_ptr;
     Stream *serial_ptr;
     NTPClient *ntp_ptr;
-    
+
     void store(LogEntryStruct &entry);
     bool iterator_hasMore = false;
     uint8_t iterator_file = 0;   // oldest
     size_t iterator_offset = 0;
+    unsigned long latest_timestamp;
 
 };
 

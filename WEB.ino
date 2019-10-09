@@ -219,30 +219,33 @@ int indexof(char c, char *s) {
 }
 
 void handleLogData() {
-  char buf[100];
-  char *ts, *msg;
   String s;
   bool first = true;
+  unsigned long t = 0;
+  if (server.hasArg("t")) {
+    t = strtoul(server.arg("t").c_str(), NULL, 10);
+  }
+
+  logger.rewind(t);
+  if (!logger.hasMore()) {
+    server.send(200, "text/json", "{\"log\":[]}");
+    return;
+  }
+  
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   server.send(200, "text/json", String(""));
   server.sendContent("{\"log\":[");
-  logger.rewind();
+
   while (logger.hasMore()) {
-    if (!first) {
-      server.sendContent(",");
-    } else {
-      first = false;
+    if (!first) server.sendContent(",");
+    first = false;
+
+    String entry_str = logger.getNext();
+    if (entry_str.length() > 0) {
+      Logfile::LogEntryStruct entry = logger.strToEntry(entry_str);
+      String s = "{\"ts\":" + String(entry.timestamp) + ", \"msg\":\"" + String(entry.message) + "\"}\r";
+      server.sendContent(s);
     }
-    logger.getNext(buf, sizeof(buf));
-    int idx = indexof(';', buf);
-    if (idx > 0) {
-      ts = &buf[0];
-      msg = &buf[idx+1];
-      buf[idx] = '\0';
-    }
-    s = "{\"ts\":" + String(ts) + ", \"msg\":\"" + String(msg) + "\"}\r";
-    Serial << s;
-    server.sendContent(s);
   }
   server.sendContent("]}");
 }

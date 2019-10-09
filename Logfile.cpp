@@ -5,54 +5,10 @@ Logfile::Logfile(FS &fs_ref, Stream &stream_ref, NTPClient &ntp_ref) {
   fs_ptr = &fs_ref;
   serial_ptr = &stream_ref;
   ntp_ptr = &ntp_ref;
+  latest_timestamp = 0;
 }
+
     
-/** 
- * write one character. needed for Stream (log << "foo")
- * One line is completed with '\r' ('\n' is discarded) and then stored
- */
-/*
-size_t Logfile::write(uint8_t character) {
-  static int pos = 0;
-
-  if (character == '\n') return 1;
-
-  if (new_ts == 0) {                          // set timestamp when first character arrives
-    new_ts = millis();
-  }
-
-  if (character == '\r') {                    // write to logfile on endline character
-    timestamps[end] = new_ts;                 // write timestamp of new message to array
-    new_ts = 0;
-    new_msg_buf[pos] = '\0';                  // terminate buffer, write to array, and reset
-    strcpy(messages[end], new_msg_buf);
-    pos = 0;
-    end = inc(end);                           // update array index
-    if (end == start) start = inc(start);
-    store(new_msg_buf);
-    if (serial_ptr) *serial_ptr << new_msg_buf << endl;
-    return 1;
-  }
-
-  if (pos < MSG_LEN - 1) {                    // add normal characters to buffer
-    new_msg_buf[pos] = character;
-    pos++;
-  }
-  return 1;
-}
-
-void Logfile::store(char buffer[]) {
-    File f = fs_ptr->open("/log.txt", "a");
-    if (f) {
-      f << buffer << endl;
-      f.close();
-    }
-    //file.setTimeout(0)
-    //int readSize = file.readBytes((byte*) myConfigStruct, sizeof(myConfigStruct));
-
-}
-*/
-
 size_t Logfile::write(uint8_t character) {
   static int pos = 0;
   static LogEntryStruct entry;
@@ -66,6 +22,7 @@ size_t Logfile::write(uint8_t character) {
   if (character == '\r') {                            // write to logfile on endline character
     entry.message[pos] = '\0';                        // make sure message is terminated
     store(entry);    
+    latest_timestamp = entry.timestamp;
     if (serial_ptr) *serial_ptr << entry.message << endl;
     pos = 0;
     entry.message[0] = '\0';
@@ -101,12 +58,18 @@ void Logfile::store(LogEntryStruct &entry) {
     }
 }
 
-
-void Logfile::getNewMessag(char &buf, size_t buflen, unsigned long timestamp) {
-  ;
+/**
+ * convert string to struct 
+ */
+Logfile::LogEntryStruct Logfile::strToEntry(String s) {
+  Logfile::LogEntryStruct entry;
+  entry.timestamp = strtoul(s.c_str(), NULL, 10);
+  int pos = s.indexOf(';') + 1;
+  String msg = s.substring(pos);
+  strncpy(entry.message, msg.c_str(), MSG_LEN - 1);
+  return entry;
 }
 
-    
 
 /* simple Iterator-like interface: check for more messages */
 bool Logfile::hasMore() {
@@ -114,30 +77,34 @@ bool Logfile::hasMore() {
 }
 
 /* simple Iterator-like interface: get next message */
-void Logfile::getNext(char *buf, size_t buflen) {
+String Logfile::getNext() {
   File f;
+  size_t file_len, file_pos;
+  String empty_string = String("");
+  
   if (this->iterator_file == 0) 
     f = fs_ptr->open(FILENAME_OLD, "r");
   else
     f = fs_ptr->open(FILENAME_ACT, "r");
+  
   if (!f) {
     if (this->iterator_file == 0) {
-      //old file not found, try new file
-      Serial << "Old file not found" << endl;
       this->iterator_file = 1;
       this->iterator_offset = 0;
-      getNext(buf, buflen);
+      return getNext();
     } else {
-      buf[0]='\0';
       this->iterator_hasMore = false;
+      return empty_string;
     }
-    return;
   }
+  
   f.seek(this->iterator_offset, SeekSet);
-  size_t n = f.readBytesUntil('\r', buf, buflen-1);
-  buf[n] = '\0';
-  unsigned long pos = f.position();
-  if (pos == f.size()) {
+  String s = f.readStringUntil('\r');
+  file_pos = f.position();
+  file_len = f.size();
+  f.close();
+  
+  if (file_pos == file_len) {
     this->iterator_offset = 0;
     if (this->iterator_file == 0) {
       this->iterator_file = 1;
@@ -145,15 +112,34 @@ void Logfile::getNext(char *buf, size_t buflen) {
       this->iterator_hasMore = false;
     }
   } else {
-    this->iterator_offset = pos;
+    this->iterator_offset = file_pos;
   }
+
+  return s;
 }
 
+/* simple Iterator-like interface reset readNextMessage to first message after t */
+void Logfile::rewind(unsigned long t) {
+  if (t >= latest_timestamp) {
+    this->iterator_hasMore = false;    
 
-/* simple Iterator-like interface reset readNextMessage to first message */
-void Logfile::rewind() {
-  Serial << "reset iterator" << endl;
-  this->iterator_hasMore = true;
-  this->iterator_file = 0;   // oldest
-  this->iterator_offset = 0;
+  } else {
+    this->iterator_hasMore = true;
+    this->iterator_file = 0;   // oldest
+    this->iterator_offset = 0;
+    while (this->hasMore()) {
+      unsigned long last_offset = iterator_offset;
+      int last_file = iterator_file;
+      Logfile::LogEntryStruct entry;
+      
+      String s = getNext();
+      entry = strToEntry(s);
+      if (entry.timestamp > t) {
+        iterator_offset = last_offset;  // go back one step
+        iterator_file = last_file;
+        iterator_hasMore = true;
+        return;
+      }
+    }
+  }
 }
