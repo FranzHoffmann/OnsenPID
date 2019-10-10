@@ -38,7 +38,7 @@ function read_state() {
 			obj.log.forEach(addOneLine);
 		}
 	};
-	req.open('GET', '/logd?t='+latest, true);
+	req.open('GET', '/log?t='+latest, true);
 	req.send();
 	setTimeout(read_state, 2345);
 }

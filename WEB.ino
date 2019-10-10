@@ -5,9 +5,9 @@ void setup_webserver(ESP8266WebServer *s) {
   s->on("/cfg",  handleConfig);
   s->on("/wifi", handleWifi);
   s->on("/log",  handleLog);
-  s->on("/logd",  handleLogData);
   s->on("/s",    handleAjax);
-  s->on("/favicon.ico",    handleFile);
+  s->on("/f",    handleFile);
+  s->on("/favicon.ico",    handleFavicon);
 
   server.onNotFound(handleNotFound);
   s->begin();
@@ -59,7 +59,11 @@ String subst(String var) {
   return var; // ignore unknown strings
 }
 
-
+/* 
+ *  read a file, optionally substitute variable like {{ACT}} and {{SET}}, and send to web server
+ *  everything enclosed in {{ }} is treated as a variable and sent to substitute()
+ *  use escape character '\' in file to output {{: \{\{
+ */
 bool readFile(const String &filename, String &content, bool substitute) {
   if (!filesystem.exists(filename)) {
     logger << "readFile(): file not found: " << filename << endl;
@@ -134,11 +138,8 @@ bool readFile(const String &filename, String &content, bool substitute) {
   f.close();
   return true;
 }
-/* 
- *  read a file, substitute variable like {{ACT}} and {{SET}}, and send to web server
- *  everything enclosed in {{ }} is treated as a variable and sent to substitute()
- *  use escape character '\' in file to output {{: \{\{
- */
+
+
 void send_file(String filename) {
   logger << "send_file(): " << filename << endl;
   String reply; reply.reserve(8192);
@@ -147,6 +148,10 @@ void send_file(String filename) {
   }
   server.send(200, getContentType(filename), reply);
 }
+
+void handleRoot()   {send_file("/index.html");}
+void handleAjax()   {send_file("/ajax.json");}
+
 
 void handleNotFound() {
   logger << "URL not found: " << server.uri() << endl;
@@ -164,28 +169,24 @@ void handleNotFound() {
   server.send(404, "text/plain", message);
 }
 
-void handleRoot()   {
-  logger << "handleRoot()" << endl;
-  send_file("/index.html");
-}
+
 
 void handleWifi()   {
   send_file("/wifi.html");
   //TODO
 }
 
-void handleAjax()   {
-  send_file("/ajax.json");
-  //TODO
-}
+void handleFavicon() {send_file("favicon.ico");}
 
+/**
+ * send any file in a query like /f&f=filename.txt
+ * very unsafe, but very convenient
+ */
 void handleFile()   {
-  send_file(server.uri());
-}
-
-void handleLog()    {
-  send_file("/log.html");
-  //TODO: merge log and logd
+  if (server.hasArg("f")) {
+    String fn = server.arg("f");
+    send_file(fn);
+  }
 }
 
 void handleRecipe() {
@@ -198,16 +199,6 @@ void handleData()   {
   //TODO
 }
 
-/*
-unsigned long strtoul(char *s) {
-  unsigned long val = 0;
-  for (int i=0; isdigit(s[i]); i++) {
-    val = 10 * val + (s[i] - '0');
-  }
-  return val;
-  Serial << val << endl;
-}
-*/
 
 int indexof(char c, char *s) {
     for (int i=0; s[i]!='\0'; i++) {
@@ -218,13 +209,18 @@ int indexof(char c, char *s) {
   return -1;
 }
 
-void handleLogData() {
+
+void handleLog() {
+  if (!server.hasArg("t")) {
+    // send log page
+    send_file("/log.html");
+    return;
+  }
+  
+  // else send log data
   String s;
   bool first = true;
-  unsigned long t = 0;
-  if (server.hasArg("t")) {
-    t = strtoul(server.arg("t").c_str(), NULL, 10);
-  }
+  unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
 
   logger.rewind(t);
   if (!logger.hasMore()) {
@@ -261,6 +257,7 @@ void changeParam(String arg_name, String param_name, double *param) {
       *param = val;
   }  
 }
+
 
 void changeParam(String arg_name, String param_name, int *param) {
   String str_param = "Parameter";
