@@ -151,7 +151,7 @@ void send_file(String filename) {
 
 void handleRoot()   {send_file("/index.html");}
 void handleAjax()   {send_file("/ajax.json");}
-void handleFavicon() {send_file("favicon.ico");}
+void handleFavicon() {send_file("/favicon.ico");}
 
 
 void handleWifi()   {

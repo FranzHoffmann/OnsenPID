@@ -25,7 +25,7 @@ Logfile logger(filesystem, Serial, timeClient);
 LiquidCrystal lcd(D5, D6, D0, D1, D2, D3);      // lcd(rs, en, d4, d5, d6, d7);
 
 /* simple scheduler */
-#define MAX_TASKS 10
+#define MAX_TASKS 20
 typedef int (*task)();    // a task is a function "int f()". returns deltaT for next call.
 struct task_t {
   task t;
@@ -104,6 +104,7 @@ boolean start_task(task t, const char *name) {
       return true;
     }
   }
+  logger << "Unable to start Task" << endl;
   return false;
 }
 
@@ -330,7 +331,7 @@ void start_WiFi() {
   WiFi.softAPmacAddress(macAddr);
   ssid << "Onsenei-";
   for (int i = 4; i < 6; i++) ssid.printf("%02x", macAddr[i]);
-  boolean success = WiFi.softAP("Onsen-1234");
+  boolean success = WiFi.softAP(String(ssid));
   if (success) {
     strncpy(p.ssid, buffer, sizeof(p.ssid));
     logger << "Opened Access Point '" << ssid << "'" << endl;
