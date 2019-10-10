@@ -179,7 +179,7 @@ int task_statistics() {
   logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
   }
 
-  return 60000;
+  return 60000; // why does this work?
 }
 
 // -------------------------------------------------------------------------- Recipe Task
@@ -193,9 +193,11 @@ int task_recipe() {
         break;
       case STATE_COOKING:
         logger << "Kochen gestartet" << endl;
+        dl_startBatch();
         break;
       case STATE_FINISHED:
         logger << "Kochen abgeschlossen" << endl;
+        dl_endBatch();
         break;
       case STATE_ERROR:
         logger << "Systemfehler erkannt" << endl;
@@ -364,8 +366,10 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
 
   setup_OTA();
-  
+
   timeClient.begin();
+
+  setup_dl(); // data logger
 
   start_task(task_keyboard, "keybd");
   start_task(task_lcd, "lcd");

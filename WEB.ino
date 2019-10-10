@@ -151,6 +151,24 @@ void send_file(String filename) {
 
 void handleRoot()   {send_file("/index.html");}
 void handleAjax()   {send_file("/ajax.json");}
+void handleFavicon() {send_file("favicon.ico");}
+
+
+void handleWifi()   {
+  send_file("/wifi.html");
+  //TODO
+}
+
+/**
+ * send any file in a query like /f&f=filename.txt
+ * very unsafe, but very convenient
+ */
+void handleFile()   {
+  if (server.hasArg("f")) {
+    String fn = server.arg("f");
+    send_file(fn);
+  }
+}
 
 
 void handleNotFound() {
@@ -169,25 +187,6 @@ void handleNotFound() {
   server.send(404, "text/plain", message);
 }
 
-
-
-void handleWifi()   {
-  send_file("/wifi.html");
-  //TODO
-}
-
-void handleFavicon() {send_file("favicon.ico");}
-
-/**
- * send any file in a query like /f&f=filename.txt
- * very unsafe, but very convenient
- */
-void handleFile()   {
-  if (server.hasArg("f")) {
-    String fn = server.arg("f");
-    send_file(fn);
-  }
-}
 
 void handleRecipe() {
   send_file("/rec.html");
