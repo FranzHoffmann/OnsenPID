@@ -1,9 +1,27 @@
 /*
-
+  TODO
+  ====
+  - data logger / chart display webpage
+  - log data access with "batch no"
+  - persistant storage of parameters
+  - use real temperature sensor
+  - WiFi setup from web interface
+  - D-Part
+  - hostname
+  - start in x minutes / finish at x:xx 
+  - repalce "Einschalten" by "Start dialog"
+  - move PWM (and PID?) to interrupt
+  
+  more ideas
+  ==========
+  - autotuning
+  - improve anti-windup
+  - complex recipes, more recipes, selection via LCD/web
+  - better statistics: runtime and ms/s for each task
 */
 
 #include <Streaming.h>
-#include <NTPClient.h>
+#include <NTPClient.h>      // note: git pull request 22 (asynchronus update) required
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <LiquidCrystal.h>
@@ -17,12 +35,22 @@
 
 #define HOSTNAME "onsen"
 
+#define LCD_RS D5
+#define LCD_EN D6
+#define LCD_D4 D0
+#define LCD_D5 D1
+#define LCD_D6 D2
+#define LCD_D7 D3
+
+#define PWM_PORT D4
+
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 ESP8266WebServer server(80);
 FS filesystem = SPIFFS;
 Logfile logger(filesystem, Serial, timeClient);
-LiquidCrystal lcd(D5, D6, D0, D1, D2, D3);      // lcd(rs, en, d4, d5, d6, d7);
+LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+
 
 /* simple scheduler */
 #define MAX_TASKS 20
@@ -51,10 +79,8 @@ enum ButtonEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE};
 #define DEGC '\1' << 'C'   // custom caracter for degree
 #define ARROW '\2'         // custom character for up/down arrow
 
-#define PWM_PORT D4
-
 struct param {
-  StateEnum state;                  // global state
+  StateEnum state;              // global state
   WiFiEnum AP_mode;
   int set_time, act_time;       // remaining time (s)
   double set, act, out;         // controller i/o
@@ -180,7 +206,7 @@ int task_statistics() {
   logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
   }
 
-  return 60000; // why does this work?
+  return 60000; // good thing int seems to be 32 bit
 }
 
 // -------------------------------------------------------------------------- Recipe Task
