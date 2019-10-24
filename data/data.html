@@ -5,15 +5,22 @@
 <meta charset='utf-8'>
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
 <title>{{HOSTNAME}} - Kurven</title>
-<style>
+<style src="stylesheet.css"></style>
+
 {{CSS}}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+<script src="moment.min.js"></script>
+<script src="Chart.js"></script> <!-- /f?f=/ -->
 <script>
-var data = [
-	{"t":0, "act":"14.62", "set":"42.00", "out":"97.13"}
-];
+
+window.chartColors = {
+	red: 'rgb(255, 99, 132)',
+	orange: 'rgb(255, 159, 64)',
+	yellow: 'rgb(255, 205, 86)',
+	green: 'rgb(75, 192, 192)',
+	blue: 'rgb(54, 162, 235)',
+	purple: 'rgb(153, 102, 255)',
+	grey: 'rgb(201, 203, 207)'
+};
 
 var config = {
 	type: 'line',
@@ -21,26 +28,29 @@ var config = {
 		labels: [],
 		datasets: [{
 			label: 'Temperatur',
-			borderColor: chartColors.green_opaque,
-			backgroundColor: chartColors.green_opaque,
-			pointRadius: 0,
+			borderColor: window.chartColors.red,
+			backgroundColor: window.chartColors.red,
+//			pointRadius: 0,
 			fill: false,
+			yAxisID: 't',
 			data: []
 		},
 		{
 			label: 'Solltemperatur',
-			borderColor: chartColors.blue_opaque,
-			backgroundColor: chartColors.blue_opaque,
-			pointRadius: 0,
+			borderColor: window.chartColors.green,
+			backgroundColor: window.chartColors.green,
+//			pointRadius: 0,
 			fill: false,
+			yAxisID: 't',
 			data: []
 		},
 		{
 			label: 'Leistung',
-			borderColor: chartColors.red_opaque,
-			backgroundColor: chartColors.red_opaque,
-			pointRadius: 0,
+			borderColor: window.chartColors.blue,
+			backgroundColor: window.chartColors.blue,
+//			pointRadius: 0,
 			fill: false,
+			yAxisID: 'p',
 			data: []
 		}]
 	},
@@ -53,18 +63,18 @@ var config = {
 					display: true,
 					labelString: 'Uhrzeit'
 				},
-				time: {
-					displayFormats: {hour: "H:mm"},
-					min: '2019-10-06 03:00:00Z',
-					max: '2019-10-06 20:00:00Z',
-				}
+				time: {displayFormats: {minute: 'HH:mm'}, minUnit: 'minute'}
 			}],
 			yAxes: [{
-				scaleLabel: {
-					display: true,
-					labelString: 'Leistung',
-				},
-				ticks: {suggestedMax: 7000}
+				id: 't',
+				type: 'linear',
+				scaleLabel: {display: true, labelString: 'Temperatur'},
+			}, {
+				id: 'p',
+				type: 'linear',
+				position: 'right',
+				scaleLabel: { display: true, labelString: 'Leistung'},
+				gridLines: {display: false},
 			}]
 		},
 		responsive: true,
@@ -72,19 +82,40 @@ var config = {
 	}
 };
 
-// push generated data into config structure
-for (var i = 0; i < dbdata.length; i++) {
-	config.data.datasets[0].data.push({t: dbdata[i].t, y: round(dbdata[i].p1, 2)});
-	config.data.datasets[1].data.push({t: dbdata[i].t, y: round(dbdata[i].p2, 2)});
-	config.data.datasets[2].data.push({t: dbdata[i].t, y: round(dbdata[i].p1+dbdata[i].p2, 2)});
-}
+var chart = null;
+var req = null;
+var latest = 0;
 
+function read_data() {
+	if (req != null) {
+		req.abort();
+	}
+	req = new XMLHttpRequest();
+	req.onreadystatechange = function() {
+		if (req.readyState == 4 && req.status == 200) {
+			var data = JSON.parse(req.responseText);
+			// push generated data into config structure
+			for (var i = 0; i < data.length; i++) {
+				var t = new Date(data[i].t * 1000);
+				config.data.datasets[0].data.push({t: t, y: data[i].act});
+				config.data.datasets[1].data.push({t: t, y: data[i].set});
+				config.data.datasets[2].data.push({t: t, y: data[i].out});
+			}
+			chart.update;
+		}
+	};
+	req.open('GET', 'testdata.json', true);
+//	req.open('GET', '/log?t='+latest, true);
+	req.send();
+	setTimeout(read_data, 12345);
+}
 
 window.onload = function() {
 	var ctx = document.getElementById('canvas').getContext('2d');
-	window.myLine = new Chart(ctx, config);
+	chart = new Chart(ctx, config);
+	read_data();
 };
-
+</script>
 </head>
 
 <body>
@@ -96,8 +127,7 @@ window.onload = function() {
 	<fieldset>
 		<legend><b>&nbsp;Rezept&nbsp;</b></legend>
 		<div class="chart-container">
-			<!-- note: height/width for spect ratio only -->
-			<canvas id="canvas" height="20px" width="30px"></canvas>
+			<canvas id="canvas" height="400px" width="600px"></canvas>
 		</div>
 	</fieldset>
 	<div></div>

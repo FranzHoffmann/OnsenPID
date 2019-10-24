@@ -139,9 +139,9 @@ bool readFile(const String &filename, String &content, bool substitute) {
   return true;
 }
 
-
+// ---------------------------------------------------------------------------------------- send file
 void send_file(String filename) {
-  logger << "send_file(): " << filename << endl;
+  // logger << "send_file(): " << filename << endl;
   String reply; reply.reserve(8192);
   if (!readFile(filename, reply, true)) {
     return fail("file not found: " + filename);
@@ -150,14 +150,7 @@ void send_file(String filename) {
 }
 
 void handleRoot()   {send_file("/index.html");}
-void handleAjax()   {send_file("/ajax.json");}
 void handleFavicon() {send_file("/favicon.ico");}
-
-
-void handleWifi()   {
-  send_file("/wifi.html");
-  //TODO
-}
 
 /**
  * send any file in a query like /f&f=filename.txt
@@ -166,11 +159,38 @@ void handleWifi()   {
 void handleFile()   {
   if (server.hasArg("f")) {
     String fn = server.arg("f");
-    send_file(fn);
+    File f = filesystem.open(fn, "r");
+    if (!f) {
+      logger << "handleFile(): could not open file" << fn << endl;
+      return;
+    }  
+    server.streamFile(f, getContentType(fn));
+    f.close();
   }
 }
 
 
+// --------------------------------------------------------------------------------------------- Ajax (and commands)
+void handleAjax() {
+  if (server.hasArg("cmd")) {
+    String cmd = server.arg("cmd");
+    if (cmd == "1") {
+      // start cooking
+      // TODO: do this properly. state shoud be encapsulated and changed by functions
+      p.state = STATE_COOKING;
+    }
+  }
+  send_file("/ajax.json");
+}
+
+
+// --------------------------------------------------------------------------------------------- WiFi
+void handleWifi()   {
+  send_file("/wifi.html");
+  //TODO
+}
+
+// --------------------------------------------------------------------------------------------- not found
 void handleNotFound() {
   logger << "URL not found: " << server.uri() << endl;
   String message = "File Not Found\n\n";
@@ -187,15 +207,41 @@ void handleNotFound() {
   server.send(404, "text/plain", message);
 }
 
-
+// --------------------------------------------------------------------------------------------- recipe
 void handleRecipe() {
   send_file("/rec.html");
   //TODO
 }
 
+// --------------------------------------------------------------------------------------------- data
 void handleData()   {
-  send_file("/data.html");
-  //TODO
+  if (!server.hasArg("t")) {
+    // send html page
+    send_file("/data.html");
+    return;
+  }
+  
+  //else send data
+  bool first = true;
+  unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
+  logger << "handleData(): dl_rewind(" << t << ")" << endl;
+  dl_rewind("TODO", t);
+  if (!dl_hasMore()) {
+    logger << "handleData(): nothing (!dl_hasMore())" << endl;
+    server.send(200, "text/json", "{\"data\":[]}");
+    return;    
+  }
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send(200, "text/json", String(""));
+  server.sendContent("{\"data\":[");
+
+  while (dl_hasMore()) {
+    if (!first) server.sendContent(",");
+    first = false;
+    server.sendContent(dl_getNext());
+  }
+  server.sendContent("]}");
+  logger << "handleData(): done" << endl;
 }
 
 
@@ -211,12 +257,12 @@ int indexof(char c, char *s) {
 
 void handleLog() {
   if (!server.hasArg("t")) {
-    // send log page
+    // send html page
     send_file("/log.html");
     return;
   }
   
-  // else send log data
+  // else send data
   String s;
   bool first = true;
   unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);

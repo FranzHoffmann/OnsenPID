@@ -8,13 +8,19 @@
 
 <script>
 var req = null;
+var timer;
 
 function pad(num, size) {
 	var s = num+"";
 	while (s.length < size) s = "0" + s;
 	return s;
 }
-function read_state() {
+function read_state(cmd) {
+	var arg = '';
+	if (read_state.arguments.length == 1) {
+		arg = "?" + cmd;
+		clearTimeout(timer);
+	}
 	if (req != null) {
 		req.abort();
 	}
@@ -29,9 +35,9 @@ function read_state() {
 				Math.floor(obj.time / 60) + ":" + pad(obj.time % 60, 2);
 		}
 	};
-	req.open('GET', '/s', true);
+	req.open('GET', '/s'+arg, true);
 	req.send();
-	setTimeout(read_state, 2345);
+	timer = setTimeout(read_state, 2345);
 }
 
 window.onload = read_state();
@@ -59,7 +65,7 @@ window.onload = read_state();
 	</tbody>
 	</table>
 	</div>
-	<table style="width:100%"><tbody><tr><td style="width:100%"><button onclick='read_state();'>Einschalten!</button></td></tr></tbody></table>
+	<table style="width:100%"><tbody><tr><td style="width:100%"><button onclick='read_state("cmd=1");'>Einschalten!</button></td></tr></tbody></table>
 	<div></div>
 	<p></p>
 	<form action="rec" method="get"><button>Rezept</button></form>

@@ -11,12 +11,17 @@
  * 
  */
 
-#define DL_RAMBUF 100
+#define DL_RAMBUF 10
 
 struct dl_t {
   bool recording;
   String filename;
   int pointer;      // index of first unused ram buffer index
+  unsigned long last_ts;
+  String it_filename;
+  size_t it_offset;
+  unsigned long it_after;
+  bool it_hasMore;
 };
 
 struct dl_data_t {
@@ -40,22 +45,27 @@ void setup_dl() {
  * Task for logging
  */
 int dl_log() {
+  Serial << "dl_log(" << dl.recording << ")" << endl;
   if (dl.recording) {
+    dl.last_ts = timeClient.getEpochTime();  
     dl_data[dl.pointer].set = p.set;
     dl_data[dl.pointer].act = p.act;
     dl_data[dl.pointer].out = p.out;
-    dl_data[dl.pointer].ts = timeClient.getEpochTime();
+    dl_data[dl.pointer].ts = dl.last_ts;
+
+    dl.pointer++;
+    if (dl.pointer == DL_RAMBUF) {
+      dl_flush();
+      dl.pointer = 0;
+    }
   }
-  dl.pointer++;
-  if (dl.pointer == DL_RAMBUF) {
-    dl_flush();
-  }
+  
   return 1000;
 }
 
 int dl_cleanup() {
-  //TODO
-  return 20000; // only int!
+  logger << "datalogger cleanup" << endl;
+  return 3600000;
 }
 
 
@@ -66,8 +76,9 @@ void dl_startBatch() {
   dl.recording = true;
   dl.pointer = 0;
   // TODO
-  dl.filename = "data.dat";
+  dl.filename = "/data.dat";
   File f = filesystem.open(dl.filename, "w");
+  logger << "datalogger: started logfile '" << dl.filename << "'" << endl;
   f.write("TODO: Rezeptname\r");
   f.close();
 }
@@ -76,15 +87,91 @@ void dl_startBatch() {
  * 
  */
 void dl_endBatch() {
+  logger << "datalogger: closed logfile '" << dl.filename << "'" << endl;
   dl.recording = false;
   dl_flush();
+  dl.filename = "";
 }
 
 
 void dl_flush() {
+  Serial << "dl_flush()";
   File f = filesystem.open(dl.filename, "a");
-  for (int i=0; i<dl.pointer; i++) {
-    f.write((char *)&dl_data[i], sizeof(dl_data_t)/sizeof(char));
+  if (f) {
+    for (int i=0; i<dl.pointer; i++) {
+      f.write((char *)&dl_data[i], sizeof(dl_data_t)/sizeof(char));
+    }
+    f.close();
+  }
+}
+
+/*
+ * simple Java-iterator-like interace
+ * what's the proper way to do this in C++?
+ */
+/* resets the iterator to the specified file/time */
+void dl_rewind(String filename, unsigned long after) {
+  dl.it_filename = "/data.dat"; // TODO
+  dl.it_offset = 0;
+  dl.it_hasMore = false;
+
+  File f = filesystem.open(dl.it_filename, "r");
+  if (!f) {
+    logger << "dl_rewind: file not found: '" << dl.it_filename << "'" << endl;
+    return;
+  }
+  dl_data_t data;
+  String recipe = f.readStringUntil('\r');
+  size_t filepos = f.position();
+  size_t filelen = f.size();
+  while (filepos < filelen) {
+    f.readBytes((char*)&data, sizeof(data));
+    Serial << "data.ts: " << data.ts << endl;
+    if (data.ts > after) {                        // found entry after 'after'
+      dl.it_hasMore = true;
+      dl.it_offset = filepos;
+      break;
+    } else {
+      filepos = f.position();                     // entry is too old, try next
+    }
+  }
+  logger << "dl_rewind: after=" << after <<", latest=" << data.ts << endl; 
+  f.close();
+}
+
+bool dl_hasMore() {
+  logger << "dl_hasmore: " << dl.it_hasMore << endl;
+  return dl.it_hasMore;
+}
+
+/* returns the next entry as json string */
+String dl_getNext() {
+  dl_data_t data;
+  char buf[100];
+  PString pstr(buf, sizeof(buf));
+  File f = filesystem.open(dl.it_filename, "r");
+  if (!f) {
+    String s = "";
+    dl.it_hasMore = false;
+    return s;
+  }
+
+  f.seek(dl.it_offset, SeekSet);
+  f.readBytes((char*)&data, sizeof(data));
+  if (f.position() == f.size()) {
+    dl.it_hasMore = false;
+  } else {
+    dl.it_offset = f.position();
   }
   f.close();
+  char Q = '"';
+  pstr = "{";
+  pstr << Q << "t"   << Q << ":" << data.ts  << ", ";
+  pstr << Q << "act" << Q << ":" << data.act << ", ";
+  pstr << Q << "set" << Q << ":" << data.set << ", ";
+  pstr << Q << "out" << Q << ":" << data.out;
+  pstr << "}" << endl;
+  Serial << "pstr: " << pstr;
+  String s(buf);
+  return s;
 }
