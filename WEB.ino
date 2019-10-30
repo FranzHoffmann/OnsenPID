@@ -140,6 +140,11 @@ bool readFile(const String &filename, String &content, bool substitute) {
 }
 
 // ---------------------------------------------------------------------------------------- send file
+/**
+ * send file with substitution of {{variables}}
+ * only works with small files.
+ * TODO: make thsi streaming...
+ */
 void send_file(String filename) {
   // logger << "send_file(): " << filename << endl;
   String reply; reply.reserve(8192);
@@ -149,8 +154,21 @@ void send_file(String filename) {
   server.send(200, getContentType(filename), reply);
 }
 
-void handleRoot()   {send_file("/index.html");}
-void handleFavicon() {send_file("/favicon.ico");}
+
+/**
+ * send file (as-is, no substitutions)
+ * this also works with huge files.
+ */
+void stream_file(String filename) {
+    File f = filesystem.open(filename, "r");
+    if (!f) {
+      logger << "stream_file(): could not open file" << filename << endl;
+      return;
+    }  
+    server.streamFile(f, getContentType(filename));
+    f.close();  
+}
+
 
 /**
  * send any file in a query like /f&f=filename.txt
@@ -158,16 +176,33 @@ void handleFavicon() {send_file("/favicon.ico");}
  */
 void handleFile()   {
   if (server.hasArg("f")) {
-    String fn = server.arg("f");
-    File f = filesystem.open(fn, "r");
-    if (!f) {
-      logger << "handleFile(): could not open file" << fn << endl;
-      return;
-    }  
-    server.streamFile(f, getContentType(fn));
-    f.close();
+    String filename = server.arg("f");
+    stream_file(filename);
   }
 }
+
+
+// --------------------------------------------------------------------------------------------- not found
+void handleNotFound() {
+  logger << "URL not found: " << server.uri() << endl;
+  String message = "File Not Found\n\n";
+  message += "URI: ";
+  message += server.uri();
+  message += "\nMethod: ";
+  message += (server.method() == HTTP_GET) ? "GET" : "POST";
+  message += "\nArguments: ";
+  message += server.args();
+  message += "\n";
+  for (uint8_t i = 0; i < server.args(); i++) {
+    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+  }
+  server.send(404, "text/plain", message);
+}
+
+
+// --------------------------------------------------------------------------------------------- Root etc.
+void handleRoot()   {send_file("/index.html");}
+void handleFavicon() {send_file("/favicon.ico");}
 
 
 // --------------------------------------------------------------------------------------------- Ajax (and commands)
@@ -190,22 +225,6 @@ void handleWifi()   {
   //TODO
 }
 
-// --------------------------------------------------------------------------------------------- not found
-void handleNotFound() {
-  logger << "URL not found: " << server.uri() << endl;
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++) {
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
-  }
-  server.send(404, "text/plain", message);
-}
 
 // --------------------------------------------------------------------------------------------- recipe
 void handleRecipe() {
@@ -255,6 +274,7 @@ int indexof(char c, char *s) {
 }
 
 
+// --------------------------------------------------------------------------------------------- log
 void handleLog() {
   if (!server.hasArg("t")) {
     // send html page
@@ -304,6 +324,7 @@ void changeParam(String arg_name, String param_name, double *param) {
 }
 
 
+// --------------------------------------------------------------------------------------------- config
 void changeParam(String arg_name, String param_name, int *param) {
   String str_param = "Parameter";
   String str_from  = "geändert von";

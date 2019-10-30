@@ -14,6 +14,47 @@
 		document.getElementById('ssid').value = l.innerText || l.textContent;
 		document.getElementById('pwd').focus();
 	}
+
+var req = null;
+var latest = 0;
+
+/*
+{"result":7, "list":[
+{"ssid":"Netz 1", "Ch":6, "encryption":"foo", "RSSI":32}
+,{"ssid":"Netz 2", "Ch":13, "encryption":"offen", "RSSI":74}
+]}
+*/
+function parse_scan(obj){
+	var sr = document.getElementById('scanned');
+	if (obj.result == -1) {
+		sr.innerHTML = '<p>Scan läuft noch</p>';
+	} else if (obj.result == 0) {
+		sr.innerHTML = '<p>Keine WLAN-Netze gefunden</p>';
+	}else if (obj.result < -1) {
+		sr.innerHTML = '<p>Unbekannter Fehler </p>';
+	} else {
+		sr.innerHTML = '<p>Scan abgeschlossen</p>';
+		obj.list.forEach(function(element) {
+		sr.innerHTML += '<div><a href=\'#p\' onclick=\'use_ssid(this)\'>' +  element.ssid + '</a></div>'
+		});
+	}
+}
+
+function scan() {
+	if (req != null) {
+		req.abort();
+	}
+	req = new XMLHttpRequest();
+	req.onreadystatechange = function() {
+		if (req.readyState == 4 && req.status == 200) {
+			var obj = JSON.parse(req.responseText);
+			parse_scan(onj);
+		}
+	};
+	req.open('GET', '/wifi?scan=t', true);
+	req.send();
+	return false;
+}
 </script>
 
 <style>
@@ -27,11 +68,9 @@
 			<h3>OnsenPID</h3>
 			<h2>{{HOSTNAME}}</h2>
 		</div>
-		<div><a href='/wi?scan='>Scan for wifi networks</a></div><br />
-		<div><a href='#p' onclick='use_ssid(this)'>Demo 1</a></div>
-		<div><a href='#p' onclick='use_ssid(this)'>Unitymedia WifiSpot</a></div>
-		<div><a href='#p' onclick='use_ssid(this)'>FRITZ!Box Demo 3</a></div>
-		<div><a href='#p' onclick='use_ssid(this)'>WLAN-191818 Demo 4</a></div><br />
+		<div><a onclick='scan()'>Scan for wifi networks</a></div><br />
+		<div id='scanned'>
+		</div>
 		<fieldset>
 			<legend><b>&nbsp;Wifi-Parameter&nbsp;</b></legend>
 			<form method='get' action='wifi'>
