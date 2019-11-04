@@ -9,6 +9,8 @@ void setup_webserver(ESP8266WebServer *s) {
   s->on("/f",    handleFile);
   s->on("/favicon.ico",    handleFavicon);
 
+  s->on("/edit", HTTP_POST, []() {returnOK();}, handleFileUpload);
+
   server.onNotFound(handleNotFound);
   s->begin();
 }
@@ -34,6 +36,9 @@ String getContentType(String filename) {
 
 void fail(String msg) {
   server.send(500, "text/plain", msg + "\r\n");
+}
+void returnOK() {
+  server.send(200, "text/plain", "");
 }
 
 
@@ -220,9 +225,41 @@ void handleAjax() {
 
 
 // --------------------------------------------------------------------------------------------- WiFi
+/*
+{"result":7, "list":[
+{"ssid":"Netz 1", "Ch":6, "encryption":"foo", "RSSI":32}
+,{"ssid":"Netz 2", "Ch":13, "encryption":"offen", "RSSI":74}
+]}
+*/
 void handleWifi()   {
-  send_file("/wifi.html");
-  //TODO
+  if (server.hasArg("scan")) {
+    if (p.AP_mode != WIFI_APMODE) {
+      // TODO: scanning not possible
+    } else {
+      // TODO: make this async
+      logger << "WiFi scan started" << endl;
+      int n = WiFi.scanNetworks();
+      logger << "WiFi scan finished (" << n << " networks found)" << endl;
+      bool first = true;
+      server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+      server.send(200, "text/json", String(""));
+      server.sendContent("{\"result\":" + String(n) + ", \"list\":[\n");
+      for (int i=0; i<n; i++) {
+        if (!first) {
+          server.sendContent(",\n");
+        }
+        first = false;
+        server.sendContent("{\"ssid\":\"" + WiFi.SSID(i) + "\"" 
+          + ", \"Ch\":" + String(WiFi.channel(i)) 
+          + ", \"encryption\":" + (WiFi.encryptionType(i) == ENC_TYPE_NONE ? "\"open\"" : "\"encrypted\"")
+          + ", \"RSSI\":" + String(WiFi.RSSI(i))
+          + "}");
+      }
+      server.sendContent("]}");
+    }
+  } else {
+    send_file("/wifi.html");
+  }
 }
 
 
@@ -345,4 +382,38 @@ void handleConfig() {
     changeParam("tz", "UTC Offset", &(p.tzoffset));
   }
   send_file("/cfg.html");
+}
+
+// --------------------------------------------------------------------------------------------- File upload
+File uploadFile;
+void handleFileUpload() {
+  if (server.uri() != "/edit") {
+    return;
+  }
+  HTTPUpload& upload = server.upload();
+  String fn = "/" + upload.filename;
+  
+  if (upload.status == UPLOAD_FILE_START) {
+    if (filesystem.exists(fn)) {
+      filesystem.remove(fn);
+    }
+    uploadFile = filesystem.open(fn, "w");
+    logger << "Upload: START, filename: " << fn << endl;
+  }
+    
+  else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (uploadFile) {
+      uploadFile.write(upload.buf, upload.currentSize);
+      logger << "Upload: WRITE, Bytes: " << upload.currentSize << endl;
+    } else {
+      logger << "Upload: WRITE (failed)" << endl;
+    }
+  }
+  
+  else if (upload.status == UPLOAD_FILE_END) {
+    if (uploadFile) {
+      uploadFile.close();
+    }
+    logger << "Upload: END, Size: " << upload.totalSize << endl;
+  }
 }

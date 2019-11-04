@@ -196,7 +196,7 @@ int task_statistics() {
       init_stats(&tasklist[i]);
     }
   }
-/*  {
+  {
     Dir dir = filesystem.openDir("/");
     while (dir.next()) {
       String fileName = dir.fileName();
@@ -205,7 +205,6 @@ int task_statistics() {
     }    
   logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
   }
-*/
   return 60000; // good thing int seems to be 32 bit
 }
 
