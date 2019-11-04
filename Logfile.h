@@ -21,16 +21,13 @@ class Logfile : public  Print {                                       // extend 
     };
 
 
-    // primitive iterator-like interface
-    //void rewind();
+    // primitive iterator-like interface 
     void rewind(unsigned long after);
     bool hasMore();
-    //void getNext(char *buf, size_t buflen);
     String getNext();
-    //String getNext(unsigned long after);
+
     Logfile::LogEntryStruct strToEntry(String s);
     
-
     Logfile(FS &fs_ref, Stream &stream_ref, NTPClient &ntp_ref);      // Constructor
     size_t write(uint8_t character);                                  // write one character. needed for Stream (logfile << "foo")
 

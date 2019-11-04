@@ -1,5 +1,5 @@
 void setup_OTA() {
-    ArduinoOTA.setHostname(HOSTNAME);
+    ArduinoOTA.setHostname(cfg.p.hostname);
   
     ArduinoOTA.onStart([]() {
       String type;

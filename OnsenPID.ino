@@ -32,8 +32,9 @@
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
 #include "MemoryInfo.h"
+#include "Config.h"
 
-#define HOSTNAME "onsen"
+//#define HOSTNAME "onsen"
 
 #define LCD_RS D5
 #define LCD_EN D6
@@ -64,7 +65,6 @@ struct task_t {
 task_t tasklist[MAX_TASKS];
 
 /* Buttons and menu p.screens */
-enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
 enum StateEnum {STATE_IDLE, STATE_COOKING, STATE_FINISHED, STATE_ERROR};
 enum ButtonEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE};
 #define DISP_MAIN 0
@@ -79,18 +79,19 @@ enum ButtonEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE};
 #define DEGC '\1' << 'C'   // custom caracter for degree
 #define ARROW '\2'         // custom character for up/down arrow
 
+enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
 struct param {
   StateEnum state;              // global state
   WiFiEnum AP_mode;
   int set_time, act_time;       // remaining time (s)
   double set, act, out;         // controller i/o
-  double kp, tn, tv;            // controller parameter
   double t1;                    // filter time for act temperature
   boolean out_b;                // heater is on
   int screen;                   // active screen
   char ssid[33], pw[33];
-  int tzoffset;
 } p;
+
+Config cfg("/config.ini", &logger);
 
 char buf[4][17];
 PString line1(buf[0], sizeof(buf[0]));
@@ -104,12 +105,9 @@ PString line2_old(buf[3], sizeof(buf[3]));
 // ------------------------------------------------------------------------ useful functions
 
 void init_params() {
-  p.set = 45.0;
-  p.kp = 30.0;
-  p.tn = 20.0;
-  p.tv = 0.0;
   p.t1 = 0.3;
   p.set_time = 600;
+  cfg.read();
 
 }
 
@@ -262,8 +260,8 @@ int task_PID() {
 
   if (p.state == STATE_COOKING) {
     double e = p.set - p.act;
-    double ppart = p.kp * e;
-    ipart = limit(ipart + ta/1000.0/p.tn * e, 0, 100.0);
+    double ppart = cfg.p.kp * e;
+    ipart = limit(ipart + ta/1000.0/cfg.p.tn * e, 0, 100.0);
     p.out = limit(ppart + ipart, 0.0, 100.0);
 
   } else {
@@ -371,12 +369,10 @@ void start_WiFi() {
 
 // ----------------------------------------------------------------------------- setup
 void setup() {
-  init_params();
-
   pinMode(PWM_PORT, OUTPUT);
   Serial.begin(115200);
-
   filesystem.begin();
+  init_params();
 
   lcd.begin(16, 2);
   byte char_deg[8] = {6,9,9,6,0,0,0,0};
@@ -387,7 +383,7 @@ void setup() {
   
   start_WiFi();
 
-  MDNS.begin(HOSTNAME);
+  MDNS.begin(cfg.p.hostname);
   setup_webserver(&server);
   MDNS.addService("http", "tcp", 80);
 

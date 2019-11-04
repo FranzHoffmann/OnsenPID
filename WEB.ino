@@ -9,7 +9,7 @@ void setup_webserver(ESP8266WebServer *s) {
   s->on("/f",    handleFile);
   s->on("/favicon.ico",    handleFavicon);
 
-  s->on("/edit", HTTP_POST, []() {returnOK();}, handleFileUpload);
+  s->on("/edit", HTTP_POST, []() {redirect("/cfg");}, handleFileUpload);
 
   server.onNotFound(handleNotFound);
   s->begin();
@@ -37,8 +37,9 @@ String getContentType(String filename) {
 void fail(String msg) {
   server.send(500, "text/plain", msg + "\r\n");
 }
-void returnOK() {
-  server.send(200, "text/plain", "");
+void redirect(String url) {
+  server.sendHeader("Location", url, true);
+  server.send(302, "text/plain", "");
 }
 
 
@@ -47,12 +48,12 @@ String subst(String var) {
   if (var == "ACT") return String(p.act);
   if (var == "SET") return String(p.set);
   if (var == "OUT") return String(p.out);
-  if (var == "KP") return String(p.kp);
-  if (var == "TN") return String(p.tn);
-  if (var == "TV") return String(p.tv);
+  if (var == "KP") return String(cfg.p.kp);
+  if (var == "TN") return String(cfg.p.tn);
+  if (var == "TV") return String(cfg.p.tv);
   if (var == "TIME_LEFT") return String(p.set_time - p.act_time);
   if (var == "TIME_SET") return String(p.set_time);
-  if (var == "HOSTNAME") return HOSTNAME;
+  if (var == "HOSTNAME") return String(cfg.p.hostname);
   if (var == "SSID") return p.ssid;
   
   if (var == "CSS")  {
@@ -370,18 +371,19 @@ void changeParam(String arg_name, String param_name, int *param) {
       int val = server.arg(arg_name).toInt();
       logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
       *param = val;
-  }  
+  }
 }
 
 
 void handleConfig() {
   if (server.hasArg("save")) {
-    changeParam("kp", "Verstärkung", &(p.kp));
-    changeParam("tn", "Nachstellzeit", &(p.tn));
-    changeParam("tv", "Vorhaltezeit", &(p.tv));
-    changeParam("tz", "UTC Offset", &(p.tzoffset));
+    changeParam("kp", "Verstärkung", &(cfg.p.kp));
+    changeParam("tn", "Nachstellzeit", &(cfg.p.tn));
+    changeParam("tv", "Vorhaltezeit", &(cfg.p.tv));
+    changeParam("tz", "UTC Offset", &(cfg.p.tzoffset));
   }
   send_file("/cfg.html");
+  cfg.save();
 }
 
 // --------------------------------------------------------------------------------------------- File upload

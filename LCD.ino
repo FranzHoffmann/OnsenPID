@@ -92,7 +92,7 @@ int task_keyboard() {
           break;
         
         case WIFI_CONN:
-          line1 << HOSTNAME << ".local";
+          line1 << cfg.p.hostname << ".local";
           line2 << WiFi.localIP();
           break;
       }
@@ -118,23 +118,23 @@ int task_keyboard() {
       break;
 
     case DISP_SET_KP:
-      if (b == BTN_UP) p.kp += 0.1;
-      if (b == BTN_DN) p.kp -= 0.1;
-      p.kp = limit(p.kp, 0.0, 1000.0);
+      if (b == BTN_UP) cfg.p.kp += 0.1;
+      if (b == BTN_DN) cfg.p.kp -= 0.1;
+      cfg.p.kp = limit(cfg.p.kp, 0.0, 1000.0);
       line1.begin();
       line1 << "Verstaerkung:";
       line2.begin();
-      line2 << ARROW << p.kp << "%/" << DEGC;
+      line2 << ARROW << cfg.p.kp << "%/" << DEGC;
       break;
 
     case DISP_SET_TN:
-      if (b == BTN_UP) p.tn += 0.1;
-      if (b == BTN_DN) p.tn -= 0.1;
-      p.tn = limit(p.tn, 0.0, 1000.0);
+      if (b == BTN_UP) cfg.p.tn += 0.1;
+      if (b == BTN_DN) cfg.p.tn -= 0.1;
+      cfg.p.tn = limit(cfg.p.tn, 0.0, 1000.0);
       line1.begin();
       line1 << "Nachstellzeit:";
       line2.begin();
-      line2 << ARROW << p.tn << "s";;
+      line2 << ARROW << cfg.p.tn << "s";;
       break;
 
     case DISP_OUTPUT:

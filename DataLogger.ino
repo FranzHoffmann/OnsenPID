@@ -45,7 +45,7 @@ void setup_dl() {
  * Task for logging
  */
 int dl_log() {
-  Serial << "dl_log(" << dl.recording << ")" << endl;
+  //Serial << "dl_log(" << dl.recording << ")" << endl;
   if (dl.recording) {
     dl.last_ts = timeClient.getEpochTime();  
     dl_data[dl.pointer].set = p.set;
