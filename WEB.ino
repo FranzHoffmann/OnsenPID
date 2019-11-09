@@ -55,13 +55,6 @@ String subst(String var) {
   if (var == "TIME_SET") return String(p.set_time);
   if (var == "HOSTNAME") return String(cfg.p.hostname);
   if (var == "SSID") return p.ssid;
-  
-  if (var == "CSS")  {
-    String s; s.reserve(1200);
-    readFile("/stylesheet.css", s, false);
-    return s;
-  }
-  
   return var; // ignore unknown strings
 }
 
@@ -70,79 +63,55 @@ String subst(String var) {
  *  everything enclosed in {{ }} is treated as a variable and sent to substitute()
  *  use escape character '\' in file to output {{: \{\{
  */
-bool readFile(const String &filename, String &content, bool substitute) {
-  if (!filesystem.exists(filename)) {
-    logger << "readFile(): file not found: " << filename << endl;
-    return false;
-  }
-  File f = filesystem.open(filename, "r");
-  if (!f) {
-    logger << "readFile(): could not open file" << filename << endl;
-    return false;
-  }  
-  String var;
+String readFile(File f) {
+  String var, content;
   enum {TEXT, ESCAPED, VAR1, VAR_START, VAR, VAR_END} state;
   state = TEXT;
   while (f.available()) {
     char c = f.read();
-    if (!substitute) {
-      content += c;
-      
-    } else {
-      switch(state) {
-  
-        case TEXT:
-          switch (c) {
-            case '\\':
-              state = ESCAPED;
-              break;
-            case '{':
-              state = VAR_START;
-              break;
-            default:
-              content += c;
-          }
-          break;
-  
-        case ESCAPED:
+    switch(state) {
+      case TEXT:
+        if (c ==  '\\')    state = ESCAPED;
+        else if (c == '{') state = VAR_START;
+        else content += c;
+        break;
+
+      case ESCAPED:
+        content += c;
+        state = TEXT;
+        break;
+
+      case VAR_START:             
+        if (c == '{') {           // found {{
+          state = VAR;            
+          var = "";
+        } else {                  // found {x
+          content += '{';
           content += c;
           state = TEXT;
-          break;
-  
-        case VAR_START:                      // first { found
-          if (c == '{') {
-            state = VAR;
-            var = "";
-          } else {
-            content += '{';
-            content += c;
-            state = TEXT;
-          }
-          break;
-  
-        case VAR:                    // both {{ found
-          if (c == '}') {
-            state = VAR_END;
-          } else {
-            var += c;
-          }
-          break;
-  
-        case VAR_END:
-          if (c == '}') {            // both }} found
-            content += subst(var);
-            state = TEXT;
-          } else {
-            // should not happen
-            var += '}';
-            var += c;
-          }
-          break;
-      }
+        }
+        break;
+
+      case VAR:
+        if (c == '}') {         // found }
+          state = VAR_END;
+        } else {
+          var += c;
+        }
+        break;
+
+      case VAR_END:
+        if (c == '}') {            // found }}
+          content += subst(var);
+          state = TEXT;
+        } else {                  // found }x inside variable
+          var += '}';
+          var += c;
+        }
+        break;
     }
-  } 
-  f.close();
-  return true;
+  }
+  return content;
 }
 
 // ---------------------------------------------------------------------------------------- send file
@@ -153,11 +122,15 @@ bool readFile(const String &filename, String &content, bool substitute) {
  */
 void send_file(String filename) {
   // logger << "send_file(): " << filename << endl;
-  String reply; reply.reserve(8192);
-  if (!readFile(filename, reply, true)) {
-    return fail("file not found: " + filename);
+  File f = filesystem.open(filename, "r");
+  if (!f) {
+    logger << "send_file(): file not found: " << filename << endl;
+    fail("file not found: " + filename);
+    return;
   }
+  String reply = readFile(f); 
   server.send(200, getContentType(filename), reply);
+  f.close();
 }
 
 
