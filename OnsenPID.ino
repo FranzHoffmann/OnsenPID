@@ -3,14 +3,18 @@
   ====
   - data logger / chart display webpage
   - log data access with "batch no"
-  - persistant storage of parameters
   - use real temperature sensor
   - WiFi setup from web interface
   - D-Part
-  - hostname
   - start in x minutes / finish at x:xx 
   - repalce "Einschalten" by "Start dialog"
   - move PWM (and PID?) to interrupt
+
+  DONE
+  ====
+  - hostname
+  - persistant storage of parameters
+
   
   more ideas
   ==========
@@ -33,8 +37,6 @@
 #include <ArduinoOTA.h>
 #include "MemoryInfo.h"
 #include "Config.h"
-
-//#define HOSTNAME "onsen"
 
 #define LCD_RS D5
 #define LCD_EN D6
