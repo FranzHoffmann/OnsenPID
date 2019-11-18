@@ -77,7 +77,7 @@ function scan() {
 		</div>
 		<fieldset>
 			<legend><b>&nbsp;Wifi-Parameter&nbsp;</b></legend>
-			<form method='get' action='wifi'>
+			<form method='post' action='/wifi?save=1'>
 				<p><b>SSId</b><br /><input id='ssid' name='ssid' placeholder='' value='{{SSID}}'></p>
 				<p><b>Passwort</b><br /><input id='pwd' name='pwd' type='password' placeholder='Passwort' value='****'></p>
 				<p><b>Hostname</b><br /><input id='hn' name='hn' value='{{HOSTNAME}}'></p>

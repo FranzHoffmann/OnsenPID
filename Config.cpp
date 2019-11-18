@@ -19,7 +19,6 @@ bool Config::read() {
   String s;
   if (!_ini->open()) {
     *_logger << "Ini-File does not exist" << endl;
-    return false;
   }
 
   readDouble(section_controller, controller_kp, p.kp, 30.0);
@@ -32,7 +31,7 @@ bool Config::read() {
 
   readInt(section_system, system_tz, p.tzoffset, 0);
   
-  *_logger << "Ini-File read" << endl;
+  *_logger << "Initialization complete" << endl;
   return true;
 }
 
@@ -41,7 +40,7 @@ bool Config::readString(const char* section, const char* key, String &value, Str
   const size_t bufferLen = 80;
   char buffer[bufferLen];
   *_logger << section << ", " << key <<": ";
-  if (_ini->getValue(section, key, buffer, bufferLen)) {
+  if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
     value = "" + String(buffer);
     *_logger << value << endl;
     return true;
@@ -56,7 +55,7 @@ bool Config::readInt(const char* section, const char* key, int &value, int deflt
   const size_t bufferLen = 80;
   char buffer[bufferLen];
   *_logger << section << ", " << key <<": ";
-  if (_ini->getValue(section, key, buffer, bufferLen)) {
+  if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
     value = atoi(buffer);
     *_logger << value << endl;
     return true;
@@ -71,7 +70,7 @@ bool Config::readDouble(const char* section, const char* key, double &value, dou
   const size_t bufferLen = 80;
   char buffer[bufferLen];
   *_logger << section << ", " << key <<": ";
-  if (_ini->getValue(section, key, buffer, bufferLen)) {
+  if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
     value = atof(buffer);
     *_logger << value << endl;
     return true;

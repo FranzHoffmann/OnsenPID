@@ -87,7 +87,7 @@ int task_keyboard() {
           break;
           
         case WIFI_APMODE:
-          line1 << p.ssid;
+          line1 << cfg.p.ssid;
           line2 << WiFi.softAPIP();
           break;
         

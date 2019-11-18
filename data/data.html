@@ -5,8 +5,8 @@
 <meta charset='utf-8'>
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
 <title>{{HOSTNAME}} - Kurven</title>
-<script src="moment.min.js"></script>
-<script src="Chart.js"></script> <!-- /f?f=/ -->
+<script src="/moment.min.js"></script>
+<script src="/Chart.js"></script>
 <script>
 
 window.chartColors = {
@@ -101,8 +101,7 @@ function read_data() {
 			chart.update;
 		}
 	};
-	req.open('GET', 'testdata.json', true);
-//	req.open('GET', '/log?t='+latest, true);
+	req.open('GET', '/data?t='+latest, true);
 	req.send();
 	setTimeout(read_data, 12345);
 }

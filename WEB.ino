@@ -1,14 +1,16 @@
 void setup_webserver(ESP8266WebServer *s) {
-  s->on("/",     handleRoot);
+  s->on("/",               []() {send_file("/index.html");});
+/*  s->on("/favicon.ico",    []() {stream_file("/favicon.ico");});
+  s->on("/stylesheet.css", []() {stream_file("/stylesheet.css");});
+  s->on("/moment.min.js", []() {stream_file("/stylesheet.css");});
+  s->on("/Chart.js", []() {stream_file("/stylesheet.css");});
+*/
   s->on("/rec",  handleRecipe);
   s->on("/data", handleData);
   s->on("/cfg",  handleConfig);
   s->on("/wifi", handleWifi);
   s->on("/log",  handleLog);
   s->on("/s",    handleAjax);
-  s->on("/f",    handleFile);
-  s->on("/favicon.ico",    handleFavicon);
-
   s->on("/edit", HTTP_POST, []() {redirect("/cfg");}, handleFileUpload);
 
   server.onNotFound(handleNotFound);
@@ -54,7 +56,8 @@ String subst(String var) {
   if (var == "TIME_LEFT") return String(p.set_time - p.act_time);
   if (var == "TIME_SET") return String(p.set_time);
   if (var == "HOSTNAME") return String(cfg.p.hostname);
-  if (var == "SSID") return p.ssid;
+  if (var == "SSID") return cfg.p.ssid;
+  if (var == "TZ") return String(cfg.p.tzoffset);
   return var; // ignore unknown strings
 }
 
@@ -114,11 +117,44 @@ String readFile(File f) {
   return content;
 }
 
+void changeParam(String arg_name, String param_name, double *param) {
+  String str_param = "Parameter";
+  String str_from  = "geändert von";
+  String str_to    = "auf";
+  if (server.hasArg(arg_name)) {
+      double val = server.arg(arg_name).toDouble();
+      logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
+      *param = val;
+  }  
+}
+
+void changeParam(String arg_name, String param_name, char *param, int buflen) {
+  String str_param = "Parameter";
+  String str_from  = "geändert von";
+  String str_to    = "auf";
+  if (server.hasArg(arg_name)) {
+      String val = server.arg(arg_name);
+      logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
+      strncpy(param, val.c_str(), buflen);
+  }  
+}
+
+void changeParam(String arg_name, String param_name, int *param) {
+  String str_param = "Parameter";
+  String str_from  = "geändert von";
+  String str_to    = "auf";
+  if (server.hasArg(arg_name)) {
+      int val = server.arg(arg_name).toInt();
+      logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
+      *param = val;
+  }
+}
+
 // ---------------------------------------------------------------------------------------- send file
 /**
  * send file with substitution of {{variables}}
  * only works with small files.
- * TODO: make thsi streaming...
+ * TODO: make this streaming...
  */
 void send_file(String filename) {
   // logger << "send_file(): " << filename << endl;
@@ -138,51 +174,47 @@ void send_file(String filename) {
  * send file (as-is, no substitutions)
  * this also works with huge files.
  */
-void stream_file(String filename) {
-    File f = filesystem.open(filename, "r");
-    if (!f) {
+bool stream_file(String filename) {
+  String content_type = getContentType(filename);
+  String filename_gz = filename + ".gz";
+  String fn;
+  if (filesystem.exists(filename_gz)) {
+    fn = filename_gz;
+  } else if (filesystem.exists(filename)) {
+    fn = filename;
+  } else {
       logger << "stream_file(): could not open file" << filename << endl;
-      return;
-    }  
-    server.streamFile(f, getContentType(filename));
-    f.close();  
-}
-
-
-/**
- * send any file in a query like /f&f=filename.txt
- * very unsafe, but very convenient
- */
-void handleFile()   {
-  if (server.hasArg("f")) {
-    String filename = server.arg("f");
-    stream_file(filename);
+      return false;    
   }
+  File f = filesystem.open(fn, "r");
+  if (!f) {
+    return false;
+  }
+  server.streamFile(f, content_type);
+  f.close();
+  return true;    
 }
-
 
 // --------------------------------------------------------------------------------------------- not found
+// this is called when the URL is not one of the special URLs defined above.
+// 1) if the URL refers to a file, stream it
+// 2) 404
 void handleNotFound() {
-  logger << "URL not found: " << server.uri() << endl;
+  String filename = server.uri();
+  if (stream_file(filename)) {
+    return;
+  }
+  logger << "URL nicht gefunden: " << server.uri() << endl;
   String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += server.args();
+  message += "URI: " + server.uri();
+  message += "\nMethod: " + (server.method() == HTTP_GET) ? "GET" : "POST";
+  message += "\nArguments: " + server.args();
   message += "\n";
   for (uint8_t i = 0; i < server.args(); i++) {
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
   server.send(404, "text/plain", message);
 }
-
-
-// --------------------------------------------------------------------------------------------- Root etc.
-void handleRoot()   {send_file("/index.html");}
-void handleFavicon() {send_file("/favicon.ico");}
-
 
 // --------------------------------------------------------------------------------------------- Ajax (and commands)
 void handleAjax() {
@@ -199,7 +231,7 @@ void handleAjax() {
 
 
 // --------------------------------------------------------------------------------------------- WiFi
-/*
+/* 
 {"result":7, "list":[
 {"ssid":"Netz 1", "Ch":6, "encryption":"foo", "RSSI":32}
 ,{"ssid":"Netz 2", "Ch":13, "encryption":"offen", "RSSI":74}
@@ -207,30 +239,32 @@ void handleAjax() {
 */
 void handleWifi()   {
   if (server.hasArg("scan")) {
-    if (p.AP_mode != WIFI_APMODE) {
-      // TODO: scanning not possible
-    } else {
-      // TODO: make this async
-      logger << "WiFi scan started" << endl;
-      int n = WiFi.scanNetworks();
-      logger << "WiFi scan finished (" << n << " networks found)" << endl;
-      bool first = true;
-      server.setContentLength(CONTENT_LENGTH_UNKNOWN);
-      server.send(200, "text/json", String(""));
-      server.sendContent("{\"result\":" + String(n) + ", \"list\":[\n");
-      for (int i=0; i<n; i++) {
-        if (!first) {
-          server.sendContent(",\n");
-        }
-        first = false;
-        server.sendContent("{\"ssid\":\"" + WiFi.SSID(i) + "\"" 
-          + ", \"Ch\":" + String(WiFi.channel(i)) 
-          + ", \"encryption\":" + (WiFi.encryptionType(i) == ENC_TYPE_NONE ? "\"open\"" : "\"encrypted\"")
-          + ", \"RSSI\":" + String(WiFi.RSSI(i))
-          + "}");
+    // TODO: make this async
+    logger << "WiFi-Scan gestartet" << endl;
+    int n = WiFi.scanNetworks();
+    logger << "WiFi-Scan abgeschlossen (" << n << " Netze gefunden)" << endl;
+    bool first = true;
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "text/json", String(""));
+    server.sendContent("{\"result\":" + String(n) + ", \"list\":[\n");
+    for (int i=0; i<n; i++) {
+      if (!first) {
+        server.sendContent(",\n");
       }
-      server.sendContent("]}");
+      first = false;
+      server.sendContent("{\"ssid\":\"" + WiFi.SSID(i) + "\"" 
+        + ", \"Ch\":" + String(WiFi.channel(i)) 
+        + ", \"encryption\":" + (WiFi.encryptionType(i) == ENC_TYPE_NONE ? "\"open\"" : "\"encrypted\"")
+        + ", \"RSSI\":" + String(WiFi.RSSI(i))
+        + "}");
     }
+    server.sendContent("]}");
+  } else if (server.hasArg("save")) {
+    changeParam("ssid", "SSID", cfg.p.ssid, 32);
+    changeParam("pwd", "Password", cfg.p.pw, 32);
+    changeParam("hn", "Hostname", cfg.p.hostname, 20);
+    cfg.save();
+    send_file("/wifi.html");
   } else {
     send_file("/wifi.html");
   }
@@ -322,32 +356,7 @@ void handleLog() {
   server.sendContent("]}");
 }
 
-
-void changeParam(String arg_name, String param_name, double *param) {
-  String str_param = "Parameter";
-  String str_from  = "geändert von";
-  String str_to    = "auf";
-  if (server.hasArg(arg_name)) {
-      double val = server.arg(arg_name).toDouble();
-      logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
-      *param = val;
-  }  
-}
-
-
 // --------------------------------------------------------------------------------------------- config
-void changeParam(String arg_name, String param_name, int *param) {
-  String str_param = "Parameter";
-  String str_from  = "geändert von";
-  String str_to    = "auf";
-  if (server.hasArg(arg_name)) {
-      int val = server.arg(arg_name).toInt();
-      logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
-      *param = val;
-  }
-}
-
-
 void handleConfig() {
   if (server.hasArg("save")) {
     changeParam("kp", "Verstärkung", &(cfg.p.kp));

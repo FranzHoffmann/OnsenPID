@@ -90,7 +90,6 @@ struct param {
   double t1;                    // filter time for act temperature
   boolean out_b;                // heater is on
   int screen;                   // active screen
-  char ssid[33], pw[33];
 } p;
 
 Config cfg("/config.ini", &logger);
@@ -334,19 +333,21 @@ void loop() {
     
 // ----------------------------------------------------------------------------- start_WiFi
 void start_WiFi() {
+  logger << "Versuche verbindung mit '" << cfg.p.ssid << "'" << endl;
   WiFi.mode(WIFI_STA);
+  //WiFi.begin(cfg.p.ssid, cfg.p.pw);
   WiFi.begin();
-
+  
   // wait for connection
   for (int i=0; i<100; i++) {
     if (WiFi.status() == WL_CONNECTED) {
-      logger << "WiFi connected (IP: " << WiFi.localIP() << ")" << endl;
+      logger << "WiFi verbunden (IP: " << WiFi.localIP() << ")" << endl;
       p.AP_mode = WIFI_CONN;
       return;
     }
     delay(100);
   }
-  logger << "WiFi connection failed" << endl;
+  logger << "WiFi-Verbindung fehlgeschlagen" << endl;
 
   // open AP
   uint8_t macAddr[6];
@@ -358,11 +359,11 @@ void start_WiFi() {
   for (int i = 4; i < 6; i++) ssid.printf("%02x", macAddr[i]);
   boolean success = WiFi.softAP(String(ssid));
   if (success) {
-    strncpy(p.ssid, buffer, sizeof(p.ssid));
-    logger << "Opened Access Point '" << ssid << "'" << endl;
+    strncpy(cfg.p.ssid, buffer, sizeof(cfg.p.ssid));
+    logger << "Access Point erstellt: '" << ssid << "'" << endl;
     p.AP_mode = WIFI_APMODE;
   } else {
-    logger << "Failed to open AP" << endl;
+    logger << "Acces Point erstellen fehlgeschlagen" << endl;
     p.AP_mode = WIFI_OFFLINE;
   }
   return;
