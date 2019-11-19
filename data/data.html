@@ -27,7 +27,6 @@ var config = {
 			label: 'Temperatur',
 			borderColor: window.chartColors.red,
 			backgroundColor: window.chartColors.red,
-//			pointRadius: 0,
 			fill: false,
 			yAxisID: 't',
 			data: []
@@ -36,7 +35,6 @@ var config = {
 			label: 'Solltemperatur',
 			borderColor: window.chartColors.green,
 			backgroundColor: window.chartColors.green,
-//			pointRadius: 0,
 			fill: false,
 			yAxisID: 't',
 			data: []
@@ -60,7 +58,7 @@ var config = {
 					display: true,
 					labelString: 'Uhrzeit'
 				},
-				time: {displayFormats: {minute: 'HH:mm'}, minUnit: 'minute'}
+//				time: {displayFormats: {minute: 'HH:mm'}, minUnit: 'minute'}
 			}],
 			yAxes: [{
 				id: 't',
@@ -90,15 +88,19 @@ function read_data() {
 	req = new XMLHttpRequest();
 	req.onreadystatechange = function() {
 		if (req.readyState == 4 && req.status == 200) {
-			var data = JSON.parse(req.responseText);
+			var data = JSON.parse(req.responseText).data;
 			// push generated data into config structure
 			for (var i = 0; i < data.length; i++) {
+				if (data[i].t > latest) {
+					latest = data[i].t;
+				}
 				var t = new Date(data[i].t * 1000);
 				config.data.datasets[0].data.push({t: t, y: data[i].act});
 				config.data.datasets[1].data.push({t: t, y: data[i].set});
 				config.data.datasets[2].data.push({t: t, y: data[i].out});
 			}
-			chart.update;
+			console.log(config);
+			chart.update();
 		}
 	};
 	req.open('GET', '/data?t='+latest, true);
