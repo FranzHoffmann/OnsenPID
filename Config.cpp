@@ -13,7 +13,7 @@ Config::Config(const char* filename, Print *logger) {
   _logger = logger;
   *_logger << "Config initialized (" << filename << ")" << endl;
 }
-
+Config::Config() {}
 
 bool Config::read() {  
   String s;
@@ -25,13 +25,13 @@ bool Config::read() {
   readDouble(section_controller, controller_tn, p.tn, 20.0);
   readDouble(section_controller, controller_tv, p.tv, 0.0);
 
-  readString(section_wifi, wifi_hostname, s, String("onsenPID"));       strncpy(p.hostname, s.c_str(), sizeof(p.hostname));
-  readString(section_wifi, wifi_ssid,     s, String(""));               strncpy(p.ssid, s.c_str(), sizeof(p.ssid));
-  readString(section_wifi, wifi_pw,       s, String(""));               strncpy(p.pw, s.c_str(), sizeof(p.pw));
+  readString(section_wifi, wifi_hostname, p.hostname, String("onsenPID"));       //strncpy(p.hostname, s.c_str(), sizeof(p.hostname));
+  readString(section_wifi, wifi_ssid,     p.ssid, String("default_ssid"));               //strncpy(p.ssid, s.c_str(), sizeof(p.ssid));
+  readString(section_wifi, wifi_pw,       p.pw, String("default_pw"));               //strncpy(p.pw, s.c_str(), sizeof(p.pw));
 
   readInt(section_system, system_tz, p.tzoffset, 0);
   
-  *_logger << "Initialization complete" << endl;
+  *_logger << "End of config file" << endl;
   return true;
 }
 
@@ -39,10 +39,10 @@ bool Config::read() {
 bool Config::readString(const char* section, const char* key, String &value, String deflt) {
   const size_t bufferLen = 80;
   char buffer[bufferLen];
-  *_logger << section << ", " << key <<": ";
+  *_logger << "- " << section << ", " << key <<": ";
   if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
-    value = "" + String(buffer);
-    *_logger << value << endl;
+    value = String(buffer);
+    *_logger << "'" << value << "'" << endl;
     return true;
   } else {
     *_logger << "not found, using default (" << deflt << ")" << endl;
@@ -54,7 +54,7 @@ bool Config::readString(const char* section, const char* key, String &value, Str
 bool Config::readInt(const char* section, const char* key, int &value, int deflt) {
   const size_t bufferLen = 80;
   char buffer[bufferLen];
-  *_logger << section << ", " << key <<": ";
+  *_logger << "- " << section << ", " << key <<": ";
   if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
     value = atoi(buffer);
     *_logger << value << endl;
@@ -69,7 +69,7 @@ bool Config::readInt(const char* section, const char* key, int &value, int deflt
 bool Config::readDouble(const char* section, const char* key, double &value, double deflt) {
   const size_t bufferLen = 80;
   char buffer[bufferLen];
-  *_logger << section << ", " << key <<": ";
+  *_logger << "- " << section << ", " << key <<": ";
   if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
     value = atof(buffer);
     *_logger << value << endl;
@@ -97,9 +97,9 @@ bool Config::save(){
   write(controller_tv, p.tv);
 
   write(section_wifi);
-  write(wifi_hostname, p.hostname);
-  write(wifi_ssid, p.ssid);
-  write(wifi_pw, p.pw);
+  write(wifi_hostname, p.hostname.c_str());
+  write(wifi_ssid, p.ssid.c_str());
+  write(wifi_pw, p.pw.c_str());
 
   write(section_system);
   write(system_tz, p.tzoffset);

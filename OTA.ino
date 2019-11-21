@@ -1,5 +1,7 @@
 void setup_OTA() {
-    ArduinoOTA.setHostname(cfg.p.hostname);
+    logger << "Starting OTA service... ";
+    
+    ArduinoOTA.setHostname(cfg.p.hostname.c_str());
   
     ArduinoOTA.onStart([]() {
       String type;
@@ -26,7 +28,7 @@ void setup_OTA() {
     });
   
     ArduinoOTA.begin();
-    logger << "OTA ready (";
+    logger << "done (";
     if (p.AP_mode == WIFI_APMODE) {
       logger << WiFi.softAPIP();
     } else {

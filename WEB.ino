@@ -128,6 +128,18 @@ void changeParam(String arg_name, String param_name, double *param) {
   }  
 }
 
+void changeParam(String arg_name, String param_name, String &param) {
+  String str_param = "Parameter";
+  String str_from  = "geändert von";
+  String str_to    = "auf";
+  if (server.hasArg(arg_name)) {
+      String val = server.arg(arg_name);
+      logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << param << ' ' << str_to << ' ' << val << endl;
+      param = val;
+  }  
+}
+
+// deprecated
 void changeParam(String arg_name, String param_name, char *param, int buflen) {
   String str_param = "Parameter";
   String str_from  = "geändert von";
@@ -260,9 +272,9 @@ void handleWifi()   {
     }
     server.sendContent("]}");
   } else if (server.hasArg("save")) {
-    changeParam("ssid", "SSID", cfg.p.ssid, 32);
-    changeParam("pwd", "Password", cfg.p.pw, 32);
-    changeParam("hn", "Hostname", cfg.p.hostname, 20);
+    changeParam("ssid", "SSID", cfg.p.ssid);
+    changeParam("pwd", "Password", cfg.p.pw);
+    changeParam("hn", "Hostname", cfg.p.hostname);
     cfg.save();
     send_file("/wifi.html");
   } else {

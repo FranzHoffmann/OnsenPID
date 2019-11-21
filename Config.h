@@ -32,14 +32,15 @@ class Config {
     double set, act, out;         // controller i/o
     double kp, tn, tv;            // controller parameter
     double t1;                    // filter time for act temperature
-    char ssid[33], pw[33];
-    char hostname[20];
+    String ssid, pw;
+    String hostname;
     int tzoffset;
   } p;
 
   // constructor
   Config(const char* filename, Print *logger);
-
+  Config();
+  
   bool read();
   bool save();
 

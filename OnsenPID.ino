@@ -92,7 +92,7 @@ struct param {
   int screen;                   // active screen
 } p;
 
-Config cfg("/config.ini", &logger);
+Config cfg;
 
 char buf[4][17];
 PString line1(buf[0], sizeof(buf[0]));
@@ -109,7 +109,6 @@ void init_params() {
   p.t1 = 0.3;
   p.set_time = 600;
   cfg.read();
-
 }
 
 void init_stats(task_t *t) {
@@ -335,10 +334,7 @@ void loop() {
 void start_WiFi() {
   logger << "Versuche verbindung mit '" << cfg.p.ssid << "'" << endl;
   WiFi.mode(WIFI_STA);
-  //WiFi.begin(cfg.p.ssid, cfg.p.pw);
-  WiFi.begin();
-  
-  // wait for connection
+  WiFi.begin(cfg.p.ssid, cfg.p.pw);
   for (int i=0; i<100; i++) {
     if (WiFi.status() == WL_CONNECTED) {
       logger << "WiFi verbunden (IP: " << WiFi.localIP() << ")" << endl;
@@ -351,15 +347,14 @@ void start_WiFi() {
 
   // open AP
   uint8_t macAddr[6];
-  char buffer[32];
-  PString ssid(buffer, sizeof(buffer));
-
+  String ssid = "Onsenei-";
   WiFi.softAPmacAddress(macAddr);
-  ssid << "Onsenei-";
-  for (int i = 4; i < 6; i++) ssid.printf("%02x", macAddr[i]);
-  boolean success = WiFi.softAP(String(ssid));
+  for (int i = 4; i < 6; i++) {
+    ssid += String(macAddr[i], HEX);
+  }
+  boolean success = WiFi.softAP(ssid);
   if (success) {
-    strncpy(cfg.p.ssid, buffer, sizeof(cfg.p.ssid));
+    cfg.p.ssid = ssid;
     logger << "Access Point erstellt: '" << ssid << "'" << endl;
     p.AP_mode = WIFI_APMODE;
   } else {
@@ -375,6 +370,8 @@ void setup() {
   pinMode(PWM_PORT, OUTPUT);
   Serial.begin(115200);
   filesystem.begin();
+
+  cfg = Config("/config.ini", &logger);
   init_params();
 
   lcd.begin(16, 2);
@@ -383,19 +380,27 @@ void setup() {
   lcd.createChar(1, char_deg);
   lcd.createChar(2, char_updn);
   lcd.clear();
-  
+  logger << "LCD initialized" << endl;
+    
   start_WiFi();
+  logger << "WiFi initilaized" << endl;
 
-  MDNS.begin(cfg.p.hostname);
   setup_webserver(&server);
+  logger << "Webserver initialized" << endl;
+  
+  MDNS.begin(cfg.p.hostname);
   MDNS.addService("http", "tcp", 80);
-
+  logger << "MDNS initialized" << endl;
+  
   setup_OTA();
-
+  logger << "OTA initialized " << endl;
+  
   timeClient.begin();
-
+  logger << "NTPClient initialized" << endl;
+  
   setup_dl(); // data logger
-
+  logger << "Datalogger initialized" << endl;
+  
   start_task(task_keyboard, "keybd");
   start_task(task_lcd, "lcd");
   start_task(task_ntp, "ntp");
