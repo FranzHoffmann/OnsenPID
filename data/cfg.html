@@ -26,13 +26,17 @@
 		</form>
 	</fieldset>
 	<div></div>
+	<fieldset>
+		<legend><b>&nbsp;Speicherkarte&nbsp;</b></legend>
+		{{DIR}}
+		<form action="/edit" method="post" enctype="multipart/form-data">
+			<label>Datei hochladen:
+			<input name="datei" type="file" size="50" accept="text/*"> 
+			</label>  
+			<button class='button bgrn'>Hochladen</button>
+		</form>
+	</fieldset>
 	<p><form action='/' method='get'><button>Zurück</button></form>	</p><br />
-	<form action="/edit" method="post" enctype="multipart/form-data">
-		<label>Datei hochladen:
-		<input name="datei" type="file" size="50" accept="text/*"> 
-		</label>  
-		<button>Hochladen</button>
-	</form>
 	<div style='text-align:right;font-size:11px;'><hr /><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>OnsenPID by Franz Hoffmann</a></div>
 </div>
 </body>

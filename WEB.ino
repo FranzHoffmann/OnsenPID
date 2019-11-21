@@ -1,10 +1,5 @@
 void setup_webserver(ESP8266WebServer *s) {
   s->on("/",               []() {send_file("/index.html");});
-/*  s->on("/favicon.ico",    []() {stream_file("/favicon.ico");});
-  s->on("/stylesheet.css", []() {stream_file("/stylesheet.css");});
-  s->on("/moment.min.js", []() {stream_file("/stylesheet.css");});
-  s->on("/Chart.js", []() {stream_file("/stylesheet.css");});
-*/
   s->on("/rec",  handleRecipe);
   s->on("/data", handleData);
   s->on("/cfg",  handleConfig);
@@ -58,7 +53,20 @@ String subst(String var) {
   if (var == "HOSTNAME") return String(cfg.p.hostname);
   if (var == "SSID") return cfg.p.ssid;
   if (var == "TZ") return String(cfg.p.tzoffset);
+  if (var == "DIR") return directory();
   return var; // ignore unknown strings
+}
+
+String directory() {
+  Dir dir = filesystem.openDir("/");
+  String s = "<ul>";
+  while (dir.next()) {
+    String fileName = dir.fileName();
+    size_t fileSize = dir.fileSize();
+    s += "<li><a href=\"" + fileName + "\">" + fileName + "</a></li>";
+  }
+  s += "</ul>";
+  return s;
 }
 
 /* 

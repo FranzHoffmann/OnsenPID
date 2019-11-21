@@ -193,16 +193,8 @@ int task_statistics() {
              << endl;
       init_stats(&tasklist[i]);
     }
-  }
-  {
-    Dir dir = filesystem.openDir("/");
-    while (dir.next()) {
-      String fileName = dir.fileName();
-      size_t fileSize = dir.fileSize();
-      Serial << "FS File: " << fileName << " size: " << fileSize << endl;
-    }    
+  }   
   logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
-  }
   return 60000; // good thing int seems to be 32 bit
 }
 
@@ -369,8 +361,16 @@ void start_WiFi() {
 void setup() {
   pinMode(PWM_PORT, OUTPUT);
   Serial.begin(115200);
-  filesystem.begin();
 
+  filesystem.begin();
+  logger << "File system mounted. contents:" << endl;
+  Dir dir = filesystem.openDir("/");
+  while (dir.next()) {
+    String fileName = dir.fileName();
+    size_t fileSize = dir.fileSize();
+    Serial << "- '" << fileName << "', " << fileSize << " bytes" << endl;
+  } 
+    
   cfg = Config("/config.ini", &logger);
   init_params();
 
