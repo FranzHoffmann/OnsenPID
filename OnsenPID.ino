@@ -37,6 +37,7 @@
 #include <ArduinoOTA.h>
 #include "MemoryInfo.h"
 #include "Config.h"
+#include <DS18B20.h>
 
 #define LCD_RS D5
 #define LCD_EN D6
@@ -46,6 +47,7 @@
 #define LCD_D7 D3
 
 #define PWM_PORT D4
+#define TMP_PORT D7
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
@@ -53,7 +55,8 @@ ESP8266WebServer server(80);
 FS filesystem = SPIFFS;
 Logfile logger(filesystem, Serial, timeClient);
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
-
+DS18B20 ds(TMP_PORT);
+uint8_t selected;  // aktiver ds18b20
 
 /* simple scheduler */
 #define MAX_TASKS 20
@@ -190,7 +193,7 @@ int task_statistics() {
       Serial << '\t' << tasklist[i].tmin
              << '\t'<< avg
              << '\t'<< tasklist[i].tmax
-             << endl;
+             << "ms" << endl;
       init_stats(&tasklist[i]);
     }
   }   
@@ -233,15 +236,18 @@ int task_recipe() {
 // -------------------------------------------------------------------------- Temperature Task
 /* task: read temperature */
 int task_read_temp() {
+  p.act = selected ? ds.getTempC() : 0.0;
+  return 2000;
+  /*
   int cycle = 1;
   /*
   int reading = analogRead(A0);
   double act = scale(reading, 0.0, 100.0);
   p.act = pt1(act, p.t1, cycle/1000.0);
-  */
+  
   // simulation:
   p.act = pt1((p.out_b ? 150.0 : 20.0), 200, cycle/1000.0);
-  return cycle;
+  return cycle;*/
 }
 
 // -------------------------------------------------------------------------- PID Task
@@ -270,6 +276,7 @@ int task_PWM() {
 
   int dt   = 10;
   int Tmax = 1000;
+  p.out = 50.0;
   unsigned long Thi = (p.out / 100.0 * Tmax);
 
   if (T>=Tmax)  T = 0;
@@ -302,6 +309,7 @@ int task_webserver() {
   ArduinoOTA.handle();
   return 20;
 }
+
 
 // ----------------------------------------------------------------------------- loop
 void loop() {
@@ -356,6 +364,43 @@ void start_WiFi() {
   return;
 }
 
+void setup_ds18b20() {
+    logger  << ("DS18B20: ");
+  logger << ds.getNumberOfDevices() << " devices found" << endl;
+  while (selected = ds.selectNext()) {
+    switch (ds.getFamilyCode()) {
+      case MODEL_DS18S20:
+        logger << "Model: DS18S20/DS1820" << endl;
+        break;
+      case MODEL_DS1822:
+        logger << "Model: DS1822" << endl;
+        break;
+      case MODEL_DS18B20:
+        logger << "Model: DS18B20" << endl;
+        break;
+      default:
+        logger << "Unrecognized Device" << endl;
+        break;
+    }
+      uint8_t address[8];
+    ds.getAddress(address);
+
+    logger << "Address:";
+    for (uint8_t i = 0; i < 8; i++) {
+      logger << address[i];
+    }
+    logger << endl;
+    
+    logger << "Resolution: " << ds.getResolution() << endl;
+    logger << "Power Mode: ";
+    if (ds.getPowerMode()) {
+      logger << "External" << endl;
+    } else {
+      logger << "Parasite" << endl;
+    }
+    break;
+  }
+}
 
 // ----------------------------------------------------------------------------- setup
 void setup() {
@@ -400,12 +445,14 @@ void setup() {
   
   setup_dl(); // data logger
   logger << "Datalogger initialized" << endl;
+
+  setup_ds18b20();
   
   start_task(task_keyboard, "keybd");
   start_task(task_lcd, "lcd");
   start_task(task_ntp, "ntp");
   start_task(task_recipe, "recipe");
-  start_task(task_read_temp, "r_temp");
+//  start_task(task_read_temp, "r_temp");
   start_task(task_PID, "PID");
   start_task(task_PWM, "PWM");
   start_task(task_statistics, "stats");

@@ -140,7 +140,6 @@ void dl_rewind(String filename, unsigned long after) {
 }
 
 bool dl_hasMore() {
-  logger << "dl_hasmore: " << dl.it_hasMore << endl;
   return dl.it_hasMore;
 }
 
@@ -164,14 +163,6 @@ String dl_getNext() {
     dl.it_offset = f.position();
   }
   f.close();
-  char Q = '"';
-  pstr = "{";
-  pstr << Q << "t"   << Q << ":" << data.ts  << ", ";
-  pstr << Q << "act" << Q << ":" << data.act << ", ";
-  pstr << Q << "set" << Q << ":" << data.set << ", ";
-  pstr << Q << "out" << Q << ":" << data.out;
-  pstr << "}" << endl;
-  Serial << "pstr: " << pstr;
   String s(buf);
   return s;
 }
