@@ -276,7 +276,6 @@ int task_PWM() {
 
   int dt   = 10;
   int Tmax = 1000;
-  p.out = 50.0;
   unsigned long Thi = (p.out / 100.0 * Tmax);
 
   if (T>=Tmax)  T = 0;
