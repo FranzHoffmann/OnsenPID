@@ -55,8 +55,9 @@ ESP8266WebServer server(80);
 FS filesystem = SPIFFS;
 Logfile logger(filesystem, Serial, timeClient);
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
-DS18B20 ds(TMP_PORT);
-uint8_t selected;  // aktiver ds18b20
+
+OneWire oneWire(TMP_PORT);
+DS18B20 thermometer(&oneWire);
 
 /* simple scheduler */
 #define MAX_TASKS 20
@@ -93,6 +94,7 @@ struct param {
   double t1;                    // filter time for act temperature
   boolean out_b;                // heater is on
   int screen;                   // active screen
+  boolean sensorOK;
 } p;
 
 Config cfg;
@@ -110,7 +112,8 @@ PString line2_old(buf[3], sizeof(buf[3]));
 
 void init_params() {
   p.t1 = 0.3;
-  p.set_time = 600;
+  p.set_time = 3600;
+  p.set = 65.0;
   cfg.read();
 }
 
@@ -236,18 +239,24 @@ int task_recipe() {
 // -------------------------------------------------------------------------- Temperature Task
 /* task: read temperature */
 int task_read_temp() {
-  p.act = selected ? ds.getTempC() : 0.0;
-  return 2000;
-  /*
-  int cycle = 1;
-  /*
-  int reading = analogRead(A0);
-  double act = scale(reading, 0.0, 100.0);
-  p.act = pt1(act, p.t1, cycle/1000.0);
-  
+  static uint32_t counter = 0;
+  if (thermometer.isConversionComplete()) {
+    p.act = thermometer.getTempC();
+    counter = 0;
+    p.sensorOK = true;
+    thermometer.requestTemperatures();
+  } else {
+    counter++;
+    if (counter > 5) {
+      p.sensorOK = false;
+      logger << "thermometer failure, resetting" << endl;
+      thermometer.requestTemperatures();    
+    }
+  }
+
   // simulation:
-  p.act = pt1((p.out_b ? 150.0 : 20.0), 200, cycle/1000.0);
-  return cycle;*/
+  //p.act = pt1((p.out_b ? 150.0 : 20.0), 200, cycle/1000.0);
+  return 1000;  
 }
 
 // -------------------------------------------------------------------------- PID Task
@@ -273,7 +282,7 @@ int task_PID() {
 /* task: PWM */
 int task_PWM() {
   static unsigned long T;
-
+  
   int dt   = 10;
   int Tmax = 1000;
   unsigned long Thi = (p.out / 100.0 * Tmax);
@@ -281,7 +290,11 @@ int task_PWM() {
   if (T>=Tmax)  T = 0;
   T += dt;
   p.out_b = T <= Thi;
-  digitalWrite(PWM_PORT, p.out_b);
+  if (p.sensorOK) {
+    digitalWrite(PWM_PORT, p.out_b);
+  } else {
+    digitalWrite(PWM_PORT, false);    
+  }
   
   return dt;
 }
@@ -353,7 +366,6 @@ void start_WiFi() {
   }
   boolean success = WiFi.softAP(ssid);
   if (success) {
-    cfg.p.ssid = ssid;
     logger << "Access Point erstellt: '" << ssid << "'" << endl;
     p.AP_mode = WIFI_APMODE;
   } else {
@@ -364,41 +376,11 @@ void start_WiFi() {
 }
 
 void setup_ds18b20() {
-    logger  << ("DS18B20: ");
-  logger << ds.getNumberOfDevices() << " devices found" << endl;
-  while (selected = ds.selectNext()) {
-    switch (ds.getFamilyCode()) {
-      case MODEL_DS18S20:
-        logger << "Model: DS18S20/DS1820" << endl;
-        break;
-      case MODEL_DS1822:
-        logger << "Model: DS1822" << endl;
-        break;
-      case MODEL_DS18B20:
-        logger << "Model: DS18B20" << endl;
-        break;
-      default:
-        logger << "Unrecognized Device" << endl;
-        break;
-    }
-      uint8_t address[8];
-    ds.getAddress(address);
-
-    logger << "Address:";
-    for (uint8_t i = 0; i < 8; i++) {
-      logger << address[i];
-    }
-    logger << endl;
-    
-    logger << "Resolution: " << ds.getResolution() << endl;
-    logger << "Power Mode: ";
-    if (ds.getPowerMode()) {
-      logger << "External" << endl;
-    } else {
-      logger << "Parasite" << endl;
-    }
-    break;
-  }
+  logger  << ("Initializing thermometer DS18B20 ") << endl;
+  logger << "DS18B20 Library version: " << DS18B20_LIB_VERSION << endl;
+  thermometer.begin();
+  thermometer.setResolution(12);
+  thermometer.requestTemperatures();
 }
 
 // ----------------------------------------------------------------------------- setup
@@ -451,7 +433,7 @@ void setup() {
   start_task(task_lcd, "lcd");
   start_task(task_ntp, "ntp");
   start_task(task_recipe, "recipe");
-//  start_task(task_read_temp, "r_temp");
+  start_task(task_read_temp, "r_temp");
   start_task(task_PID, "PID");
   start_task(task_PWM, "PWM");
   start_task(task_statistics, "stats");

@@ -95,7 +95,7 @@ void dl_endBatch() {
 
 
 void dl_flush() {
-  Serial << "dl_flush()";
+  Serial << "dl_flush()" << endl;
   File f = filesystem.open(dl.filename, "a");
   if (f) {
     for (int i=0; i<dl.pointer; i++) {
@@ -163,6 +163,13 @@ String dl_getNext() {
     dl.it_offset = f.position();
   }
   f.close();
+   char Q = '"';
+  pstr = "{";
+  pstr << Q << "t"   << Q << ":" << data.ts  << ", ";
+  pstr << Q << "act" << Q << ":" << data.act << ", ";
+  pstr << Q << "set" << Q << ":" << data.set << ", ";
+  pstr << Q << "out" << Q << ":" << data.out;
+  pstr << "}" << endl;
   String s(buf);
   return s;
 }

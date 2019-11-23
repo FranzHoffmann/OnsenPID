@@ -1,5 +1,5 @@
 void setup_webserver(ESP8266WebServer *s) {
-  s->on("/",               []() {send_file("/index.html");});
+  s->on("/",     handleRoot);
   s->on("/rec",  handleRecipe);
   s->on("/data", handleData);
   s->on("/cfg",  handleConfig);
@@ -52,6 +52,7 @@ String subst(String var) {
   if (var == "TIME_SET") return String(p.set_time);
   if (var == "HOSTNAME") return String(cfg.p.hostname);
   if (var == "SSID") return cfg.p.ssid;
+  if (var == "PW") return cfg.p.pw;
   if (var == "TZ") return String(cfg.p.tzoffset);
   if (var == "DIR") return directory();
   return var; // ignore unknown strings
@@ -236,6 +237,15 @@ void handleNotFound() {
   server.send(404, "text/plain", message);
 }
 
+
+// --------------------------------------------------------------------------------------------- root
+void handleRoot() {
+  if (server.hasArg("rst")) {
+    ESP.restart();
+  }
+  send_file("/index.html");
+}
+
 // --------------------------------------------------------------------------------------------- Ajax (and commands)
 void handleAjax() {
   if (server.hasArg("cmd")) {
@@ -244,6 +254,7 @@ void handleAjax() {
       // start cooking
       // TODO: do this properly. state shoud be encapsulated and changed by functions
       p.state = STATE_COOKING;
+      p.act_time = 0;
     }
   }
   send_file("/ajax.json");
@@ -293,6 +304,10 @@ void handleWifi()   {
 
 // --------------------------------------------------------------------------------------------- recipe
 void handleRecipe() {
+  if (server.hasArg("save")) {
+    changeParam("temp", "Temperatur", &(p.set));
+    changeParam("time", "Kochzeit", &(p.set_time));
+  }
   send_file("/rec.html");
   //TODO
 }
