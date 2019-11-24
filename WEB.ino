@@ -327,10 +327,10 @@ void handleData()   {
   send_file("/data.html");
 }
 
-void sendJsonData(unsigned long t) {
+void sendJsonData_OLD(unsigned long t) {
   bool first = true;
   
-  logger << "request: json data since " << t << endl;
+  //logger << "request: json data since " << t << endl;
   dl_rewind("TODO", t);
   if (!dl_hasMore()) {
     logger << "answer: nothing" << endl;
@@ -349,27 +349,79 @@ void sendJsonData(unsigned long t) {
     count++;
   }
   server.sendContent("]}");
-  logger << "answer: " << count << " data point" << endl;
+  //logger << "answer: " << count << " data point" << endl;
 }
 
-void sendCSVData() {
+
+void sendJsonData(unsigned long t) {
   bool first = true;
+  
+  //logger << "request: json data since " << t << endl;
+  dl_rewind("TODO", t);
+  if (!dl_hasMore()) {
+    logger << "answer: nothing" << endl;
+    server.send(200, "text/json", "{\"data\":[]}");
+    return;    
+  }
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send(200, "text/json", String(""));
+  server.sendContent("{\"data\":[");
+
+  uint32_t count = 0;
+  char buf[100];
+  PString pstr(buf, sizeof(buf));
+  char Q = '"';
+  while (dl_hasMore() && count < 300) {
+    if (!first) server.sendContent(",");
+    first = false;
+    dl_data_t data = dl_getNext_new();
+    pstr = "{";
+    pstr << Q << "t"   << Q << ":" << data.ts  << ", ";
+    pstr << Q << "act" << Q << ":" << data.act << ", ";
+    pstr << Q << "set" << Q << ":" << data.set << ", ";
+    pstr << Q << "out" << Q << ":" << data.out;
+    pstr << "}" << endl;
+    server.sendContent(buf);
+    count++;
+    yield();
+  }
+  if (count < 300) {
+    server.sendContent("], \"more\":0}");
+  } else {
+    server.sendContent("], \"more\":1}");
+  }
+  //logger << "answer: " << count << " data points" << endl;
+}
+
+
+void sendCSVData() {
+  logger << "request: CSV data" << endl;
+
+  uint32_t count = 0;
   dl_rewind("TODO", 0);
   if (!dl_hasMore()) {
-    logger << "handleData(): nothing (!dl_hasMore())" << endl;
-  server.send(200, "text/csv", "");
+    logger << "answer: nothing" << endl;
+    server.send(200, "text/csv", "");
     return;    
   }
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   server.send(200, "text/csv", "time,setpoint,temperature,power\n");
-  // TODO
+
+  char buf[100];
+  PString pstr(buf, sizeof(buf));
   while (dl_hasMore()) {
-    if (!first) server.sendContent(",");
-    first = false;
-    server.sendContent(dl_getNext());
+    dl_data_t data = dl_getNext_new();
+    pstr = "";
+    pstr << data.ts;
+    pstr << "," << data.set;
+    pstr << "," << data.act;
+    pstr << "," << data.out << "\n";
+    server.sendContent(buf);
+    count++;
+    yield();
   }
   server.sendContent("]}");
-  logger << "handleData(): done" << endl;
+  logger << "answer: " << count << " data points" << endl;
 }
 
 

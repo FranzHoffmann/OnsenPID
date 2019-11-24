@@ -144,6 +144,7 @@ bool dl_hasMore() {
 }
 
 /* returns the next entry as json string */
+// deprecated
 String dl_getNext() {
   dl_data_t data;
   char buf[100];
@@ -172,4 +173,25 @@ String dl_getNext() {
   pstr << "}" << endl;
   String s(buf);
   return s;
+}
+
+/* returns the next entry as json string */
+struct dl_data_t dl_getNext_new() {
+  dl_data_t data;
+  File f = filesystem.open(dl.it_filename, "r");
+  if (!f) {
+    // ???
+    dl.it_hasMore = false;
+    return data;
+  }
+
+  f.seek(dl.it_offset, SeekSet);
+  f.readBytes((char*)&data, sizeof(data));
+  if (f.position() == f.size()) {
+    dl.it_hasMore = false;
+  } else {
+    dl.it_offset = f.position();
+  }
+  f.close();
+  return data;
 }

@@ -178,30 +178,32 @@ double limit(double x, double xmin, double xmax) {
 // -------------------------------------------------------------------------- NTP Task
 /* task: ntp client */
 int task_ntp() {
-  timeClient.update();
-  return 10;  
+  if (p.state != STATE_COOKING) {
+    timeClient.update();
+  }
+  return 10;
 }
 
 // -------------------------------------------------------------------------- Statistik Task
 /* task: calculate debug statistics */
 int task_statistics() {
-  Serial << endl << "Statistics: " << endl;
+  logger << endl << "Statistics: " << endl;
   for (int i=0; i<MAX_TASKS; i++) {
     if (tasklist[i].t != NULL) {
       double avg = tasklist[i].tcount > 0 
                  ? (double)tasklist[i].tsum / tasklist[i].tcount
                  : 0;
-      Serial << tasklist[i].taskname;
+      logger << tasklist[i].taskname;
       //for (int i=strlen(tasklist[i].taskname); i<20; i++) { Serial << '.'; }  // crashes?
-      Serial << '\t' << tasklist[i].tmin
-             << '\t'<< avg
-             << '\t'<< tasklist[i].tmax
+      logger << ',' << tasklist[i].tmin
+             << ','<< avg
+             << ','<< tasklist[i].tmax
              << "ms" << endl;
       init_stats(&tasklist[i]);
     }
   }   
   logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
-  return 60000; // good thing int seems to be 32 bit
+  return 600000; // good thing int seems to be 32 bit
 }
 
 // -------------------------------------------------------------------------- Recipe Task
@@ -243,13 +245,18 @@ int task_read_temp() {
   if (thermometer.isConversionComplete()) {
     p.act = thermometer.getTempC();
     counter = 0;
-    p.sensorOK = true;
+    if (!p.sensorOK) {
+      p.sensorOK = true;
+      logger << "thermometer ok" << endl;
+    }
     thermometer.requestTemperatures();
   } else {
     counter++;
     if (counter > 5) {
-      p.sensorOK = false;
-      logger << "thermometer failure, resetting" << endl;
+      if (p.sensorOK) {
+        p.sensorOK = false;
+        logger << "thermometer failure, resetting" << endl;
+      }
       thermometer.requestTemperatures();    
     }
   }

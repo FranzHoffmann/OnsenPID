@@ -86,9 +86,12 @@ function read_data() {
 		req.abort();
 	}
 	req = new XMLHttpRequest();
+
 	req.onreadystatechange = function() {
 		if (req.readyState == 4 && req.status == 200) {
-			var data = JSON.parse(req.responseText).data;
+			var obj = JSON.parse(req.responseText);
+			var data = obj.data;
+			var more = obj.more;
 			// push generated data into config structure
 			for (var i = 0; i < data.length; i++) {
 				if (data[i].t > latest) {
@@ -101,11 +104,13 @@ function read_data() {
 			}
 			console.log(config);
 			chart.update();
+			
 		}
 	};
+
 	req.open('GET', '/data?t='+latest, true);
 	req.send();
-	setTimeout(read_data, 12345);
+	setTimeout(read_data, 15000);
 }
 
 window.onload = function() {
@@ -130,7 +135,8 @@ window.onload = function() {
 		</div>
 	</fieldset>
 	<div></div>
-	<p><form action='/' method='get'><button>Zurück</button></form>	</p><br />
+	<p><form action='?csv=1' method='get'><button>Daten als CSV speichern</button></form></p><br />
+	<p><form action='/' method='get'><button>Zurück</button></form></p><br />
 	<div style='text-align:right;font-size:11px;'><hr /><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>OnsenPID by Franz Hoffmann</a></div>
 </div>
 </body>
