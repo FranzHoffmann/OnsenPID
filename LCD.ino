@@ -43,8 +43,8 @@ int task_keyboard() {
     case DISP_MAIN:
       line1.begin();
       line1 << p.act << " / " << p.set << DEGC;
-      if (b == BTN_UP) p.set += 1.0;
-      if (b == BTN_DN) p.set -= 1.0;
+      if (b == BTN_UP) p.set += 0.1;
+      if (b == BTN_DN) p.set -= 0.1;
       
       line2.begin();
       switch (p.state) {

@@ -24,6 +24,8 @@ bool Config::read() {
   readDouble(section_controller, controller_kp, p.kp, 30.0);
   readDouble(section_controller, controller_tn, p.tn, 20.0);
   readDouble(section_controller, controller_tv, p.tv, 0.0);
+  readDouble(section_controller, controller_emax, p.emax, 10.0);
+  
 
   readString(section_wifi, wifi_hostname, p.hostname, String("onsenPID"));       //strncpy(p.hostname, s.c_str(), sizeof(p.hostname));
   readString(section_wifi, wifi_ssid,     p.ssid, String("default_ssid"));               //strncpy(p.ssid, s.c_str(), sizeof(p.ssid));
@@ -95,6 +97,7 @@ bool Config::save(){
   write(controller_kp, p.kp);
   write(controller_tn, p.tn);
   write(controller_tv, p.tv);
+  write(controller_emax, p.emax);
 
   write(section_wifi);
   write(wifi_hostname, p.hostname.c_str());

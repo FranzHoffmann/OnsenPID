@@ -13,6 +13,8 @@
 #define controller_kp "Kp"
 #define controller_tn "Tn"
 #define controller_tv "Tv"
+#define controller_emax "Emax"
+
 
 #define section_wifi "wifi"
 #define wifi_hostname "hostname"
@@ -29,7 +31,8 @@ class Config {
   struct param {
     WiFiEnum AP_mode;
     int set_time, act_time;       // remaining time (s)
-    double set, act, out;         // controller i/o
+//    double set, act, out;         // controller i/o
+    double emax;
     double kp, tn, tv;            // controller parameter
     double t1;                    // filter time for act temperature
     String ssid, pw;

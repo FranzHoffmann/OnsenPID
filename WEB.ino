@@ -48,6 +48,7 @@ String subst(String var) {
   if (var == "KP") return String(cfg.p.kp);
   if (var == "TN") return String(cfg.p.tn);
   if (var == "TV") return String(cfg.p.tv);
+  if (var == "EMAX") return String(cfg.p.emax);  
   if (var == "TIME_LEFT") return String(p.set_time - p.act_time);
   if (var == "TIME_SET") return String(p.set_time);
   if (var == "HOSTNAME") return String(cfg.p.hostname);
@@ -64,7 +65,7 @@ String directory() {
   while (dir.next()) {
     String fileName = dir.fileName();
     size_t fileSize = dir.fileSize();
-    s += "<li><a href=\"" + fileName + "\">" + fileName + "</a></li>";
+    s += "<li><a href=\"" + fileName + "\">" + fileName + "</a> (" + String(fileSize) + " Bytes)</li>";
   }
   s += "</ul>";
   return s;
@@ -314,19 +315,25 @@ void handleRecipe() {
 
 // --------------------------------------------------------------------------------------------- data
 void handleData()   {
-  if (!server.hasArg("t")) {
-    // send html page
-    send_file("/data.html");
+  if (server.hasArg("t")) {
+    unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
+    sendJsonData(t);
     return;
   }
-  
-  //else send data
+  if (server.hasArg("csv")) {
+    sendCSVData();
+    return;
+  }
+  send_file("/data.html");
+}
+
+void sendJsonData(unsigned long t) {
   bool first = true;
-  unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
-  logger << "handleData(): dl_rewind(" << t << ")" << endl;
+  
+  logger << "request: json data since " << t << endl;
   dl_rewind("TODO", t);
   if (!dl_hasMore()) {
-    logger << "handleData(): nothing (!dl_hasMore())" << endl;
+    logger << "answer: nothing" << endl;
     server.send(200, "text/json", "{\"data\":[]}");
     return;    
   }
@@ -334,6 +341,28 @@ void handleData()   {
   server.send(200, "text/json", String(""));
   server.sendContent("{\"data\":[");
 
+  int count = 0;
+  while (dl_hasMore() && count < 300) {
+    if (!first) server.sendContent(",");
+    first = false;
+    server.sendContent(dl_getNext());
+    count++;
+  }
+  server.sendContent("]}");
+  logger << "answer: " << count << " data point" << endl;
+}
+
+void sendCSVData() {
+  bool first = true;
+  dl_rewind("TODO", 0);
+  if (!dl_hasMore()) {
+    logger << "handleData(): nothing (!dl_hasMore())" << endl;
+  server.send(200, "text/csv", "");
+    return;    
+  }
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send(200, "text/csv", "time,setpoint,temperature,power\n");
+  // TODO
   while (dl_hasMore()) {
     if (!first) server.sendContent(",");
     first = false;
@@ -397,6 +426,7 @@ void handleConfig() {
     changeParam("kp", "Verstärkung", &(cfg.p.kp));
     changeParam("tn", "Nachstellzeit", &(cfg.p.tn));
     changeParam("tv", "Vorhaltezeit", &(cfg.p.tv));
+    changeParam("emax", "Max. Regelabweichung", &(cfg.p.emax));
     changeParam("tz", "UTC Offset", &(cfg.p.tzoffset));
   }
   send_file("/cfg.html");
