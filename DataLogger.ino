@@ -110,33 +110,36 @@ void dl_flush() {
  * what's the proper way to do this in C++?
  */
 /* resets the iterator to the specified file/time */
+File readfile;
 void dl_rewind(String filename, unsigned long after) {
   dl.it_filename = "/data.dat"; // TODO
   dl.it_offset = 0;
   dl.it_hasMore = false;
 
-  File f = filesystem.open(dl.it_filename, "r");
-  if (!f) {
+  if (readfile) {
+    readfile.close();
+  }
+
+  readfile = filesystem.open(dl.it_filename, "r");
+  if (!readfile) {
     logger << "dl_rewind: file not found: '" << dl.it_filename << "'" << endl;
     return;
   }
   dl_data_t data;
-  String recipe = f.readStringUntil('\r');
-  size_t filepos = f.position();
-  size_t filelen = f.size();
+  String recipe = readfile.readStringUntil('\r');
+  size_t filepos = readfile.position();
+  size_t filelen = readfile.size();
   while (filepos < filelen) {
-    f.readBytes((char*)&data, sizeof(data));
-    Serial << "data.ts: " << data.ts << endl;
+    readfile.readBytes((char*)&data, sizeof(data));
     if (data.ts > after) {                        // found entry after 'after'
       dl.it_hasMore = true;
       dl.it_offset = filepos;
       break;
     } else {
-      filepos = f.position();                     // entry is too old, try next
+      filepos = readfile.position();                     // entry is too old, try next
     }
   }
   logger << "dl_rewind: after=" << after <<", latest=" << data.ts << endl; 
-  f.close();
 }
 
 bool dl_hasMore() {
@@ -144,22 +147,12 @@ bool dl_hasMore() {
 }
 
 /* returns the next entry as json string */
-struct dl_data_t dl_getNext_new() {
+struct dl_data_t dl_getNext() {
   dl_data_t data;
-  File f = filesystem.open(dl.it_filename, "r");
-  if (!f) {
-    // ???
-    dl.it_hasMore = false;
-    return data;
-  }
 
-  f.seek(dl.it_offset, SeekSet);
-  f.readBytes((char*)&data, sizeof(data));
-  if (f.position() == f.size()) {
+  readfile.readBytes((char*)&data, sizeof(data));
+  if (readfile.position() == readfile.size()) {
     dl.it_hasMore = false;
-  } else {
-    dl.it_offset = f.position();
   }
-  f.close();
   return data;
 }

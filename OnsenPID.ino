@@ -35,7 +35,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
-#include "MemoryInfo.h"
+#include "src/MemInfo/MemoryInfo.h"
 #include "Config.h"
 #include <DS18B20.h>
 

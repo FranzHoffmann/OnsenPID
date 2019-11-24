@@ -348,7 +348,7 @@ void sendJsonData(unsigned long t) {
   while (dl_hasMore() && count < 30000) {
     if (!first) server.sendContent(",");
     first = false;
-    dl_data_t data = dl_getNext_new();
+    dl_data_t data = dl_getNext();
     pstr = "{";
     pstr << Q << "t"   << Q << ":" << data.ts  << ", ";
     pstr << Q << "act" << Q << ":" << data.act << ", ";
@@ -384,7 +384,7 @@ void sendCSVData() {
   char buf[100];
   PString pstr(buf, sizeof(buf));
   while (dl_hasMore()) {
-    dl_data_t data = dl_getNext_new();
+    dl_data_t data = dl_getNext();
     pstr = "";
     pstr << data.ts;
     pstr << "," << data.set;
