@@ -327,32 +327,6 @@ void handleData()   {
   send_file("/data.html");
 }
 
-void sendJsonData_OLD(unsigned long t) {
-  bool first = true;
-  
-  //logger << "request: json data since " << t << endl;
-  dl_rewind("TODO", t);
-  if (!dl_hasMore()) {
-    logger << "answer: nothing" << endl;
-    server.send(200, "text/json", "{\"data\":[]}");
-    return;    
-  }
-  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
-  server.send(200, "text/json", String(""));
-  server.sendContent("{\"data\":[");
-
-  int count = 0;
-  while (dl_hasMore() && count < 300) {
-    if (!first) server.sendContent(",");
-    first = false;
-    server.sendContent(dl_getNext());
-    count++;
-  }
-  server.sendContent("]}");
-  //logger << "answer: " << count << " data point" << endl;
-}
-
-
 void sendJsonData(unsigned long t) {
   bool first = true;
   
@@ -371,7 +345,7 @@ void sendJsonData(unsigned long t) {
   char buf[100];
   PString pstr(buf, sizeof(buf));
   char Q = '"';
-  while (dl_hasMore() && count < 300) {
+  while (dl_hasMore() && count < 30000) {
     if (!first) server.sendContent(",");
     first = false;
     dl_data_t data = dl_getNext_new();

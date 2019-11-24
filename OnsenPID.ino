@@ -266,50 +266,6 @@ int task_read_temp() {
   return 1000;  
 }
 
-// -------------------------------------------------------------------------- PID Task
-/* task: PID controller */
-int task_PID() {
-  static double ipart;
-  int ta = 50;
-
-  if (p.state == STATE_COOKING) {
-    double e = p.set - p.act;
-    double ppart = cfg.p.kp * e;
-    if (abs(e) < abs(cfg.p.emax)) {
-      ipart = limit(ipart + ta/1000.0/cfg.p.tn * e, 0, 100.0);
-      p.out = limit(ppart + ipart, 0.0, 100.0);
-    } else {
-      p.out = limit( 10.0*e, 0.0, 100.0);
-    }
-
-  } else {
-    ipart = 0.0;
-    p.out = 0.0;
-  }
-  return ta;
-}
-
-// -------------------------------------------------------------------------- PWM Task
-/* task: PWM */
-int task_PWM() {
-  static unsigned long T;
-  
-  int dt   = 10;
-  int Tmax = 1000;
-  unsigned long Thi = (p.out / 100.0 * Tmax);
-
-  if (T>=Tmax)  T = 0;
-  T += dt;
-  p.out_b = T <= Thi;
-  if (p.sensorOK) {
-    digitalWrite(PWM_PORT, p.out_b);
-  } else {
-    digitalWrite(PWM_PORT, false);    
-  }
-  
-  return dt;
-}
-
 // -------------------------------------------------------------------------- LCD Task
 /* task: update LCD */
 int task_lcd() {
@@ -445,8 +401,8 @@ void setup() {
   start_task(task_ntp, "ntp");
   start_task(task_recipe, "recipe");
   start_task(task_read_temp, "r_temp");
-  start_task(task_PID, "PID");
-  start_task(task_PWM, "PWM");
   start_task(task_statistics, "stats");
   start_task(task_webserver, "apache");
+
+  setup_controller();
 }

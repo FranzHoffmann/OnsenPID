@@ -144,38 +144,6 @@ bool dl_hasMore() {
 }
 
 /* returns the next entry as json string */
-// deprecated
-String dl_getNext() {
-  dl_data_t data;
-  char buf[100];
-  PString pstr(buf, sizeof(buf));
-  File f = filesystem.open(dl.it_filename, "r");
-  if (!f) {
-    String s = "";
-    dl.it_hasMore = false;
-    return s;
-  }
-
-  f.seek(dl.it_offset, SeekSet);
-  f.readBytes((char*)&data, sizeof(data));
-  if (f.position() == f.size()) {
-    dl.it_hasMore = false;
-  } else {
-    dl.it_offset = f.position();
-  }
-  f.close();
-   char Q = '"';
-  pstr = "{";
-  pstr << Q << "t"   << Q << ":" << data.ts  << ", ";
-  pstr << Q << "act" << Q << ":" << data.act << ", ";
-  pstr << Q << "set" << Q << ":" << data.set << ", ";
-  pstr << Q << "out" << Q << ":" << data.out;
-  pstr << "}" << endl;
-  String s(buf);
-  return s;
-}
-
-/* returns the next entry as json string */
 struct dl_data_t dl_getNext_new() {
   dl_data_t data;
   File f = filesystem.open(dl.it_filename, "r");
