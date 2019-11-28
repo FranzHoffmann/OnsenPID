@@ -58,7 +58,7 @@ var config = {
 					display: true,
 					labelString: 'Uhrzeit'
 				},
-//				time: {displayFormats: {minute: 'HH:mm'}, minUnit: 'minute'}
+				time: {displayFormats: {minute: 'HH:mm'}, minUnit: 'minute'}
 			}],
 			yAxes: [{
 				id: 't',
@@ -70,6 +70,8 @@ var config = {
 				position: 'right',
 				scaleLabel: { display: true, labelString: 'Leistung'},
 				gridLines: {display: false},
+				suggestedMax: 100,
+				suggestedMin: 0
 			}]
 		},
 		responsive: true,
