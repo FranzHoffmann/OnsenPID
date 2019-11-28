@@ -137,8 +137,8 @@ window.onload = function() {
 		</div>
 	</fieldset>
 	<div></div>
-	<p><form action='?csv=1' method='get'><button>Daten als CSV speichern</button></form></p><br />
-	<p><form action='/' method='get'><button>Zurück</button></form></p><br />
+	<form action='/data' method='get'><input type='hidden' name='csv' value='1'><button>Daten als CSV speichern</button></form><br />
+	<form action='/' method='get'><button>Zurück</button></form><br />
 	<div style='text-align:right;font-size:11px;'><hr /><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>OnsenPID by Franz Hoffmann</a></div>
 </div>
 </body>

@@ -7,6 +7,7 @@ void setup_webserver(ESP8266WebServer *s) {
   s->on("/log",  handleLog);
   s->on("/s",    handleAjax);
   s->on("/edit", HTTP_POST, []() {redirect("/cfg");}, handleFileUpload);
+  s->on("/delete",  handleFileDelete);
 
   server.onNotFound(handleNotFound);
   s->begin();
@@ -65,7 +66,8 @@ String directory() {
   while (dir.next()) {
     String fileName = dir.fileName();
     size_t fileSize = dir.fileSize();
-    s += "<li><a href=\"" + fileName + "\">" + fileName + "</a> (" + String(fileSize) + " Bytes)</li>";
+    s += "<li><a href=\"" + fileName + "\">" + fileName + "</a> (" + String(fileSize) + " Bytes)";
+    s += "(<a href=\"/delete?fn=" + fileName + "\">delete</a>)</li>";
   }
   s += "</ul>";
   return s;
@@ -379,6 +381,7 @@ void sendCSVData() {
     return;    
   }
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.sendHeader("Content-Disposition", "inline; filename=\"data.csv\"", true);
   server.send(200, "text/csv", "time,setpoint,temperature,power\n");
 
   char buf[100];
@@ -469,11 +472,17 @@ void handleFileUpload() {
   String fn = "/" + upload.filename;
   
   if (upload.status == UPLOAD_FILE_START) {
+    if (uploadFile) {
+      uploadFile.close();
+    }
     if (filesystem.exists(fn)) {
       filesystem.remove(fn);
     }
     uploadFile = filesystem.open(fn, "w");
     logger << "Upload: START, filename: " << fn << endl;
+    if (!uploadFile) {
+      logger << "Warning: could not open file" << endl;
+    }
   }
     
   else if (upload.status == UPLOAD_FILE_WRITE) {
@@ -491,4 +500,15 @@ void handleFileUpload() {
     }
     logger << "Upload: END, Size: " << upload.totalSize << endl;
   }
+}
+
+void handleFileDelete() {
+  if (server.hasArg("fn")) {
+    String fn = server.arg("fn");
+    logger << "deleting file '" << fn << "'" << endl;
+    if (!filesystem.remove(fn)) {
+      logger << "file delete failed" << endl;
+    }
+  }
+  redirect("/cfg");
 }

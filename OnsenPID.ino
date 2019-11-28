@@ -187,22 +187,22 @@ int task_ntp() {
 // -------------------------------------------------------------------------- Statistik Task
 /* task: calculate debug statistics */
 int task_statistics() {
-  logger << endl << "Statistics: " << endl;
+  //logger << endl << "Statistics: " << endl;
   for (int i=0; i<MAX_TASKS; i++) {
     if (tasklist[i].t != NULL) {
       double avg = tasklist[i].tcount > 0 
                  ? (double)tasklist[i].tsum / tasklist[i].tcount
                  : 0;
-      logger << tasklist[i].taskname;
+      //logger << tasklist[i].taskname;
       //for (int i=strlen(tasklist[i].taskname); i<20; i++) { Serial << '.'; }  // crashes?
-      logger << ',' << tasklist[i].tmin
-             << ','<< avg
-             << ','<< tasklist[i].tmax
-             << "ms" << endl;
+      //logger << ',' << tasklist[i].tmin
+     //      << ','<< avg
+     //      << ','<< tasklist[i].tmax
+     //      << "ms" << endl;
       init_stats(&tasklist[i]);
     }
   }   
-  logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
+  //logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
   return 600000; // good thing int seems to be 32 bit
 }
 
@@ -356,7 +356,8 @@ void setup() {
   Serial.begin(115200);
 
   filesystem.begin();
-  logger << "File system mounted. contents:" << endl;
+  logger << "------ REBOOT" << endl;
+  logger << "File system mounted" << endl;
   Dir dir = filesystem.openDir("/");
   while (dir.next()) {
     String fileName = dir.fileName();
