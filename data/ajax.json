@@ -1,1 +1,1 @@
-{"act":"{{ACT}}", "set":"{{SET}}", "out":"{{OUT}}", "time":"{{TIME_LEFT}}"}
+{"act":"{{ACT}}", "set":"{{SET}}", "out":"{{OUT}}", "time":"{{TIME_LEFT}}", "state":"{{STATE}}"}

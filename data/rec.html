@@ -4,7 +4,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-<title>{{HOSTNAME}} - Rezept</title>
+<title>{{HOSTNAME}} - Einschalten</title>
 <link rel="stylesheet" href="/stylesheet.css" type="text/css">
 </head>
 
@@ -18,8 +18,14 @@
 		<legend><b>&nbsp;Rezept&nbsp;</b></legend>
 		<form method='get' action='rec'>
 			<p><b>Temperatur (&deg;C)</b><br /><input id='temp' name='temp' value='{{SET}}'></p>
-			<p><b>Kochzeit (min)</b><br /><input id='ttime' name='time' value='{{TIME_SET}}'></p>
-			<br /><button name='save' type='submit' class='button bgrn'>Übernehmen</button>
+			<p><b>Kochzeit (min)</b><br /><input id='duration' name='duration' value='{{TIME_SET}}'></p>
+			<p></p><b>&nbsp;Zeitsteuerung&nbsp;<br /></b>
+			<input type='radio' name='mode' id='nw' value='nw' checked><label for='st'>Sofort anfangen</label><br />
+			<input type='radio' name='mode' id='st' value='st'><label for='st'>Zur vorgeben Uhrzeit anfangen</label><br />
+			<input type='radio' name='mode' id='et' value='et'><label for='st'>Zur vorgegebenen Uhrzeit fertig sein</label><br />
+			<input type='time' name='time' value='{{STARTTIME}}'>
+			</p>
+			<br /><button name='start' type='submit' class='button bgrn'>Einschalten!</button>
 		</form>
 	</fieldset>
 	<div></div>

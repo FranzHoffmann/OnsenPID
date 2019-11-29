@@ -3,18 +3,9 @@
   ====
   - data logger / chart display webpage
   - log data access with "batch no"
-  - use real temperature sensor
-  - WiFi setup from web interface
+
   - D-Part
-  - start in x minutes / finish at x:xx 
   - repalce "Einschalten" by "Start dialog"
-  - move PWM (and PID?) to interrupt
-
-  DONE
-  ====
-  - hostname
-  - persistant storage of parameters
-
   
   more ideas
   ==========
@@ -38,6 +29,7 @@
 #include "src/MemInfo/MemoryInfo.h"
 #include "Config.h"
 #include <DS18B20.h>
+#include "State.h"
 
 #define LCD_RS D5
 #define LCD_EN D6
@@ -71,7 +63,6 @@ struct task_t {
 task_t tasklist[MAX_TASKS];
 
 /* Buttons and menu p.screens */
-enum StateEnum {STATE_IDLE, STATE_COOKING, STATE_FINISHED, STATE_ERROR};
 enum ButtonEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE};
 #define DISP_MAIN 0
 #define DISP_SET_SET 1
@@ -86,18 +77,19 @@ enum ButtonEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE};
 #define ARROW '\2'         // custom character for up/down arrow
 
 enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
+
 struct param {
-  StateEnum state;              // global state
   WiFiEnum AP_mode;
   int set_time, act_time;       // remaining time (s)
   double set, act, out;         // controller i/o
-  double t1;                    // filter time for act temperature
-  boolean out_b;                // heater is on
+  boolean released;				// controller is released
+//  boolean bOut;                 // heater is on
   int screen;                   // active screen
   boolean sensorOK;
 } p;
 
 Config cfg;
+StateMachine sm(timeClient, &logger);
 
 char buf[4][17];
 PString line1(buf[0], sizeof(buf[0]));
@@ -111,7 +103,6 @@ PString line2_old(buf[3], sizeof(buf[3]));
 // ------------------------------------------------------------------------ useful functions
 
 void init_params() {
-  p.t1 = 0.3;
   p.set_time = 3600;
   p.set = 65.0;
   cfg.read();
@@ -178,10 +169,13 @@ double limit(double x, double xmin, double xmax) {
 // -------------------------------------------------------------------------- NTP Task
 /* task: ntp client */
 int task_ntp() {
-  if (p.state != STATE_COOKING) {
-    timeClient.update();
-  }
+  timeClient.update();
   return 10;
+}
+
+
+void onNtpUpdate(NTPClient* c) {
+  logger << "Time updated from NTP" << endl;
 }
 
 // -------------------------------------------------------------------------- Statistik Task
@@ -208,33 +202,8 @@ int task_statistics() {
 
 // -------------------------------------------------------------------------- Recipe Task
 int task_recipe() {
-  static StateEnum oldstate;
-  if (oldstate != p.state) {
-    oldstate = p.state;
-    switch (p.state) {
-      case STATE_IDLE:
-        logger << "Grundzustand" << endl;
-        break;
-      case STATE_COOKING:
-        logger << "Kochen gestartet" << endl;
-        dl_startBatch();
-        break;
-      case STATE_FINISHED:
-        logger << "Kochen abgeschlossen" << endl;
-        dl_endBatch();
-        break;
-      case STATE_ERROR:
-        logger << "Systemfehler erkannt" << endl;
-        break;
-    }
-  }
-  if (p.state == STATE_COOKING) {
-    p.act_time += 1;
-    if (p.act_time >= p.set_time) {
-      p.act_time = p.set_time;
-      p.state = STATE_FINISHED;
-    }
-  }
+  sm.update();
+  p.released = (sm.getState() == State::COOKING);
   return 1000;
 }
 
@@ -388,7 +357,8 @@ void setup() {
   
   setup_OTA();
   logger << "OTA initialized " << endl;
-  
+
+  timeClient.setUpdateCallback(onNtpUpdate);
   timeClient.begin();
   logger << "NTPClient initialized" << endl;
   

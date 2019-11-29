@@ -20,6 +20,7 @@ class Logfile : public  Print {                                       // extend 
       char message[MSG_LEN];
     };
 
+    size_t write(uint8_t character);                                  // write one character. needed for Stream (logfile << "foo")
 
     // primitive iterator-like interface 
     void rewind(unsigned long after);
@@ -29,7 +30,6 @@ class Logfile : public  Print {                                       // extend 
     Logfile::LogEntryStruct strToEntry(String s);
     
     Logfile(FS &fs_ref, Stream &stream_ref, NTPClient &ntp_ref);      // Constructor
-    size_t write(uint8_t character);                                  // write one character. needed for Stream (logfile << "foo")
 
   private:
     FS *fs_ptr;

@@ -31,6 +31,7 @@ function read_state(cmd) {
 			document.getElementById('act').innerHTML = obj.act;
 			document.getElementById('set').innerHTML = obj.set;
 			document.getElementById('out').innerHTML = obj.out;
+			document.getElementById('state').innerHTML = obj.state;
 			document.getElementById('time').innerHTML = 
 				Math.floor(obj.time / 60) + ":" + pad(obj.time % 60, 2);
 		}
@@ -57,8 +58,9 @@ window.onload = read_state();
 	<tbody>
 	<tr><td>Temperatur:</td><td align="right"><span id="act">{{ACT}}</span>&deg;C</td></tr>
 	<tr><td>Sollwert:</td><td align="right"><span id="set">{{SET}}</span>&deg;C</td></tr>
-	<tr><td>Restzeit:</td><td align="right"><span id="time">{{TIME_LEFT}}</span> min</td></tr>
 	<tr><td>Leistung:</td><td align="right"><span id="out">{{OUT}}</span>%</td></tr>
+	<tr><td>Status:</td><td align="right"><span id="state">{{STATE}}</span></td></tr>
+	<tr><td>Restzeit:</td><td align="right"><span id="time">{{TIME_LEFT}}</span> min</td></tr>
 	</tbody>
 	</table>
 	</div>

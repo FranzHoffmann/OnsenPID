@@ -47,30 +47,30 @@ int task_keyboard() {
       if (b == BTN_DN) p.set -= 0.1;
       
       line2.begin();
-      switch (p.state) {
-        case STATE_COOKING:
+      switch (sm.getState()) {
+        case State::COOKING:
           line2 << "Noch " << (p.set_time - p.act_time) / 60 << " min";
           break;
           
-        case STATE_IDLE:
+        case State::IDLE:
           line2 << "Starten?";
           if (b == BTN_SEL) {
-            p.state = STATE_COOKING;
+            sm.startCooking();
             p.act_time = 0;
           }
           break;
           
-        case STATE_FINISHED:
+        case State::FINISHED:
           line2 << "Guten Appetit!";
           if (b == BTN_SEL) {
-            p.state = STATE_IDLE;
+            sm.next();
           }
           break;
 
-        case STATE_ERROR:
+        case State::ERROR:
           line2 << "Störung :-(";
           if (b == BTN_SEL) {
-            p.state = STATE_IDLE;
+            sm.next();
           }
           break;
 

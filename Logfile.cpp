@@ -8,7 +8,6 @@ Logfile::Logfile(FS &fs_ref, Stream &stream_ref, NTPClient &ntp_ref) {
   latest_timestamp = 0;
 }
 
-    
 size_t Logfile::write(uint8_t character) {
   static int pos = 0;
   static LogEntryStruct entry;
