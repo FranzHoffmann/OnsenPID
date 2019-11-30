@@ -44,15 +44,15 @@ void redirect(String url) {
 String subst(String var) {
 	String s;
 	if (var == "ACT") return String(p.act);
-	if (var == "SET") return String(p.set);
+	if (var == "SET") return String(sm.getCookingTemp());
 	if (var == "OUT") return String(p.out);
 	if (var == "KP") return String(cfg.p.kp);
 	if (var == "TN") return String(cfg.p.tn);
 	if (var == "TV") return String(cfg.p.tv);
 	if (var == "EMAX") return String(cfg.p.emax);
 	if (var == "TIME") return String(timeClient.getFormattedTime());
-	if (var == "TIME_LEFT") return String(p.set_time - p.act_time);
-	if (var == "TIME_SET") return String(p.set_time/60);
+	if (var == "TIME_LEFT") return String(sm.getRemainingTime() / 60);
+	if (var == "TIME_SET") return String(sm.getCookingTime()/60);
 	if (var == "STATE") return sm.stateAsString(sm.getState());
 	if (var == "HOSTNAME") return String(cfg.p.hostname);
 	if (var == "SSID") return cfg.p.ssid;
@@ -247,7 +247,6 @@ void handleAjax() {
 			// start cooking
 			// TODO: do this properly. state shoud be encapsulated and changed by functions
 			sm.startCooking();
-			p.act_time = 0;
 		}
 	}
 	send_file("/ajax.json");
@@ -298,10 +297,14 @@ void handleWifi()   {
 // --------------------------------------------------------------------------------------------- recipe
 void handleRecipe() {
 	if (server.hasArg("start")) {
-		int set_time_sec = p.set_time / 60;
-		changeParam("temp", "Temperatur", &(p.set));
-		changeParam("duration", "Kochzeit", &set_time_sec);
-		p.set_time = set_time_sec * 60;
+		
+		double setpoint_temp = sm.getCookingTemp();
+		changeParam("temp", "Temperatur", &setpoint_temp);
+		sm.setCookingTemp(setpoint_temp);
+		
+		int setpoint_time = sm.getCookingTime() / 60;
+		changeParam("duration", "Kochzeit", &setpoint_time);
+		sm.setCookingTime(setpoint_time * 60);
 
 		String t = server.arg("time");
 		unsigned long epoch = timeClient.getEpochTime();

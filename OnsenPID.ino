@@ -80,10 +80,8 @@ enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
 
 struct param {
   WiFiEnum AP_mode;
-  int set_time, act_time;       // remaining time (s)
   double set, act, out;         // controller i/o
   boolean released;				// controller is released
-//  boolean bOut;                 // heater is on
   int screen;                   // active screen
   boolean sensorOK;
 } p;
@@ -103,8 +101,6 @@ PString line2_old(buf[3], sizeof(buf[3]));
 // ------------------------------------------------------------------------ useful functions
 
 void init_params() {
-  p.set_time = 3600;
-  p.set = 65.0;
   cfg.read();
 }
 

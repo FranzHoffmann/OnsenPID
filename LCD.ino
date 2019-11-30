@@ -42,21 +42,20 @@ int task_keyboard() {
     switch (p.screen) {
     case DISP_MAIN:
       line1.begin();
-      line1 << p.act << " / " << p.set << DEGC;
-      if (b == BTN_UP) p.set += 0.1;
-      if (b == BTN_DN) p.set -= 0.1;
+      line1 << p.act << " / " << sm.getCookingTemp() << DEGC;
+      if (b == BTN_UP) sm.setCookingTemp(sm.getCookingTemp() + 0.1);
+      if (b == BTN_DN) sm.setCookingTemp(sm.getCookingTemp() - 0.1);
       
       line2.begin();
       switch (sm.getState()) {
         case State::COOKING:
-          line2 << "Noch " << (p.set_time - p.act_time) / 60 << " min";
+          line2 << "Noch " << sm.getRemainingTime() / 60 << " min";
           break;
           
         case State::IDLE:
           line2 << "Starten?";
           if (b == BTN_SEL) {
             sm.startCooking();
-            p.act_time = 0;
           }
           break;
           
@@ -101,28 +100,26 @@ int task_keyboard() {
       break;
 
     case DISP_SET_SET:
-      if (b == BTN_UP) p.set += 0.1;
-      if (b == BTN_DN) p.set -= 0.1;
+      if (b == BTN_UP) sm.setCookingTemp(sm.getCookingTemp() + 0.1);
+      if (b == BTN_DN) sm.setCookingTemp(sm.getCookingTemp() - 0.1);
       line1.begin();
       line1 << "Solltemperatur:";
       line2.begin();
-      line2 << ARROW << p.set << DEGC;
+      line2 << ARROW << sm.getCookingTemp() << DEGC;
       break;
 
     case DISP_SET_TIME:
-      if (b == BTN_UP) p.set_time += 60;
-      if (b == BTN_DN) p.set_time -= 60;
-      p.set_time = limit(p.set_time, 60.0, 9999.0*60);
+      if (b == BTN_UP) sm.setCookingTime(sm.getCookingTime() + 60);
+      if (b == BTN_DN) sm.setCookingTime(sm.getCookingTime() + 60);
       line1.begin();
       line1 << "Kochdauer:";
       line2.begin();
-      line2 << ARROW << p.set_time / 60 << "min";
+      line2 << ARROW << sm.getCookingTime() / 60 << "min";
       break;
 
     case DISP_SET_KP:
       if (b == BTN_UP) cfg.p.kp += 0.1;
       if (b == BTN_DN) cfg.p.kp -= 0.1;
-      cfg.p.kp = limit(cfg.p.kp, 0.0, 1000.0);
       line1.begin();
       line1 << "Verstaerkung:";
       line2.begin();
@@ -132,7 +129,6 @@ int task_keyboard() {
     case DISP_SET_TN:
       if (b == BTN_UP) cfg.p.tn += 0.1;
       if (b == BTN_DN) cfg.p.tn -= 0.1;
-      cfg.p.tn = limit(cfg.p.tn, 0.0, 1000.0);
       line1.begin();
       line1 << "Nachstellzeit:";
       line2.begin();

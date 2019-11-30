@@ -12,8 +12,29 @@ State StateMachine::getState() {
 	return state;
 }
 
+int StateMachine::getRemainingTime() {
+	int actTime = _time->getEpochTime() - startTime;
+	
+	switch (state) {
+
+		case State::COOKING:
+			return (_cookingTime - actTime);
+
+		case State::WAITING:
+			return (startTime - _time->getEpochTime());
+
+		default:
+			return 0;
+	}
+}
+
+void StateMachine::setCookingTime(int t) {_cookingTime = t;}
+int StateMachine::getCookingTime() {return _cookingTime;}
+
+void StateMachine::setCookingTemp(double t) {_cookingTemp = t;}
+double StateMachine::getCookingTemp() {return _cookingTemp;}
+
 void StateMachine::startCooking() {
-	// TODO
 	setState(State::COOKING);
 }
 
@@ -34,7 +55,7 @@ void StateMachine::startByEndTime(unsigned long endtime) {
 
 		case State::IDLE:
 		case State::WAITING:
-			startTime = endtime - 3600; // TODO!!! p.set_time;
+			startTime = endtime - _cookingTime;
 			setState(State::WAITING);
 			break;
 	}
@@ -75,7 +96,6 @@ void StateMachine::setState(State newState) {
 
 	if (newState == State::COOKING) {
 		startTime = _time->getEpochTime();
-		setTime = 300; // TODO
 	}
 
 	state = newState;
@@ -93,10 +113,9 @@ switch (state) {
 		break;
 
 	case State::COOKING:
-		actTime = _time->getEpochTime() - startTime;
-		if (actTime >= setTime) {
-			*_logger << "actTime: " << actTime << ", setTime: " << setTime << endl;
-			actTime = setTime;
+		int actTime = _time->getEpochTime() - startTime;
+		if (actTime >= _cookingTime) {
+			*_logger << "actTime: " << actTime << ", cookingTime: " << _cookingTime << endl;
 			setState(State::FINISHED);
 		}
 		break;
