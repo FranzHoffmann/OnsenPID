@@ -15,10 +15,15 @@
   - better statistics: runtime and ms/s for each task
 */
 
+// TODO: remove
+//#include <NTPClient.h>      // note: git pull request 22 (asynchronus update) required
+//#include <WiFiUdp.h>
+//WiFiUDP ntpUDP;
+//NTPClient timeClient(ntpUDP);
+
+
 #include <Streaming.h>
-#include <NTPClient.h>      // note: git pull request 22 (asynchronus update) required
 #include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
 #include <LiquidCrystal.h>
 #include <PString.h>
 #include "Logfile.h"
@@ -30,6 +35,7 @@
 #include "Config.h"
 #include <DS18B20.h>
 #include "State.h"
+#include "src/Clock/Clock.h"
 
 #define LCD_RS D5
 #define LCD_EN D6
@@ -41,11 +47,10 @@
 #define PWM_PORT D4
 #define TMP_PORT D7
 
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP);
+
 ESP8266WebServer server(80);
 FS filesystem = SPIFFS;
-Logfile logger(filesystem, Serial, timeClient);
+Logfile logger;
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 OneWire oneWire(TMP_PORT);
@@ -87,7 +92,7 @@ struct param {
 } p;
 
 Config cfg;
-StateMachine sm(timeClient, &logger);
+StateMachine sm;
 
 char buf[4][17];
 PString line1(buf[0], sizeof(buf[0]));
@@ -165,13 +170,9 @@ double limit(double x, double xmin, double xmax) {
 // -------------------------------------------------------------------------- NTP Task
 /* task: ntp client */
 int task_ntp() {
-  timeClient.update();
+  Clock.update();
+  //timeClient.update();
   return 10;
-}
-
-
-void onNtpUpdate(NTPClient* c) {
-  logger << "Time updated from NTP" << endl;
 }
 
 // -------------------------------------------------------------------------- Statistik Task
@@ -354,8 +355,8 @@ void setup() {
   setup_OTA();
   logger << "OTA initialized " << endl;
 
-  timeClient.setUpdateCallback(onNtpUpdate);
-  timeClient.begin();
+  //timeClient.setUpdateCallback(onNtpUpdate);
+  //timeClient.begin();
   logger << "NTPClient initialized" << endl;
   
   setup_dl(); // data logger

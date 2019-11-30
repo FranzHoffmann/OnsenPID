@@ -10,7 +10,7 @@ enum class State {IDLE, WAITING, COOKING, FINISHED, ERROR};
 
 class StateMachine {
 	public:
-		StateMachine(NTPClient &ntp_ref, Print *logfile_ref);
+		StateMachine();
 
 		State getState();
 		int getRemainingTime();
@@ -37,9 +37,6 @@ class StateMachine {
 		unsigned long startTime;
 
 		void setState(State newState);
-
-		NTPClient* _time;
-		Print* _logger;
 };
 
 #endif

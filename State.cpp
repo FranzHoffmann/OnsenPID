@@ -1,19 +1,16 @@
 #include "State.h"
 
+#include "src/Clock/Clock.h"
 
 /* constructor */
-StateMachine::StateMachine(NTPClient &ntp_ref, Print *logfile_ref) {
-	_logger = logfile_ref;
-	_time = &ntp_ref;
-}
-
+StateMachine::StateMachine() {}
 
 State StateMachine::getState() {
 	return state;
 }
 
 int StateMachine::getRemainingTime() {
-	int actTime = _time->getEpochTime() - startTime;
+	int actTime = Clock.getEpochTime() - startTime;
 	
 	switch (state) {
 
@@ -21,7 +18,7 @@ int StateMachine::getRemainingTime() {
 			return (_cookingTime - actTime);
 
 		case State::WAITING:
-			return (startTime - _time->getEpochTime());
+			return (startTime - Clock.getEpochTime());
 
 		default:
 			return 0;
@@ -92,10 +89,10 @@ String StateMachine::stateAsString(State s) {
 
 
 void StateMachine::setState(State newState) {
-	*_logger << "Change state from " << stateAsString(state) << " to " << stateAsString(newState) << endl;
+	//*_logger << "Change state from " << stateAsString(state) << " to " << stateAsString(newState) << endl;
 
 	if (newState == State::COOKING) {
-		startTime = _time->getEpochTime();
+		startTime = Clock.getEpochTime();
 	}
 
 	state = newState;
@@ -106,16 +103,16 @@ void StateMachine::update() {
 switch (state) {
 
 	case State::WAITING:
-		if (_time->getEpochTime() >= startTime) {
-			*_logger << "Time: " << _time->getEpochTime() << ", startTime: " << startTime << endl;
+		if (Clock.getEpochTime() >= startTime) {
+			//*_logger << "Time: " << _time->getEpochTime() << ", startTime: " << startTime << endl;
 			setState(State::COOKING);
 		}
 		break;
 
 	case State::COOKING:
-		int actTime = _time->getEpochTime() - startTime;
+		int actTime = Clock.getEpochTime() - startTime;
 		if (actTime >= _cookingTime) {
-			*_logger << "actTime: " << actTime << ", cookingTime: " << _cookingTime << endl;
+			//*_logger << "actTime: " << actTime << ", cookingTime: " << _cookingTime << endl;
 			setState(State::FINISHED);
 		}
 		break;

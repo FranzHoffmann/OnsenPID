@@ -50,7 +50,7 @@ String subst(String var) {
 	if (var == "TN") return String(cfg.p.tn);
 	if (var == "TV") return String(cfg.p.tv);
 	if (var == "EMAX") return String(cfg.p.emax);
-	if (var == "TIME") return String(timeClient.getFormattedTime());
+	if (var == "TIME") return String(Clock.getEpochTime());//timeClient.getFormattedTime());
 	if (var == "TIME_LEFT") return String(sm.getRemainingTime() / 60);
 	if (var == "TIME_SET") return String(sm.getCookingTime()/60);
 	if (var == "STATE") return sm.stateAsString(sm.getState());
@@ -307,7 +307,7 @@ void handleRecipe() {
 		sm.setCookingTime(setpoint_time * 60);
 
 		String t = server.arg("time");
-		unsigned long epoch = timeClient.getEpochTime();
+		unsigned long epoch = Clock.getEpochTime();
 		unsigned long midnight = epoch - (epoch % 86400L) - 3600 * cfg.p.tzoffset;
 		int hrs = t.substring(0, 2).toInt();
 		int mins = t.substring(3).toInt();

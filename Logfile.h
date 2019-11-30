@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <Streaming.h>
 #include <FS.h>
-#include <NTPClient.h>
+#include "src/Clock/Clock.h"
 
 #define MSG_LEN 80
 #define MSG_NUM 200
@@ -13,34 +13,33 @@
 #define FILENAME_OLD "/logfile.0"
 
 
-class Logfile : public  Print {                                       // extend Print to make Stream work
-  public:
-    struct LogEntryStruct {
-      unsigned long timestamp;
-      char message[MSG_LEN];
-    };
+class Logfile : public  Print {							// extend Print to make Stream work
+	public:
+		struct LogEntryStruct {
+			unsigned long timestamp;
+			char message[MSG_LEN];
+		};
 
-    size_t write(uint8_t character);                                  // write one character. needed for Stream (logfile << "foo")
+		size_t write(uint8_t character);				// write one character. needed for Stream (logfile << "foo")
 
-    // primitive iterator-like interface 
-    void rewind(unsigned long after);
-    bool hasMore();
-    String getNext();
+		// primitive iterator-like interface 
+		void rewind(unsigned long after);
+		bool hasMore();
+		String getNext();
 
-    Logfile::LogEntryStruct strToEntry(String s);
-    
-    Logfile(FS &fs_ref, Stream &stream_ref, NTPClient &ntp_ref);      // Constructor
+		Logfile::LogEntryStruct strToEntry(String s);
 
-  private:
-    FS *fs_ptr;
-    Stream *serial_ptr;
-    NTPClient *ntp_ptr;
+		Logfile();      // Constructor
 
-    void store(LogEntryStruct &entry);
-    bool iterator_hasMore = false;
-    uint8_t iterator_file = 0;   // oldest
-    size_t iterator_offset = 0;
-    unsigned long latest_timestamp;
+	private:
+		bool _logToFile;
+		bool _logToSerial;
+
+		void store(LogEntryStruct &entry);
+		bool iterator_hasMore = false;
+		uint8_t iterator_file = 0;   // oldest
+		size_t iterator_offset = 0;
+		unsigned long latest_timestamp;
 
 };
 
