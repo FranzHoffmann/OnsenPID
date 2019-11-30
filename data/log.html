@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>{{HOSTNAME}} - Systemprotokoll</title>
+<script src="/moment.min.js"></script>
 
 <script>
 function pad(value) {
@@ -17,9 +18,9 @@ function pad(value) {
 function addOneLine(value) {
 	let ts = value.ts - 0;
 	let msg = value.msg;
-	let d = new Date(ts * 1000);
+	let d = moment.unix(ts);
 	let t =  document.getElementById('t1');
-	t.innerHTML += d + ": " + msg + '\\r';
+	t.innerHTML += d.format('YYYY-MM-DD HH:mm:ss') + ": " + msg + '\\r';
 	latest = ts;
 	t.scrollTop = 99999;
 }
