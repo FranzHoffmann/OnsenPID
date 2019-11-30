@@ -2,9 +2,6 @@
 #define logfile_h
 
 #include <Arduino.h>
-#include <Streaming.h>
-#include <FS.h>
-#include "src/Clock/Clock.h"
 
 #define MSG_LEN 80
 #define MSG_NUM 200
@@ -13,12 +10,15 @@
 #define FILENAME_OLD "/logfile.0"
 
 
-class Logfile : public  Print {							// extend Print to make Stream work
+class LogfileT : public Print {							// extend Print to make Stream work
 	public:
 		struct LogEntryStruct {
 			unsigned long timestamp;
 			char message[MSG_LEN];
 		};
+
+		void enableLogToFile(bool b);
+		void enableLogToSerial(bool b);
 
 		size_t write(uint8_t character);				// write one character. needed for Stream (logfile << "foo")
 
@@ -27,9 +27,9 @@ class Logfile : public  Print {							// extend Print to make Stream work
 		bool hasMore();
 		String getNext();
 
-		Logfile::LogEntryStruct strToEntry(String s);
+		LogfileT::LogEntryStruct strToEntry(String s);
 
-		Logfile();      // Constructor
+		LogfileT();      // Constructor
 
 	private:
 		bool _logToFile;
@@ -42,5 +42,7 @@ class Logfile : public  Print {							// extend Print to make Stream work
 		unsigned long latest_timestamp;
 
 };
+
+extern LogfileT Logger;
 
 #endif

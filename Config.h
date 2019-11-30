@@ -2,8 +2,6 @@
 #define config_h
 
 #include <Arduino.h>
-#include <Streaming.h>
-#include <FS.h>
 #include <SPIFFSIniFile.h>
 
 #define CONFIG_MAX_FILENAME_LEN 26
@@ -31,7 +29,6 @@ class Config {
   struct param {
     WiFiEnum AP_mode;
     int set_time, act_time;       // remaining time (s)
-//    double set, act, out;         // controller i/o
     double emax;
     double kp, tn, tv;            // controller parameter
     double t1;                    // filter time for act temperature
@@ -41,7 +38,7 @@ class Config {
   } p;
 
   // constructor
-  Config(const char* filename, Print *logger);
+  Config(const char* filename);
   Config();
   
   bool read();
@@ -51,7 +48,6 @@ class Config {
   char _filename[CONFIG_MAX_FILENAME_LEN];
   mutable File _file;
   SPIFFSIniFile *_ini;
-  Print* _logger;
 
   void write(const char* section);
   void write(const char* key, const char* value);

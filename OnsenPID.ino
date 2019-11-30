@@ -1,7 +1,7 @@
 /*
   TODO
   ====
-  - data logger / chart display webpage
+  - data Logger / chart display webpage
   - log data access with "batch no"
 
   - D-Part
@@ -50,7 +50,7 @@
 
 ESP8266WebServer server(80);
 FS filesystem = SPIFFS;
-Logfile logger;
+
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 OneWire oneWire(TMP_PORT);
@@ -126,7 +126,7 @@ boolean start_task(task t, const char *name) {
       return true;
     }
   }
-  logger << "Unable to start Task" << endl;
+  Logger << "Unable to start Task" << endl;
   return false;
 }
 
@@ -178,22 +178,22 @@ int task_ntp() {
 // -------------------------------------------------------------------------- Statistik Task
 /* task: calculate debug statistics */
 int task_statistics() {
-  //logger << endl << "Statistics: " << endl;
+  //Logger << endl << "Statistics: " << endl;
   for (int i=0; i<MAX_TASKS; i++) {
     if (tasklist[i].t != NULL) {
       double avg = tasklist[i].tcount > 0 
                  ? (double)tasklist[i].tsum / tasklist[i].tcount
                  : 0;
-      //logger << tasklist[i].taskname;
+      //Logger << tasklist[i].taskname;
       //for (int i=strlen(tasklist[i].taskname); i<20; i++) { Serial << '.'; }  // crashes?
-      //logger << ',' << tasklist[i].tmin
+      //Logger << ',' << tasklist[i].tmin
      //      << ','<< avg
      //      << ','<< tasklist[i].tmax
      //      << "ms" << endl;
       init_stats(&tasklist[i]);
     }
   }   
-  //logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
+  //Logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
   return 600000; // good thing int seems to be 32 bit
 }
 
@@ -213,7 +213,7 @@ int task_read_temp() {
     counter = 0;
     if (!p.sensorOK) {
       p.sensorOK = true;
-      logger << "thermometer ok" << endl;
+      Logger << "thermometer ok" << endl;
     }
     thermometer.requestTemperatures();
   } else {
@@ -221,7 +221,7 @@ int task_read_temp() {
     if (counter > 5) {
       if (p.sensorOK) {
         p.sensorOK = false;
-        logger << "thermometer failure, resetting" << endl;
+        Logger << "thermometer failure, resetting" << endl;
       }
       thermometer.requestTemperatures();    
     }
@@ -277,18 +277,18 @@ void loop() {
     
 // ----------------------------------------------------------------------------- start_WiFi
 void start_WiFi() {
-  logger << "Versuche verbindung mit '" << cfg.p.ssid << "'" << endl;
+  Logger << "Versuche verbindung mit '" << cfg.p.ssid << "'" << endl;
   WiFi.mode(WIFI_STA);
   WiFi.begin(cfg.p.ssid, cfg.p.pw);
   for (int i=0; i<100; i++) {
     if (WiFi.status() == WL_CONNECTED) {
-      logger << "WiFi verbunden (IP: " << WiFi.localIP() << ")" << endl;
+      Logger << "WiFi verbunden (IP: " << WiFi.localIP() << ")" << endl;
       p.AP_mode = WIFI_CONN;
       return;
     }
     delay(100);
   }
-  logger << "WiFi-Verbindung fehlgeschlagen" << endl;
+  Logger << "WiFi-Verbindung fehlgeschlagen" << endl;
 
   // open AP
   uint8_t macAddr[6];
@@ -299,18 +299,18 @@ void start_WiFi() {
   }
   boolean success = WiFi.softAP(ssid);
   if (success) {
-    logger << "Access Point erstellt: '" << ssid << "'" << endl;
+    Logger << "Access Point erstellt: '" << ssid << "'" << endl;
     p.AP_mode = WIFI_APMODE;
   } else {
-    logger << "Acces Point erstellen fehlgeschlagen" << endl;
+    Logger << "Acces Point erstellen fehlgeschlagen" << endl;
     p.AP_mode = WIFI_OFFLINE;
   }
   return;
 }
 
 void setup_ds18b20() {
-  logger  << ("Initializing thermometer DS18B20 ") << endl;
-  logger << "DS18B20 Library version: " << DS18B20_LIB_VERSION << endl;
+  Logger  << ("Initializing thermometer DS18B20 ") << endl;
+  Logger << "DS18B20 Library version: " << DS18B20_LIB_VERSION << endl;
   thermometer.begin();
   thermometer.setResolution(12);
   thermometer.requestTemperatures();
@@ -322,8 +322,8 @@ void setup() {
   Serial.begin(115200);
 
   filesystem.begin();
-  logger << "------ REBOOT" << endl;
-  logger << "File system mounted" << endl;
+  Logger << "------ REBOOT" << endl;
+  Logger << "File system mounted" << endl;
   Dir dir = filesystem.openDir("/");
   while (dir.next()) {
     String fileName = dir.fileName();
@@ -331,7 +331,7 @@ void setup() {
     Serial << "- '" << fileName << "', " << fileSize << " bytes" << endl;
   } 
     
-  cfg = Config("/config.ini", &logger);
+  cfg = Config("/config.ini");
   init_params();
 
   lcd.begin(16, 2);
@@ -340,27 +340,27 @@ void setup() {
   lcd.createChar(1, char_deg);
   lcd.createChar(2, char_updn);
   lcd.clear();
-  logger << "LCD initialized" << endl;
+  Logger << "LCD initialized" << endl;
     
   start_WiFi();
-  logger << "WiFi initilaized" << endl;
+  Logger << "WiFi initilaized" << endl;
 
   setup_webserver(&server);
-  logger << "Webserver initialized" << endl;
+  Logger << "Webserver initialized" << endl;
   
   MDNS.begin(cfg.p.hostname);
   MDNS.addService("http", "tcp", 80);
-  logger << "MDNS initialized" << endl;
+  Logger << "MDNS initialized" << endl;
   
   setup_OTA();
-  logger << "OTA initialized " << endl;
+  Logger << "OTA initialized " << endl;
 
   //timeClient.setUpdateCallback(onNtpUpdate);
   //timeClient.begin();
-  logger << "NTPClient initialized" << endl;
+  Logger << "NTPClient initialized" << endl;
   
-  setup_dl(); // data logger
-  logger << "Datalogger initialized" << endl;
+  setup_dl(); // data Logger
+  Logger << "DataLogger initialized" << endl;
 
   setup_ds18b20();
   

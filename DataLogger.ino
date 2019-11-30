@@ -1,5 +1,5 @@
 /*
- * Non-generic data logger 
+ * Non-generic data Logger 
  * 
  * dl_startBatch(): legte ein neues file an und aktiviert logging
  * dl_endBatch():   deaktiviert das logging
@@ -34,11 +34,11 @@ dl_data_t dl_data[DL_RAMBUF];
 
 
 /**
- * setup data logger
+ * setup data Logger
  */
 void setup_dl() {
   start_task(dl_log, "Data Logger");
-  start_task(dl_cleanup, "Data logger cleanup");
+  start_task(dl_cleanup, "Data Logger cleanup");
 }
 
 /**
@@ -64,7 +64,7 @@ int dl_log() {
 }
 
 int dl_cleanup() {
-  logger << "datalogger cleanup" << endl;
+  Logger << "dataLogger cleanup" << endl;
   return 3600000;
 }
 
@@ -78,7 +78,7 @@ void dl_startBatch() {
   // TODO
   dl.filename = "/data.dat";
   File f = filesystem.open(dl.filename, "w");
-  logger << "datalogger: started logfile '" << dl.filename << "'" << endl;
+  Logger << "dataLogger: started logfile '" << dl.filename << "'" << endl;
   f.write("TODO: Rezeptname\r");
   f.close();
 }
@@ -87,7 +87,7 @@ void dl_startBatch() {
  * 
  */
 void dl_endBatch() {
-  logger << "datalogger: closed logfile '" << dl.filename << "'" << endl;
+  Logger << "dataLogger: closed logfile '" << dl.filename << "'" << endl;
   dl.recording = false;
   dl_flush();
   dl.filename = "";
@@ -122,7 +122,7 @@ void dl_rewind(String filename, unsigned long after) {
 
   readfile = filesystem.open(dl.it_filename, "r");
   if (!readfile) {
-    logger << "dl_rewind: file not found: '" << dl.it_filename << "'" << endl;
+    Logger << "dl_rewind: file not found: '" << dl.it_filename << "'" << endl;
     return;
   }
   dl_data_t data;
@@ -139,7 +139,7 @@ void dl_rewind(String filename, unsigned long after) {
       filepos = readfile.position();                     // entry is too old, try next
     }
   }
-  logger << "dl_rewind: after=" << after <<", latest=" << data.ts << endl; 
+  Logger << "dl_rewind: after=" << after <<", latest=" << data.ts << endl; 
 }
 
 bool dl_hasMore() {

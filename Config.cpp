@@ -1,24 +1,27 @@
 #include "Config.h"
+#include "Logfile.h"
+#include <Streaming.h>
+#include <FS.h>
+
 
 //const uint8_t Config::maxFilenameLen = CONFIG_MAX_FILENAME_LEN;
 
 
 // constructor
-Config::Config(const char* filename, Print *logger) {
+Config::Config(const char* filename) {
   _ini = new SPIFFSIniFile(filename);
   if (strlen(filename) <= CONFIG_MAX_FILENAME_LEN)
     strcpy(_filename, filename);
   else
     _filename[0] = '\0';
-  _logger = logger;
-  *_logger << "Config initialized (" << filename << ")" << endl;
+  Logger << "Config initialized (" << filename << ")" << endl;
 }
 Config::Config() {}
 
 bool Config::read() {  
   String s;
   if (!_ini->open()) {
-    *_logger << "Ini-File does not exist" << endl;
+    Logger << "Ini-File does not exist" << endl;
   }
 
   readDouble(section_controller, controller_kp, p.kp, 30.0);
@@ -33,7 +36,7 @@ bool Config::read() {
 
   readInt(section_system, system_tz, p.tzoffset, 0);
   
-  *_logger << "End of config file" << endl;
+  Logger << "End of config file" << endl;
   return true;
 }
 
@@ -41,13 +44,13 @@ bool Config::read() {
 bool Config::readString(const char* section, const char* key, String &value, String deflt) {
   const size_t bufferLen = 80;
   char buffer[bufferLen];
-  *_logger << "- " << section << ", " << key <<": ";
+  Logger << "- " << section << ", " << key <<": ";
   if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
     value = String(buffer);
-    *_logger << "'" << value << "'" << endl;
+    Logger << "'" << value << "'" << endl;
     return true;
   } else {
-    *_logger << "not found, using default (" << deflt << ")" << endl;
+    Logger << "not found, using default (" << deflt << ")" << endl;
     value = deflt;
     return false;
   }
@@ -56,13 +59,13 @@ bool Config::readString(const char* section, const char* key, String &value, Str
 bool Config::readInt(const char* section, const char* key, int &value, int deflt) {
   const size_t bufferLen = 80;
   char buffer[bufferLen];
-  *_logger << "- " << section << ", " << key <<": ";
+  Logger << "- " << section << ", " << key <<": ";
   if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
     value = atoi(buffer);
-    *_logger << value << endl;
+    Logger << value << endl;
     return true;
   } else {
-    *_logger << "not found, using default (" << deflt << ")" << endl;
+    Logger << "not found, using default (" << deflt << ")" << endl;
     value = deflt;
     return false;
   }
@@ -71,13 +74,13 @@ bool Config::readInt(const char* section, const char* key, int &value, int deflt
 bool Config::readDouble(const char* section, const char* key, double &value, double deflt) {
   const size_t bufferLen = 80;
   char buffer[bufferLen];
-  *_logger << "- " << section << ", " << key <<": ";
+  Logger << "- " << section << ", " << key <<": ";
   if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
     value = atof(buffer);
-    *_logger << value << endl;
+    Logger << value << endl;
     return true;
   } else {
-    *_logger << "not found, using default (" << deflt << ")" << endl;
+    Logger << "not found, using default (" << deflt << ")" << endl;
     value = deflt;
     return false;
   }
@@ -108,7 +111,7 @@ bool Config::save(){
   write(system_tz, p.tzoffset);
   
   _file.close();
-  *_logger << "Ini-File written" << endl;
+  Logger << "Ini-File written" << endl;
   return true;
 }
 

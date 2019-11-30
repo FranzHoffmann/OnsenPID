@@ -1,6 +1,7 @@
 #include "State.h"
 
 #include "src/Clock/Clock.h"
+#include "Logfile.h"
 
 /* constructor */
 StateMachine::StateMachine() {}
@@ -89,7 +90,7 @@ String StateMachine::stateAsString(State s) {
 
 
 void StateMachine::setState(State newState) {
-	//*_logger << "Change state from " << stateAsString(state) << " to " << stateAsString(newState) << endl;
+	Logger << "Change state from " << stateAsString(state) << " to " << stateAsString(newState) << endl;
 
 	if (newState == State::COOKING) {
 		startTime = Clock.getEpochTime();
@@ -104,7 +105,7 @@ switch (state) {
 
 	case State::WAITING:
 		if (Clock.getEpochTime() >= startTime) {
-			//*_logger << "Time: " << _time->getEpochTime() << ", startTime: " << startTime << endl;
+			Logger << "Time: " << Clock.getEpochTime() << ", startTime: " << startTime << endl;
 			setState(State::COOKING);
 		}
 		break;
@@ -112,7 +113,7 @@ switch (state) {
 	case State::COOKING:
 		int actTime = Clock.getEpochTime() - startTime;
 		if (actTime >= _cookingTime) {
-			//*_logger << "actTime: " << actTime << ", cookingTime: " << _cookingTime << endl;
+			Logger << "actTime: " << actTime << ", cookingTime: " << _cookingTime << endl;
 			setState(State::FINISHED);
 		}
 		break;

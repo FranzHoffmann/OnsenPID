@@ -1,11 +1,26 @@
 #include "Logfile.h"
+#include <Arduino.h>
+#include <Streaming.h>
+#include <FS.h>
+#include "src/Clock/Clock.h"
+
 
 /* constructor */
-Logfile::Logfile() {
+LogfileT::LogfileT() {
 	latest_timestamp = 0;
+	_logToFile = true;
+	_logToSerial = true;
 }
 
-size_t Logfile::write(uint8_t character) {
+	void LogfileT::enableLogToFile(bool b) {
+		_logToFile = b;
+	}
+
+	void LogfileT::enableLogToSerial(bool b) {
+		_logToSerial = b;
+	}
+
+size_t LogfileT::write(uint8_t character) {
 	static int pos = 0;
 	static LogEntryStruct entry;
 	
@@ -39,7 +54,7 @@ size_t Logfile::write(uint8_t character) {
  * format: "timestamp;message\r"
  * rotate files when reaching max. size
  */
-void Logfile::store(LogEntryStruct &entry) {
+void LogfileT::store(LogEntryStruct &entry) {
 		File f = SPIFFS.open(FILENAME_ACT, "a");
 		if (f.size() > MAX_FILESIZE - sizeof(entry)) {
 			f.close();
@@ -56,8 +71,8 @@ void Logfile::store(LogEntryStruct &entry) {
 /**
  * convert string to struct 
  */
-Logfile::LogEntryStruct Logfile::strToEntry(String s) {
-	Logfile::LogEntryStruct entry;
+LogfileT::LogEntryStruct LogfileT::strToEntry(String s) {
+	LogfileT::LogEntryStruct entry;
 	entry.timestamp = strtoul(s.c_str(), NULL, 10);
 	int pos = s.indexOf(';') + 1;
 	String msg = s.substring(pos);
@@ -67,12 +82,12 @@ Logfile::LogEntryStruct Logfile::strToEntry(String s) {
 
 
 /* simple Iterator-like interface: check for more messages */
-bool Logfile::hasMore() {
+bool LogfileT::hasMore() {
 	return this->iterator_hasMore;
 }
 
 /* simple Iterator-like interface: get next message */
-String Logfile::getNext() {
+String LogfileT::getNext() {
 	File f;
 	size_t file_len, file_pos;
 	String empty_string = String("");
@@ -114,7 +129,7 @@ String Logfile::getNext() {
 }
 
 /* simple Iterator-like interface reset readNextMessage to first message after t */
-void Logfile::rewind(unsigned long t) {
+void LogfileT::rewind(unsigned long t) {
 	if (t >= latest_timestamp) {
 		this->iterator_hasMore = false;    
 
@@ -125,7 +140,7 @@ void Logfile::rewind(unsigned long t) {
 		while (this->hasMore()) {
 			unsigned long last_offset = iterator_offset;
 			int last_file = iterator_file;
-			Logfile::LogEntryStruct entry;
+			LogfileT::LogEntryStruct entry;
 			
 			String s = getNext();
 			entry = strToEntry(s);
@@ -138,3 +153,5 @@ void Logfile::rewind(unsigned long t) {
 		}
 	}
 }
+
+LogfileT Logger;

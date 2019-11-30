@@ -137,7 +137,7 @@ void changeParam(String arg_name, String param_name, double *param) {
 	String str_to    = "auf";
 	if (server.hasArg(arg_name)) {
 			double val = server.arg(arg_name).toDouble();
-			logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
+			Logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
 			*param = val;
 	}
 }
@@ -148,7 +148,7 @@ void changeParam(String arg_name, String param_name, String &param) {
 	String str_to    = "auf";
 	if (server.hasArg(arg_name)) {
 			String val = server.arg(arg_name);
-			logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << param << ' ' << str_to << ' ' << val << endl;
+			Logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << param << ' ' << str_to << ' ' << val << endl;
 			param = val;
 	}
 }
@@ -159,7 +159,7 @@ void changeParam(String arg_name, String param_name, int *param) {
 	String str_to    = "auf";
 	if (server.hasArg(arg_name)) {
 			int val = server.arg(arg_name).toInt();
-			logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
+			Logger << str_param << ' ' << param_name << ' ' << str_from << ' ' << *param << ' ' << str_to << ' ' << val << endl;
 			*param = val;
 	}
 }
@@ -171,10 +171,10 @@ void changeParam(String arg_name, String param_name, int *param) {
  * TODO: make this streaming...
  */
 void send_file(String filename) {
-	// logger << "send_file(): " << filename << endl;
+	// Logger << "send_file(): " << filename << endl;
 	File f = filesystem.open(filename, "r");
 	if (!f) {
-		logger << "send_file(): file not found: " << filename << endl;
+		Logger << "send_file(): file not found: " << filename << endl;
 		fail("file not found: " + filename);
 		return;
 	}
@@ -197,7 +197,7 @@ bool stream_file(String filename) {
 	} else if (filesystem.exists(filename)) {
 		fn = filename;
 	} else {
-			logger << "stream_file(): could not open file" << filename << endl;
+			Logger << "stream_file(): could not open file" << filename << endl;
 			return false;
 	}
 	File f = filesystem.open(fn, "r");
@@ -218,7 +218,7 @@ void handleNotFound() {
 	if (stream_file(filename)) {
 		return;
 	}
-	logger << "URL nicht gefunden: " << server.uri() << endl;
+	Logger << "URL nicht gefunden: " << server.uri() << endl;
 	String message = "File Not Found\n\n";
 	message += "URI: " + server.uri();
 	message += "\nMethod: " + (server.method() == HTTP_GET) ? "GET" : "POST";
@@ -263,9 +263,9 @@ void handleAjax() {
 void handleWifi()   {
 	if (server.hasArg("scan")) {
 		// TODO: make this async
-		logger << "WiFi-Scan gestartet" << endl;
+		Logger << "WiFi-Scan gestartet" << endl;
 		int n = WiFi.scanNetworks();
-		logger << "WiFi-Scan abgeschlossen (" << n << " Netze gefunden)" << endl;
+		Logger << "WiFi-Scan abgeschlossen (" << n << " Netze gefunden)" << endl;
 		bool first = true;
 		server.setContentLength(CONTENT_LENGTH_UNKNOWN);
 		server.send(200, "text/json", String(""));
@@ -313,21 +313,21 @@ void handleRecipe() {
 		int mins = t.substring(3).toInt();
 		unsigned long timearg = midnight + 60 * mins + 3600 * hrs;
 		if (timearg < epoch) timearg += 86400;
-		logger << "time: " << hrs << ":" << mins << ", timearg: " << timearg << endl;
+		Logger << "time: " << hrs << ":" << mins << ", timearg: " << timearg << endl;
 		String m = server.arg("mode");
 		if (m == "nw") {
-			logger << "Web: Kochen sofort" << endl;
+			Logger << "Web: Kochen sofort" << endl;
 			sm.startCooking();
 		} else
 		if (m == "st") {
 			sm.startByStartTime(timearg);
-			logger << "Web: Kochen später (Start um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
+			Logger << "Web: Kochen später (Start um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
 		} else
 		if (m == "et") {
-			logger << "Web: Kochen später (Fertig um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
+			Logger << "Web: Kochen später (Fertig um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
 			sm.startByEndTime(timearg);
 		} else {
-			logger << "Web: unverständlichen Startbefehl ignoriert" << endl;
+			Logger << "Web: unverständlichen Startbefehl ignoriert" << endl;
 		}
 		cfg.save();
 	}
@@ -352,10 +352,10 @@ void handleData()   {
 void sendJsonData(unsigned long t) {
 	bool first = true;
 
-	//logger << "request: json data since " << t << endl;
+	//Logger << "request: json data since " << t << endl;
 	dl_rewind("TODO", t);
 	if (!dl_hasMore()) {
-		logger << "answer: nothing" << endl;
+		Logger << "answer: nothing" << endl;
 		server.send(200, "text/json", "{\"data\":[]}");
 		return;
 	}
@@ -386,17 +386,17 @@ void sendJsonData(unsigned long t) {
 	} else {
 		server.sendContent("], \"more\":1}");
 	}
-	//logger << "answer: " << count << " data points" << endl;
+	//Logger << "answer: " << count << " data points" << endl;
 }
 
 
 void sendCSVData() {
-	logger << "request: CSV data" << endl;
+	Logger << "request: CSV data" << endl;
 
 	uint32_t count = 0;
 	dl_rewind("TODO", 0);
 	if (!dl_hasMore()) {
-		logger << "answer: nothing" << endl;
+		Logger << "answer: nothing" << endl;
 		server.send(200, "text/csv", "");
 		return;
 	}
@@ -418,7 +418,7 @@ void sendCSVData() {
 		yield();
 	}
 	server.sendContent("]}");
-	logger << "answer: " << count << " data points" << endl;
+	Logger << "answer: " << count << " data points" << endl;
 }
 
 
@@ -445,8 +445,8 @@ void handleLog() {
 	bool first = true;
 	unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
 
-	logger.rewind(t);
-	if (!logger.hasMore()) {
+	Logger.rewind(t);
+	if (!Logger.hasMore()) {
 		server.send(200, "text/json", "{\"log\":[]}");
 		return;
 	}
@@ -455,13 +455,13 @@ void handleLog() {
 	server.send(200, "text/json", String(""));
 	server.sendContent("{\"log\":[");
 
-	while (logger.hasMore()) {
+	while (Logger.hasMore()) {
 		if (!first) server.sendContent(",");
 		first = false;
 
-		String entry_str = logger.getNext();
+		String entry_str = Logger.getNext();
 		if (entry_str.length() > 0) {
-			Logfile::LogEntryStruct entry = logger.strToEntry(entry_str);
+			LogfileT::LogEntryStruct entry = Logger.strToEntry(entry_str);
 			String s = "{\"ts\":" + String(entry.timestamp) + ", \"msg\":\"" + String(entry.message) + "\"}\r";
 			server.sendContent(s);
 		}
@@ -499,18 +499,18 @@ void handleFileUpload() {
 			filesystem.remove(fn);
 		}
 		uploadFile = filesystem.open(fn, "w");
-		logger << "Upload: START, filename: " << fn << endl;
+		Logger << "Upload: START, filename: " << fn << endl;
 		if (!uploadFile) {
-			logger << "Warning: could not open file" << endl;
+			Logger << "Warning: could not open file" << endl;
 		}
 	}
 
 	else if (upload.status == UPLOAD_FILE_WRITE) {
 		if (uploadFile) {
 			uploadFile.write(upload.buf, upload.currentSize);
-			logger << "Upload: WRITE, Bytes: " << upload.currentSize << endl;
+			Logger << "Upload: WRITE, Bytes: " << upload.currentSize << endl;
 		} else {
-			logger << "Upload: WRITE (failed)" << endl;
+			Logger << "Upload: WRITE (failed)" << endl;
 		}
 	}
 
@@ -518,16 +518,16 @@ void handleFileUpload() {
 		if (uploadFile) {
 			uploadFile.close();
 		}
-		logger << "Upload: END, Size: " << upload.totalSize << endl;
+		Logger << "Upload: END, Size: " << upload.totalSize << endl;
 	}
 }
 
 void handleFileDelete() {
 	if (server.hasArg("fn")) {
 		String fn = server.arg("fn");
-		logger << "deleting file '" << fn << "'" << endl;
+		Logger << "deleting file '" << fn << "'" << endl;
 		if (!filesystem.remove(fn)) {
-			logger << "file delete failed" << endl;
+			Logger << "file delete failed" << endl;
 		}
 	}
 	redirect("/cfg");
