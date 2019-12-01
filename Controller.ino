@@ -10,7 +10,7 @@ void setup_controller() {
 
 /* PWM and PID controller */
 //
-// interrupt routine seems to crash if I call function in Stame object?
+// interrupt routine seems to crash if I call function in Process object?
 // so this communicates by global variables in p and cfg.p
 //
 ICACHE_RAM_ATTR void controllerISR() {

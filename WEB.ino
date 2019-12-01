@@ -48,7 +48,7 @@ String subst(String var) {
 	if (var == "OUT") return String(p.out);
 	if (var == "KP") return String(cfg.p.kp);
 	if (var == "TN") return String(cfg.p.tn);
-	if (var == "TV") return String(cfg.p.tv);
+//	if (var == "TV") return String(cfg.p.tv);
 	if (var == "EMAX") return String(cfg.p.emax);
 	if (var == "TIME") return String(Clock.getEpochTime());//timeClient.getFormattedTime());
 	if (var == "TIME_LEFT") return String(sm.getRemainingTime() / 60);
@@ -477,9 +477,9 @@ void handleConfig() {
 		changeParam("tv", "Vorhaltezeit", &(cfg.p.tv));
 		changeParam("emax", "Max. Regelabweichung", &(cfg.p.emax));
 		changeParam("tz", "UTC Offset", &(cfg.p.tzoffset));
+		cfg.save();
 	}
 	send_file("/cfg.html");
-	cfg.save();
 }
 
 // --------------------------------------------------------------------------------------------- File upload

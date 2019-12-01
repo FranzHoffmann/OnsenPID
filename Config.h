@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <SPIFFSIniFile.h>
+#include "Process.h"
 
 #define CONFIG_MAX_FILENAME_LEN 26
 
@@ -12,7 +13,8 @@
 #define controller_tn "Tn"
 #define controller_tv "Tv"
 #define controller_emax "Emax"
-
+#define controller_time "time"
+#define controller_temp "temp"
 
 #define section_wifi "wifi"
 #define wifi_hostname "hostname"
@@ -28,23 +30,22 @@ class Config {
   enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
   struct param {
     WiFiEnum AP_mode;
-    int set_time, act_time;       // remaining time (s)
     double emax;
     double kp, tn, tv;            // controller parameter
-    double t1;                    // filter time for act temperature
     String ssid, pw;
     String hostname;
     int tzoffset;
   } p;
 
   // constructor
-  Config(const char* filename);
-  Config();
+  Config(Process p, const char* filename);
+  Config(Process p);
   
   bool read();
   bool save();
 
   private:
+  Process _process;
   char _filename[CONFIG_MAX_FILENAME_LEN];
   mutable File _file;
   SPIFFSIniFile *_ini;

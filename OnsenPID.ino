@@ -34,7 +34,7 @@
 #include "src/MemInfo/MemoryInfo.h"
 #include "Config.h"
 #include <DS18B20.h>
-#include "State.h"
+#include "Process.h"
 #include "src/Clock/Clock.h"
 
 #define LCD_RS D5
@@ -85,14 +85,16 @@ enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
 
 struct param {
   WiFiEnum AP_mode;
-  double set, act, out;         // controller i/o
+  double set;			// temperature setpoint, from recipe
+  double act;			// actual temperature, from thermometer
+  double out;			// actual power, from controller
   boolean released;				// controller is released
   int screen;                   // active screen
   boolean sensorOK;
 } p;
 
-Config cfg;
-StateMachine sm;
+Process sm;
+Config cfg(sm);
 
 char buf[4][17];
 PString line1(buf[0], sizeof(buf[0]));
@@ -200,6 +202,7 @@ int task_statistics() {
 // -------------------------------------------------------------------------- Recipe Task
 int task_recipe() {
   sm.update();
+  p.set = sm.getCookingTemp();
   p.released = (sm.getState() == State::COOKING);
   return 1000;
 }
@@ -331,7 +334,7 @@ void setup() {
     Serial << "- '" << fileName << "', " << fileSize << " bytes" << endl;
   } 
     
-  cfg = Config("/config.ini");
+  cfg = Config(sm, "/config.ini");
   init_params();
 
   lcd.begin(16, 2);
