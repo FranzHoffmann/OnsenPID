@@ -16,6 +16,7 @@ class ClockT {
 
 		unsigned long getEpochTime();
 		void update();
+		String getFormattedTime();
 		
 	private:
 	NTPClient* _timeClient;

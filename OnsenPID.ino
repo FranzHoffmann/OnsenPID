@@ -24,7 +24,6 @@
 
 #include <Streaming.h>
 #include <ESP8266WiFi.h>
-#include <LiquidCrystal.h>
 #include <PString.h>
 #include "Logfile.h"
 #include <FS.h>
@@ -36,13 +35,8 @@
 #include <DS18B20.h>
 #include "Process.h"
 #include "src/Clock/Clock.h"
+#include "LCDMenu.h"
 
-#define LCD_RS D5
-#define LCD_EN D6
-#define LCD_D4 D0
-#define LCD_D5 D1
-#define LCD_D6 D2
-#define LCD_D7 D3
 
 #define PWM_PORT D4
 #define TMP_PORT D7
@@ -50,9 +44,6 @@
 
 ESP8266WebServer server(80);
 FS filesystem = SPIFFS;
-
-LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
-
 OneWire oneWire(TMP_PORT);
 DS18B20 thermometer(&oneWire);
 
@@ -66,20 +57,6 @@ struct task_t {
   unsigned long tsum, tmin, tmax, tcount;
 };
 task_t tasklist[MAX_TASKS];
-
-/* Buttons and menu p.screens */
-enum ButtonEnum {BTN_SEL, BTN_UP, BTN_DN, BTN_LE, BTN_RI, BTN_NONE};
-#define DISP_MAIN 0
-#define DISP_SET_SET 1
-#define DISP_SET_TIME 2
-#define DISP_OUTPUT 3
-#define DISP_SET_KP 4
-#define DISP_SET_TN 5
-#define DISP_IP 6
-#define SCREEN_COUNT 7
-
-#define DEGC '\1' << 'C'   // custom caracter for degree
-#define ARROW '\2'         // custom character for up/down arrow
 
 enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
 
@@ -95,14 +72,7 @@ struct param {
 
 Process sm;
 Config cfg(sm);
-
-char buf[4][17];
-PString line1(buf[0], sizeof(buf[0]));
-PString line2(buf[1], sizeof(buf[1]));
-PString line1_old(buf[2], sizeof(buf[2]));
-PString line2_old(buf[3], sizeof(buf[3]));
-
-
+LCDMenu lcd(sm);
 
 
 // ------------------------------------------------------------------------ useful functions
@@ -238,6 +208,10 @@ int task_read_temp() {
 // -------------------------------------------------------------------------- LCD Task
 /* task: update LCD */
 int task_lcd() {
+	lcd.update();
+	
+  // TODO
+  /* 
   if ((line1 == line1_old) && (line2 == line2_old)) return 50;
   
   lcd.clear();
@@ -247,7 +221,8 @@ int task_lcd() {
   lcd << line2;
   line1_old.begin(); line1_old << line1;
   line2_old.begin(); line2_old << line2;
-  return 500;  
+  */
+  return 50;  
 }
 
 // -------------------------------------------------------------------------- Webserver Task
@@ -337,12 +312,7 @@ void setup() {
   cfg = Config(sm, "/config.ini");
   init_params();
 
-  lcd.begin(16, 2);
-  byte char_deg[8] = {6,9,9,6,0,0,0,0};
-  byte char_updn[8] = {4, 14, 31, 4, 4, 31, 14, 4}; 
-  lcd.createChar(1, char_deg);
-  lcd.createChar(2, char_updn);
-  lcd.clear();
+  lcd.setup();
   Logger << "LCD initialized" << endl;
     
   start_WiFi();
@@ -367,7 +337,6 @@ void setup() {
 
   setup_ds18b20();
   
-  start_task(task_keyboard, "keybd");
   start_task(task_lcd, "lcd");
   start_task(task_ntp, "ntp");
   start_task(task_recipe, "recipe");

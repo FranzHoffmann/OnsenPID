@@ -17,4 +17,8 @@ unsigned long ClockT::getEpochTime() {
 	return _timeClient->getEpochTime();
 }
 
+String ClockT::getFormattedTime() {
+	return _timeClient->getFormattedTime();
+}
+
 ClockT Clock;

@@ -1,7 +1,7 @@
 #ifndef recipe_h
 #define recipe_h
 
-#define REC_MAX_STEPS 10
+#define REC_STEPS 5
 
 struct Param_t {
 	char id[6];
@@ -25,8 +25,8 @@ struct recipe_t {
 	double Emax;
 	
 	int noOfSteps;
-	int timeArray[REC_MAX_STEPS];
-	double tempArray[REC_MAX_STEPS];
+	int timeArray[REC_STEPS];
+	double tempArray[REC_STEPS];
 };
 
 
