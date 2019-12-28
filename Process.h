@@ -7,38 +7,40 @@
 #include <Streaming.h>
 #include "recipe.h"
 
-enum class Parameter {KP, TN, TV, EMAX, TIME, TEMP};
 enum class State {IDLE, WAITING, COOKING, FINISHED, ERROR};
 
 class Process {
 	public:
 		Process();
+		void update();
 
+		// get/change state
 		State getState();
-		int getRemainingTime();
+		void startCooking(int recno);
+		void startByStartTime(int recno, unsigned long starttime);
+		void startByEndTime(int recno, unsigned long endtime);
+		void next();
+		void abort();
 
+		// get recipe or setpoints
+		int getRemainingTime();
+		double getCookingTemp();
+
+		// TODO: deprecated
 		void setCookingTime(int t);
 		int getCookingTime();
-
 		void setCookingTemp(double t);
-		double getCookingTemp();
-	
-		void startCooking();
-		void startByStartTime(unsigned long starttime);
-		void startByEndTime(unsigned long endtime);
-		
+
 		void setParam(Parameter p, double value);
 		void setParam(Parameter p, int value);
 		double getParamDouble(Parameter p);
 		int getParamInt(Parameter p);
-		
+
 		String stateAsString(State s);
-		
-		void next();
-		void update();
-		
+
 	private:
-		recipe_t _recipe;
+		uint32_t calcRecipeDuration(int recno);
+		int act_rec;
 		State state = State::IDLE;
 		unsigned long startTime;
 

@@ -2,7 +2,14 @@
 #define recipe_h
 
 #define REC_STEPS 5
+#define REC_NAME_LEN 16
+#define REC_PARAM_COUNT 5
+#define REC_COUNT 5
 
+
+// these are the parameters.
+// Param_t is initialized in the .cpp file
+enum class Parameter {KP, TN, TV, EMAX, PMAX};
 struct Param_t {
 	char id[6];
 	char name[17];
@@ -10,24 +17,15 @@ struct Param_t {
 	char unit[6];
 	double min, max;
 };
-/*
-Param_t par[] = {
-	{"kp",		"Verstärkung",		5.0,	"%/°C",	0.0,	100.0},
-	{"tn",		"Nachstellzeit",	40.0,	"s"	,	0.0,	1000.0},
-	{"emax",	"Max. Reglerabw.",	10.0,	"°C",	0.0,	100.0}
-};
-*/
+extern Param_t pararray[REC_PARAM_COUNT];
+
 struct recipe_t {
-	String name;
-	
-	double Kp;
-	double Tn;
-	double Emax;
-	
-	int noOfSteps;
-	int timeArray[REC_STEPS];
-	double tempArray[REC_STEPS];
+	char name[REC_NAME_LEN+1];
+	int times[REC_STEPS];
+	double temps[REC_STEPS];
+	double param[REC_PARAM_COUNT];
 };
 
+extern recipe_t recipe[];
 
 #endif

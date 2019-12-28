@@ -21,7 +21,6 @@
 //WiFiUDP ntpUDP;
 //NTPClient timeClient(ntpUDP);
 
-
 #include <Streaming.h>
 #include <ESP8266WiFi.h>
 #include <PString.h>
@@ -60,6 +59,9 @@ task_t tasklist[MAX_TASKS];
 
 enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
 
+
+
+
 struct param {
   WiFiEnum AP_mode;
   double set;			// temperature setpoint, from recipe
@@ -72,7 +74,6 @@ struct param {
 
 Process sm;
 Config cfg(sm);
-LCDMenu lcd(sm);
 
 
 // ------------------------------------------------------------------------ useful functions
@@ -208,7 +209,7 @@ int task_read_temp() {
 // -------------------------------------------------------------------------- LCD Task
 /* task: update LCD */
 int task_lcd() {
-	lcd.update();
+	LCDMenu_update();
 	
   // TODO
   /* 
@@ -312,7 +313,7 @@ void setup() {
   cfg = Config(sm, "/config.ini");
   init_params();
 
-  lcd.setup();
+  LCDMenu_setup();
   Logger << "LCD initialized" << endl;
     
   start_WiFi();

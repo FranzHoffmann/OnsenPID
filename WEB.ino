@@ -244,9 +244,15 @@ void handleAjax() {
 	if (server.hasArg("cmd")) {
 		String cmd = server.arg("cmd");
 		if (cmd == "1") {
-			// start cooking
-			// TODO: do this properly. state shoud be encapsulated and changed by functions
-			sm.startCooking();
+			int rec = 0;
+			if (server.hasArg("rec")) {
+				String s = server.arg("rec");
+				rec = s.toInt();
+			} else {
+				// TODO
+				Logger << "TODO: start command without recipe number" << endl;
+			}
+			sm.startCooking(rec);
 		}
 	}
 	send_file("/ajax.json");
@@ -315,17 +321,25 @@ void handleRecipe() {
 		if (timearg < epoch) timearg += 86400;
 		Logger << "time: " << hrs << ":" << mins << ", timearg: " << timearg << endl;
 		String m = server.arg("mode");
+		int rec = 0;
+		if (server.hasArg("rec")) {
+			String s = server.arg("rec");
+			rec = s.toInt();
+		} else {
+			// TODO
+			Logger << "TODO: start command without recipe number" << endl;
+		}
 		if (m == "nw") {
 			Logger << "Web: Kochen sofort" << endl;
-			sm.startCooking();
+			sm.startCooking(rec);
 		} else
 		if (m == "st") {
-			sm.startByStartTime(timearg);
+			sm.startByStartTime(rec, timearg);
 			Logger << "Web: Kochen später (Start um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
 		} else
 		if (m == "et") {
 			Logger << "Web: Kochen später (Fertig um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
-			sm.startByEndTime(timearg);
+			sm.startByEndTime(rec, timearg);
 		} else {
 			Logger << "Web: unverständlichen Startbefehl ignoriert" << endl;
 		}

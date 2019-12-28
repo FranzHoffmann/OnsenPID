@@ -1,29 +1,22 @@
-#include "LCDMenu.h"
-
 #include <Arduino.h>
 #include <LiquidCrystal.h>
 #include "Process.h"
 #include "src/Clock/Clock.h"
 
-#define LCD_RS D5
-#define LCD_EN D6
-#define LCD_D4 D0
-#define LCD_D5 D1
-#define LCD_D6 D2
-#define LCD_D7 D3
-#define LCD_AI A0
-
-#define REC_COUNT 5;
-
-LCDMenu::LCDMenu(Process p) :
-	line1(buf1, sizeof(buf1)),
-	line2(buf2, sizeof(buf2))
-{
-	process = p;
-}
 
 
-void LCDMenu::setup() {
+
+Screen screen;
+int rec_i, param_i, wifi_i, step_i;
+
+char buf1[17], buf2[17];
+PString line1(buf1, sizeof(buf1));
+PString line2(buf2, sizeof(buf2));
+
+static const char degc[2] = {'\1', 'C'};
+
+
+void LCDMenu_setup() {
 	byte char_deg[8]  = {6,  9,  9, 6, 0,  0,  0, 0};
 	byte char_updn[8] = {4, 14, 31, 4, 4, 31, 14, 4}; 
 
@@ -35,7 +28,7 @@ void LCDMenu::setup() {
 }
 
 
-LCDMenu::ButtonEnum LCDMenu::readKey() {
+ButtonEnum LCDMenu_readKey() {
 	static int count = 0;
 	static ButtonEnum previous;
 	ButtonEnum btn;
@@ -65,92 +58,79 @@ LCDMenu::ButtonEnum LCDMenu::readKey() {
 
 // -------------------------------------------------------------------------- LCD UI Task
 /* read keyboard and write menu */
-void LCDMenu::update() {
-	ButtonEnum btn = readKey();
-
-	line1.begin();
-	line2.begin();
+void LCDMenu_update() {
+	ButtonEnum btn = LCDMenu_readKey();
 
 	switch (screen) {
-		case Screen::MAIN_VERSION:
-			display_main_version(btn);
-			break;
+		case Screen::MAIN_VERSION:		disp_main_version(btn);		break;
+		case Screen::MAIN_TIME:			disp_main_time(btn);		break;
+		case Screen::MAIN_COOK:			disp_main_cook(btn);		break;
+		case Screen::MAIN_RECIPE:		disp_main_recipe(btn);		break;
+		case Screen::MAIN_SETTINGS:		disp_main_settings(btn);	break;
 
-		case Screen::MAIN_TIME:
-			display_main_time(btn);
-			break;
+		case Screen::COOK_ABORT:		disp_cook_abort(btn);		break;
+		case Screen::COOK_RECIPE:		disp_cook_recipe(btn);		break;
+		case Screen::COOK_TIMER:		disp_cook_timer(btn);		break;
+		case Screen::COOK_START:		disp_cook_start(btn);		break;
 
-		case Screen::MAIN_COOK:
-			display_main_cook(btn);
-			break;
+		case Screen::REC_SELECT:		disp_rec_select(btn);		break;
+		case Screen::REC_STEP_i:		disp_rec_step_i(btn);		break;
+		case Screen::REC_STEP_i_TEMP:	disp_rec_step_i_temp(btn);	break;
+		case Screen::REC_STEP_i_TIME:	disp_rec_step_i_time(btn);	break;
+		case Screen::REC_PARAM_i:		disp_rec_param_i(btn);		break;
+		case Screen::REC_EXIT_SAVE:		disp_rec_exit_save(btn);	break;
+		case Screen::REC_EXIT_ABORT:	disp_rec_exit_abort(btn);	break;
 
-		case Screen::MAIN_RECIPE:
-			display_main_recipe(btn);
-			break;
-
-		case Screen::MAIN_SETTINGS:
-			display_main_settings(btn);
-			break;
-
-		case Screen::REC_SELECT:
-			display_rec_select(btn);
-			break;
-
-		case Screen::REC_STEP_i:
-			display_rec_step_i(btn);
-			break;
-
-		case Screen::REC_STEP_i_TEMP:
-			display_rec_step_i_temp(btn);
-			break;
-
-		case Screen::REC_STEP_i_TIME:
-			display_rec_step_i_time(btn);
-			break;
+		case Screen::SET_WIFI:			disp_set_wifi(btn);			break;
+		case Screen::SET_TIMEZONE:		disp_set_tz(btn);			break;
 	}
-	screen = newScreen;
 }
 
-void LCDMenu::display_main_version(ButtonEnum btn) {
-	line1 << "OnsenPID";
-	line2 << "Version 1.0.7"; //TODO
+
+void disp_main_version(ButtonEnum btn) {
+	line1 = "OnsenPID";
+	line2 = "Version 1.0.7"; //TODO
 	if (btn == BTN_DN) screen = Screen::MAIN_TIME;
 	else if (btn == BTN_UP) screen = Screen::MAIN_SETTINGS;
 }
 
-void LCDMenu::display_main_time(ButtonEnum btn) {
+void disp_main_time(ButtonEnum btn) {
 	uint32_t ts = Clock.getEpochTime();
+	line1.begin();
 	line1 << Clock.getFormattedTime();
-	line2 << "TODO: Datum";
+	line2 = "TODO: Datum";
 	if (btn == BTN_DN) screen = Screen::MAIN_COOK;
 	else if (btn == BTN_UP) screen = Screen::MAIN_VERSION;
 }
 
-void LCDMenu::display_main_cook(ButtonEnum btn) {
-	switch (process.getState()) {
+void disp_main_cook(ButtonEnum btn) {
+	switch (sm.getState()) {
 		case State::COOKING:
-			line1 << process.getCookingTemp() << degc << "C";;
-			line2 << "Noch " << process.getRemainingTime()/60 << " min";
+			line1.begin();
+			line1 << p.act << " / " << sm.getCookingTemp() << degc;
+			line2.begin();
+			line2 << "Noch " << sm.getRemainingTime()/60 << " min";
 			if (btn == BTN_RI) screen = Screen::COOK_ABORT;
 			break;
 
 		case State::WAITING:
-			line1 << "Start in";
-			line2 << process.getRemainingTime()/60 << " min";
+			line1 = "Start in";
+			line2.begin();
+			line2 << sm.getRemainingTime()/60 << " min";
 			if (btn == BTN_RI) screen = Screen::COOK_ABORT;
 			break;
 
 		case State::IDLE:
-			line1 << "Kochen";
-			line2 << "";
+			line1 = "Kochen";
+			line2.begin();
 			if (btn == BTN_RI) screen = Screen::COOK_RECIPE;
 			break;
 
 		case State::FINISHED:
-			line1 << "Guten Appetit!";
-			line2 << "";
+			line1 = "Guten Appetit!";
+			line2.begin();
 			if (btn == BTN_SEL) {
-				process.next();
+				sm.next();
 			}
 			break;
 	}
@@ -158,34 +138,47 @@ void LCDMenu::display_main_cook(ButtonEnum btn) {
 	else if (btn == BTN_UP) screen = Screen::MAIN_TIME;
 }
 
-void LCDMenu::display_main_recipe(ButtonEnum btn) {
-	line1 << "Rezepte";
-	line2 << "bearbeiten";
+void disp_main_recipe(ButtonEnum btn) {
+	line1 = "Rezepte";
+	line2 = "bearbeiten";
 	if (btn == BTN_DN) screen = Screen::MAIN_SETTINGS;
 	else if (btn == BTN_UP) screen = Screen::MAIN_COOK;
 }
 
-void LCDMenu::display_main_settings(ButtonEnum btn) {
-	line1 << "Einstellungen";
-	line2 << "";
+void disp_main_settings(ButtonEnum btn) {
+	line1 = "Einstellungen";
+	line2.begin();
 	//if (btn == BTN_DN) return Screen::MAIN_VERSION;
 	if (btn == BTN_UP) screen = Screen::MAIN_RECIPE;
 	else if (btn == BTN_RI) screen = Screen::SET_WIFI;
 }
 
-void LCDMenu::display_rec_select(ButtonEnum btn) {
-	line1 << "Rezept:";
+
+
+void disp_cook_abort(ButtonEnum btn) {}
+void disp_cook_recipe(ButtonEnum btn) {}
+void disp_cook_timer(ButtonEnum btn) {}
+void disp_cook_start(ButtonEnum btn) {}
+
+
+
+
+
+void disp_rec_select(ButtonEnum btn) {
+	line1 = "Rezept:";
+	line2.begin();
 	line2 << "Rezept[" << rec_i << "].name";
-	if (btn == BTN_UP)			rec_i = (rec_i - 1)%REC_COUNT;
-	else if (btn == BTN_DN)		rec_i = (rec_i + 1)%REC_COUNT;
-	else if (btn == BTN_LE)		screen = Screen::MAIN_RECIPE;
-	else if (btn == BTN_RI) 	screen = Screen::REC_NAME;
-	else if (btn == BTN_SEL)	screen = Screen::REC_NAME;
+	if (btn == BTN_UP)       rec_i = (rec_i - 1) % REC_COUNT;
+	else if (btn == BTN_DN)  rec_i = (rec_i + 1) % REC_COUNT;
+	else if (btn == BTN_LE)  screen = Screen::MAIN_RECIPE;
+	else if (btn == BTN_RI)  screen = Screen::REC_NAME;
+	else if (btn == BTN_SEL) screen = Screen::REC_NAME;
 }
 
-void LCDMenu::display_rec_step_i(ButtonEnum btn) {
+void disp_rec_step_i(ButtonEnum btn) {
+	line1.begin();
 	line1 << "Schritt " << step_i + 1;
-	line2 << "TODO";
+	line2 = "TODO";
 	if (btn == BTN_DN) screen = Screen::REC_STEP_i_TEMP;
 	else if (btn == BTN_LE)	{
 		if (step_i == 0) screen = Screen::REC_NAME;
@@ -197,19 +190,103 @@ void LCDMenu::display_rec_step_i(ButtonEnum btn) {
 	}
 }
 
-void LCDMenu::display_rec_step_i_temp(ButtonEnum btn) {
-	line1 << "Schritt " << step_i
-	line2 << "Temp.: TODO"
+void disp_rec_step_i_temp(ButtonEnum btn) {
+	static bool edit = false;
+	static double value;
+	// jump to edit screen if editing is active
+	if (edit) {
+		if (disp_edit_number(btn, value, 20.0, 200.0, 0.5, degc)) {
+			// edit finished
+			edit = false;
+		} else {
+			return;
+		}
+	}
+	line1.begin();
+	line1 << "Schritt " << step_i;
+	line2 = "Temp.: TODO";
 	if (btn == BTN_DN)			screen = Screen::REC_STEP_i_TIME;
 	else if (btn == BTN_UP)		screen = Screen::REC_STEP_i;
 	else if (btn == BTN_SEL)	{
-		//TODO edit
+		//start editing
+		edit = true;
+		value = 0.0; // TODO:recipe[rec_i].temp[step_i]
 	}
 }
 
-void LCDMenu::display_rec_step_i_time(ButtonEnum btn) {
+void disp_rec_step_i_time(ButtonEnum btn) {
 }
 
+void disp_rec_param_i(ButtonEnum btn) {
+}
+
+void disp_rec_exit_save(ButtonEnum btn) {
+}
+
+void disp_rec_exit_abort(ButtonEnum btn) {
+}
+
+void disp_set_wifi(ButtonEnum btn) {
+	line1.begin(); 
+	line2.begin();
+	switch (wifi_i) {
+		 case 0:
+			line1 << "WLAN";
+			if (p.AP_mode == WIFI_OFFLINE)	line2 << "offline";
+			if (p.AP_mode == WIFI_CONN)		line2 << "verbunden";
+			if (p.AP_mode == WIFI_APMODE)	line2 << "AP aktiv";
+			break;
+		case 1:
+			line1 << "SSID";
+			line2 << cfg.p.ssid;
+			break;
+		case 2:
+			line1 << "Hostname";
+			line2 << cfg.p.hostname;
+			break;
+		case 3:
+			line1 << "IP";
+			if (p.AP_mode == WIFI_OFFLINE)	line2 << "---";
+			if (p.AP_mode == WIFI_CONN)		line2 << WiFi.localIP();
+			if (p.AP_mode == WIFI_APMODE)	line2 << WiFi.softAPIP();
+	}
+	if (btn == BTN_DN) wifi_i = (wifi_i + 1) % 4;
+	else if (btn == BTN_UP) wifi_i = (wifi_i - 1) % 4;
+	else if (btn == BTN_RI) {
+		wifi_i = 0;
+		screen = Screen::SET_TIMEZONE;
+	}
+	else if (btn == BTN_LE) {
+		wifi_i = 0;
+		screen = Screen::MAIN_SETTINGS;
+	}
+}
+
+void disp_set_tz(ButtonEnum btn) {}
+
+
+/**
+ * This screen should be used for any value to be edited.
+ * Edit mode should be activated when ENTER is pressed while the value is displayed
+ * The value can be edited in line 2
+ * The function will not touch line1.
+ */
+bool disp_edit_number(ButtonEnum btn,
+	double &value, double vmin, double vmax, double step,
+	const char *unit)
+{
+	if (btn == BTN_UP) value = value + step;
+	else if (btn == BTN_UP) value = value - step;
+	value = (value > vmax) ? vmax : value;
+	value = (value < vmin) ? vmin : value;
+	line2.begin();
+	line2 << value << " " << unit;
+	if (btn == BTN_SEL) {
+		return true;
+	} else {
+		return false;
+	}
+}
 
 /*
   ButtonEnum b = readKey(A0);

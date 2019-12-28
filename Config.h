@@ -43,8 +43,11 @@ class Config {
   
   bool read();
   bool save();
+  void readRecipes();
 
   private:
+  void writeRecipes();
+  
   Process _process;
   char _filename[CONFIG_MAX_FILENAME_LEN];
   mutable File _file;

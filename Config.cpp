@@ -22,29 +22,11 @@ Config::Config(Process p) {
 }
 
 bool Config::read() {  
-	String s;
 	if (!_ini->open()) {
 		Logger << "Ini-File does not exist" << endl;
 	}
-	double d;
-	int i;
-	
-	readDouble(section_controller, controller_kp, p.kp, 30.0);
-	_process.setParam(Parameter::KP, p.kp);
-	
-	readDouble(section_controller, controller_tn, p.tn, 20.0);
-	_process.setParam(Parameter::TN, p.tn);
-	
-	readDouble(section_controller, controller_emax, p.emax, 10.0);
-	_process.setParam(Parameter::EMAX, p.emax);
 
-	//readDouble(section_controller, controller_tv, d, 0.0);
-
-	readDouble(section_controller, controller_temp, d, 65.0);
-	_process.setParam(Parameter::TEMP, d);
-
-	readInt(section_controller, controller_time, i, 3600);
-	_process.setParam(Parameter::TIME, i);
+	readRecipes();
 
 	readString(section_wifi, wifi_hostname, p.hostname, String("onsenPID"));
 	readString(section_wifi, wifi_ssid,     p.ssid, String("default_ssid"));
@@ -56,6 +38,55 @@ bool Config::read() {
 	return true;
 }
 
+void Config::readRecipes() {
+	String section, key;
+	String strValue;
+	for (int i=0; i<REC_COUNT; i++) {
+		section = "Recipe" + i;
+		readString(section.c_str(), "name", strValue, section.c_str());
+		strncpy(recipe[i].name, strValue.c_str(), sizeof(recipe[i].name));
+		// read times and temps arrays
+		for (int j=0; j<REC_STEPS; j++) {
+			key = "time" + j;
+			readInt(section.c_str(), key.c_str(), recipe[i].times[j], 0);
+			key = "temp" + j;
+			readDouble(section.c_str(), key.c_str(), recipe[i].temps[j], 0.0);
+			yield();
+		}
+		// read params
+		for (int j=0; j<REC_PARAM_COUNT; j++) {
+			key = pararray[j].id;
+			readDouble(section.c_str(), key.c_str(), recipe[i].param[j], 0.0);
+			yield();
+		}
+	}
+}
+
+// Note: only the whole file can be written at once.
+// Don't call this, except from save()
+void Config::writeRecipes() {
+	String section, key;
+	String strValue;
+	for (int i=0; i<REC_COUNT; i++) {
+		section = "Recipe" + i;
+		write(section.c_str());
+		write("name", recipe[i].name);
+		// write times and temps arrays
+		for (int j=0; j<REC_STEPS; j++) {
+			key = "time" + j;
+			write(key.c_str(), recipe[i].times[j]);
+			key = "temp" + j;
+			write(key.c_str(), recipe[i].temps[j]);
+			yield();
+		}
+		// write params
+		for (int j=0; j<REC_PARAM_COUNT; j++) {
+			key = pararray[j].id;
+			write(key.c_str(), recipe[i].param[j]);
+			yield();
+		}
+	}
+}
 
 bool Config::readString(const char* section, const char* key, String &value, String deflt) {
 	const size_t bufferLen = 80;
@@ -111,12 +142,8 @@ bool Config::save(){
 	if (!_file) {
 			return false;
 	}
-	
-	write(section_controller);
-	write(controller_kp, p.kp);
-	write(controller_tn, p.tn);
-	write(controller_tv, p.tv);
-	write(controller_emax, p.emax);
+
+	writeRecipes();
 
 	write(section_wifi);
 	write(wifi_hostname, p.hostname.c_str());
