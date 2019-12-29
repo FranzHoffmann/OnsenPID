@@ -44,7 +44,7 @@ void redirect(String url) {
 String subst(String var) {
 	String s;
 	if (var == "ACT") return String(p.act);
-	if (var == "SET") return String(sm.getCookingTemp());
+	if (var == "SET") return String(sm.out.set);
 	if (var == "OUT") return String(p.out);
 	if (var == "KP") return String(cfg.p.kp);
 	if (var == "TN") return String(cfg.p.tn);
@@ -52,7 +52,7 @@ String subst(String var) {
 	if (var == "EMAX") return String(cfg.p.emax);
 	if (var == "TIME") return String(Clock.getEpochTime());//timeClient.getFormattedTime());
 	if (var == "TIME_LEFT") return String(sm.getRemainingTime() / 60);
-	if (var == "TIME_SET") return String(sm.getCookingTime()/60);
+//	if (var == "TIME_SET") return String(sm.getCookingTime()/60);
 	if (var == "STATE") return sm.stateAsString(sm.getState());
 	if (var == "HOSTNAME") return String(cfg.p.hostname);
 	if (var == "SSID") return cfg.p.ssid;
@@ -303,15 +303,6 @@ void handleWifi()   {
 // --------------------------------------------------------------------------------------------- recipe
 void handleRecipe() {
 	if (server.hasArg("start")) {
-		
-		double setpoint_temp = sm.getCookingTemp();
-		changeParam("temp", "Temperatur", &setpoint_temp);
-		sm.setCookingTemp(setpoint_temp);
-		
-		int setpoint_time = sm.getCookingTime() / 60;
-		changeParam("duration", "Kochzeit", &setpoint_time);
-		sm.setCookingTime(setpoint_time * 60);
-
 		String t = server.arg("time");
 		unsigned long epoch = Clock.getEpochTime();
 		unsigned long midnight = epoch - (epoch % 86400L) - 3600 * cfg.p.tzoffset;
@@ -320,7 +311,7 @@ void handleRecipe() {
 		unsigned long timearg = midnight + 60 * mins + 3600 * hrs;
 		if (timearg < epoch) timearg += 86400;
 		Logger << "time: " << hrs << ":" << mins << ", timearg: " << timearg << endl;
-		String m = server.arg("mode");
+
 		int rec = 0;
 		if (server.hasArg("rec")) {
 			String s = server.arg("rec");
@@ -329,6 +320,8 @@ void handleRecipe() {
 			// TODO
 			Logger << "TODO: start command without recipe number" << endl;
 		}
+
+		String m = server.arg("mode");
 		if (m == "nw") {
 			Logger << "Web: Kochen sofort" << endl;
 			sm.startCooking(rec);

@@ -34,35 +34,9 @@ int Process::getRemainingTime() {
 			return 0;
 	}
 }
-//doof
-void Process::setCookingTime(int t) {recipe[act_rec].times[0] = t;}
 
-//doof
-int Process::getCookingTime() {return recipe[act_rec].times[0];}
+//double Process::getCookingTemp() {return recipe[act_rec].temps[0];}
 
-//doof
-void Process::setCookingTemp(double t) {recipe[act_rec].temps[0] = t;}
-
-double Process::getCookingTemp() {return recipe[act_rec].temps[0];}
-
-// doof
-void Process::setParam(Parameter p, double value) {
-/*	switch (p) {
-	case Parameter::KP: 
-		recipe[act_rec].Kp = value;
-		break;
-	case Parameter::TN:
-		recipe[act_rec].Tn = value;
-		break;
-	case Parameter::EMAX:
-		recipe[act_rec].Emax = value;
-		break;
-	case Parameter::TEMP:
-		recipe[act_rec].times[0] = value;
-		break;
-	}
-	*/
-}
 
 // ---------------------------------------------------- state management
 State Process::getState() {
@@ -117,20 +91,6 @@ void Process::abort() {
 }
 
 // ---------------------------------------------------- ????????????????
-void Process::setParam(Parameter p, int value) {
-}
-
-double Process::getParamDouble(Parameter p) {
-	return recipe[act_rec].param[(int)p];
-}
-
-// doof
-int Process::getParamInt(Parameter p) {
-return 0;
-}
-
-
-
 
 String Process::stateAsString(State s) {
 	switch (s) {
@@ -154,6 +114,7 @@ void Process::setState(State newState) {
 }
 
 void Process::update() {
+	double set =0.0;
 	switch (state) {
 	case State::WAITING:
 		if (Clock.getEpochTime() >= startTime) {
@@ -163,14 +124,42 @@ void Process::update() {
 		break;
 
 	case State::COOKING:
-		int actTime = Clock.getEpochTime() - startTime;
-		if (actTime >= recipe[act_rec].times[0]) {
-			Logger << "actTime: " << actTime << ", cookingTime: " << recipe[act_rec].times[0] << endl;
+		uint32_t actTime = Clock.getEpochTime() - startTime;
+		if (actTime >= calcRecipeDuration(act_rec)) {
 			setState(State::FINISHED);
 		}
+		set = calcRecipeRamp(actTime);
 		break;
 	}
+
+	out.set  = set;
+	out.kp   = recipe[act_rec].param[(int)Parameter::KP];
+	out.tn   = recipe[act_rec].param[(int)Parameter::TN];
+	out.tv   = recipe[act_rec].param[(int)Parameter::TV];
+	out.emax = recipe[act_rec].param[(int)Parameter::EMAX];
+	out.pmax = recipe[act_rec].param[(int)Parameter::PMAX];
+	out.released = (state == State::COOKING);
 }
+
+double Process::calcRecipeRamp(uint32_t actTime) {
+	recipe_t *rec = &recipe[act_rec]; // for convenience
+	if (actTime <= rec->times[0]) {
+		return rec->temps[0];
+	}
+	for (int i=1; i<REC_STEPS; i++) {
+		actTime -= rec->times[i-1];
+		if (actTime < rec->times[i]) {
+			// we are now ramping from setpoint i-1 to i
+			return (rec->temps[i-1] + (rec->temps[i] - rec->temps[i-1]) * actTime / rec->times[i]);
+		}
+	}
+	// should not happen
+	Logger << "Process::calcRecipeRamp: actTime > duration " << endl;
+	return 0.0;
+}
+
+
+	
 
 /**
  * returns the duration of the recipe (sum of all steps) in seconds

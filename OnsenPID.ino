@@ -21,6 +21,8 @@
 //WiFiUDP ntpUDP;
 //NTPClient timeClient(ntpUDP);
 
+#define VERSION "0.9"
+
 #include <Streaming.h>
 #include <ESP8266WiFi.h>
 #include <PString.h>
@@ -59,12 +61,10 @@ task_t tasklist[MAX_TASKS];
 
 enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
 
-
-
-
 struct param {
   WiFiEnum AP_mode;
   double set;			// temperature setpoint, from recipe
+  double kp, tn, tv, emax, pmax;
   double act;			// actual temperature, from thermometer
   double out;			// actual power, from controller
   boolean released;				// controller is released
@@ -144,7 +144,6 @@ double limit(double x, double xmin, double xmax) {
 /* task: ntp client */
 int task_ntp() {
   Clock.update();
-  //timeClient.update();
   return 10;
 }
 
@@ -173,8 +172,15 @@ int task_statistics() {
 // -------------------------------------------------------------------------- Recipe Task
 int task_recipe() {
   sm.update();
-  p.set = sm.getCookingTemp();
-  p.released = (sm.getState() == State::COOKING);
+  // write values from recipe to global struct for PID controller
+  noInterrupts();
+  p.set  = sm.out.set;
+  p.kp   = sm.out.kp;
+  p.tn   = sm.out.tn;
+  p.tv   = sm.out.tv;
+  p.emax = sm.out.emax;
+  p.pmax = sm.out.pmax;
+  interrupts();
   return 1000;
 }
 
@@ -329,8 +335,6 @@ void setup() {
   setup_OTA();
   Logger << "OTA initialized " << endl;
 
-  //timeClient.setUpdateCallback(onNtpUpdate);
-  //timeClient.begin();
   Logger << "NTPClient initialized" << endl;
   
   setup_dl(); // data Logger

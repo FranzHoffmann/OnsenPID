@@ -60,7 +60,6 @@ class Config {
   bool readDouble(const char* section, const char* key, double &value, double deflt);
   bool readInt   (const char* section, const char* key, int    &value, int    deflt);
   bool readString(const char* section, const char* key, String &value, String deflt);
-  
 };
 
 

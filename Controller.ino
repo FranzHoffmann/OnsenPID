@@ -11,7 +11,7 @@ void setup_controller() {
 /* PWM and PID controller */
 //
 // interrupt routine seems to crash if I call function in Process object?
-// so this communicates by global variables in p and cfg.p
+// so this communicates by global variables in p
 //
 ICACHE_RAM_ATTR void controllerISR() {
 
@@ -23,9 +23,9 @@ ICACHE_RAM_ATTR void controllerISR() {
 	} else
 	if (p.released) {
 		double e = p.set - p.act;
-		double ppart = cfg.p.kp * e;
-		if (abs(e) < abs(cfg.p.emax)) {
-			ipart = limit(ipart + ta/1000.0/cfg.p.tn * e, 0, 100.0);
+		double ppart = p.kp * e;
+		if (abs(e) < abs(p.emax)) {
+			ipart = limit(ipart + ta/1000.0/p.tn * e, 0, 100.0);
 			p.out = limit(ppart + ipart, 0.0, 100.0);
 		} else {
 			p.out = limit( 10.0*e, 0.0, 100.0);

@@ -24,22 +24,19 @@ class Process {
 
 		// get recipe or setpoints
 		int getRemainingTime();
-		double getCookingTemp();
-
-		// TODO: deprecated
-		void setCookingTime(int t);
-		int getCookingTime();
-		void setCookingTemp(double t);
-
-		void setParam(Parameter p, double value);
-		void setParam(Parameter p, int value);
-		double getParamDouble(Parameter p);
-		int getParamInt(Parameter p);
 
 		String stateAsString(State s);
 
+	struct  {
+		double set;
+		double kp, tn, tv, emax, pmax;
+		boolean released;
+	} out;
+
+
 	private:
 		uint32_t calcRecipeDuration(int recno);
+		double calcRecipeRamp(uint32_t actTime);
 		int act_rec;
 		State state = State::IDLE;
 		unsigned long startTime;
