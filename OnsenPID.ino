@@ -15,13 +15,7 @@
   - better statistics: runtime and ms/s for each task
 */
 
-// TODO: remove
-//#include <NTPClient.h>      // note: git pull request 22 (asynchronus update) required
-//#include <WiFiUdp.h>
-//WiFiUDP ntpUDP;
-//NTPClient timeClient(ntpUDP);
-
-#define VERSION "0.9"
+#define VERSION "0.901"
 
 #include <Streaming.h>
 #include <ESP8266WiFi.h>
@@ -37,7 +31,8 @@
 #include "Process.h"
 #include "src/Clock/Clock.h"
 #include "LCDMenu.h"
-
+#include "src/util.h"
+#include "src/tasks/tasks.h"
 
 #define PWM_PORT D4
 #define TMP_PORT D7
@@ -48,16 +43,6 @@ FS filesystem = SPIFFS;
 OneWire oneWire(TMP_PORT);
 DS18B20 thermometer(&oneWire);
 
-/* simple scheduler */
-#define MAX_TASKS 20
-typedef int (*task)();    // a task is a function "int f()". returns deltaT for next call.
-struct task_t {
-  task t;
-  unsigned long nextrun;
-  const char *taskname;
-  unsigned long tsum, tmin, tmax, tcount;
-};
-task_t tasklist[MAX_TASKS];
 
 enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
 
@@ -82,63 +67,6 @@ void init_params() {
   cfg.read();
 }
 
-void init_stats(task_t *t) {
-      t->tsum = 0;
-      t->tmin = 999999;
-      t->tmax = 0;
-      t->tcount = 0;
-}
-
-boolean start_task(task t, const char *name) {
-  for (int i=0; i<MAX_TASKS; i++) {
-    if (tasklist[i].t == NULL) {
-      tasklist[i].t = t;
-      tasklist[i].nextrun = millis();
-      tasklist[i].taskname = name;
-      init_stats(&tasklist[i]);
-      return true;
-    }
-  }
-  Logger << "Unable to start Task" << endl;
-  return false;
-}
-
-
-
-
-double scale(int in, double min, double max) {
-  double in_r = in;
-  return (in_r / 1024) * (max - min) + min;
-}
-
-double pt1(double x, double tau, double T) {
-  static double y_old;
-  double a = T / tau;
-  double y =  a * x + (1.0 - a) * y_old;
-  y_old = y;
-  return y;
-}
-
-double xscale(double in, double in_min, double in_max, double out_min, double out_max) {
-  return (in - in_min)/(in_max - in_min) * (out_max - out_min) + out_min;
-}
-
-double linearize(double x, double *xval, double *yval, int len) {
-  for (int idx = 1; idx<len; idx++) {
-    if (xval[idx-1] > x && xval[idx] <= x) {
-      return xscale(x, xval[idx], xval[idx-1], yval[idx], yval[idx-1]);
-    }
-  }
-  return yval[len-1];
-}
-
-double limit(double x, double xmin, double xmax) {
-  if (x < xmin) return xmin;
-  if (x > xmax) return xmax;
-  return x; 
-}
-
-
 
 // -------------------------------------------------------------------------- NTP Task
 /* task: ntp client */
@@ -147,27 +75,6 @@ int task_ntp() {
   return 10;
 }
 
-// -------------------------------------------------------------------------- Statistik Task
-/* task: calculate debug statistics */
-int task_statistics() {
-  //Logger << endl << "Statistics: " << endl;
-  for (int i=0; i<MAX_TASKS; i++) {
-    if (tasklist[i].t != NULL) {
-      double avg = tasklist[i].tcount > 0 
-                 ? (double)tasklist[i].tsum / tasklist[i].tcount
-                 : 0;
-      //Logger << tasklist[i].taskname;
-      //for (int i=strlen(tasklist[i].taskname); i<20; i++) { Serial << '.'; }  // crashes?
-      //Logger << ',' << tasklist[i].tmin
-     //      << ','<< avg
-     //      << ','<< tasklist[i].tmax
-     //      << "ms" << endl;
-      init_stats(&tasklist[i]);
-    }
-  }   
-  //Logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
-  return 600000; // good thing int seems to be 32 bit
-}
 
 // -------------------------------------------------------------------------- Recipe Task
 int task_recipe() {
@@ -243,20 +150,7 @@ int task_webserver() {
 
 // ----------------------------------------------------------------------------- loop
 void loop() {
-  unsigned long t = millis();
-  unsigned long t0, dt;
-  
-  for (int i=0; i<MAX_TASKS; i++) {
-    if (tasklist[i].t != NULL && t > tasklist[i].nextrun) {
-      t0 = millis();
-      tasklist[i].nextrun += (tasklist[i].t)();
-      dt = millis()- t0;
-      tasklist[i].tcount++;
-      tasklist[i].tsum += dt;
-      tasklist[i].tmin = min(tasklist[i].tmin, dt);
-      tasklist[i].tmax = max(tasklist[i].tmax, dt);
-    }
-  }
+	run_tasks(millis());
 }
 
     
