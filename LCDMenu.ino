@@ -55,6 +55,41 @@ ButtonEnum LCDMenu_readKey() {
 	return BTN_NONE;
 }
 
+/**
+ * This screen should be used for any value to be edited.
+ * Edit mode should be activated when ENTER is pressed while the value is displayed
+ * The value can be edited in line 2
+ * The function will not touch line1.
+ */
+struct {
+	double v, vmin, vmax, step;
+	int decimals;
+	String unit;
+	callback onChange;
+} editNumData;
+
+void start_edit_number(double value, int decimals,
+		double vmin, double vmax, double step, const char *unit,
+		callback onChange) {
+	editNumData.v = value;
+	editNumData.vmin = vmin;
+	editNumData.vmin = vmax;
+	editNumData.step = step;
+	editNumData.unit = String(*unit);
+	editNumData.decimals = decimals;
+	editNumData.onChange = onChange;
+	screen = Screen::EDIT_NUMBER;
+}
+ 
+void disp_edit_number(ButtonEnum btn) {
+	if (btn == BTN_UP) editNumData.v += editNumData.step;
+	else if (btn == BTN_UP) editNumData.v -= editNumData.step;
+	limit(editNumData.v, editNumData.vmin, editNumData.vmax);
+	line2.begin();
+	line2 << String(editNumData.v, editNumData.decimals) << " " << editNumData.unit;
+	if (btn == BTN_SEL) (*editNumData.onChange);
+}
+
 
 // -------------------------------------------------------------------------- LCD UI Task
 /* read keyboard and write menu */
@@ -83,6 +118,8 @@ void LCDMenu_update() {
 
 		case Screen::SET_WIFI:			disp_set_wifi(btn);			break;
 		case Screen::SET_TIMEZONE:		disp_set_tz(btn);			break;
+
+		case Screen::EDIT_NUMBER:		disp_edit_number(btn);		break;
 	}
 }
 
@@ -95,6 +132,7 @@ void disp_main_version(ButtonEnum btn) {
 	else if (btn == BTN_UP) screen = Screen::MAIN_SETTINGS;
 }
 
+
 void disp_main_time(ButtonEnum btn) {
 	uint32_t ts = Clock.getEpochTime();
 	line1.begin();
@@ -103,6 +141,7 @@ void disp_main_time(ButtonEnum btn) {
 	if (btn == BTN_DN) screen = Screen::MAIN_COOK;
 	else if (btn == BTN_UP) screen = Screen::MAIN_VERSION;
 }
+
 
 void disp_main_cook(ButtonEnum btn) {
 	switch (sm.getState()) {
@@ -139,6 +178,7 @@ void disp_main_cook(ButtonEnum btn) {
 	else if (btn == BTN_UP) screen = Screen::MAIN_TIME;
 }
 
+
 void disp_main_recipe(ButtonEnum btn) {
 	line1 = "Rezepte";
 	line2 = "bearbeiten";
@@ -146,10 +186,10 @@ void disp_main_recipe(ButtonEnum btn) {
 	else if (btn == BTN_UP) screen = Screen::MAIN_COOK;
 }
 
+
 void disp_main_settings(ButtonEnum btn) {
 	line1 = "Einstellungen";
 	line2.begin();
-	//if (btn == BTN_DN) return Screen::MAIN_VERSION;
 	if (btn == BTN_UP) screen = Screen::MAIN_RECIPE;
 	else if (btn == BTN_RI) screen = Screen::SET_WIFI;
 }
@@ -165,6 +205,7 @@ void disp_cook_abort(ButtonEnum btn) {
 	}
 }
 
+
 void disp_cook_recipe(ButtonEnum btn) {
 	line1.begin();
 	line1 << "Rezept:";
@@ -175,6 +216,7 @@ void disp_cook_recipe(ButtonEnum btn) {
 	else if (btn == BTN_DN) rec_i = (rec_i + 1) % REC_COUNT;
 	else if (btn == BTN_SEL) screen = Screen::COOK_TIMER;
 }
+
 
 void disp_cook_timer(ButtonEnum btn) {
 	line1 = "Timer-Modus";
@@ -194,22 +236,17 @@ void disp_cook_timer(ButtonEnum btn) {
 	else if (btn == BTN_UP) timer_mode = (timer_mode - 1) % 3;
 	else if (btn == BTN_DN) timer_mode = (timer_mode + 1) % 3;
 	else if (btn == BTN_SEL) {
-		// TODO: edit
+		start_edit_number(starttime,
+		0, 0.0, 1440.0, 5.0, "hh:mm",
+		[](){
+			// anonymous function, called when edit is complete
+			starttime = editNumData.v * 60.0;
+			screen = Screen::COOK_START;
+		});
 	}
+	// TODO: make a edit screen/function that displays time correctly
 }
 
-/**
- * convert seconds-since-midnight in hh:mm
- */
-String secToTime(int sec) {
-	int hours = sec / 3600;
-	int min = (sec - 3600 * hours) / 60;
-	String s;
-	s += (hours > 9) ? "" + hours : "0" + hours;
-	s += ":";
-	s += (min > 9) ? "" + min : "0" + min;
-	return s; 
-}
 
 void disp_cook_start(ButtonEnum btn) {
 	if (btn == BTN_LE) screen = Screen::COOK_TIMER;
@@ -218,9 +255,6 @@ void disp_cook_start(ButtonEnum btn) {
 		screen = Screen::MAIN_COOK;
 	}
 }
-
-
-
 
 
 void disp_rec_select(ButtonEnum btn) {
@@ -249,40 +283,85 @@ void disp_rec_step_i(ButtonEnum btn) {
 	}
 }
 
+
 void disp_rec_step_i_temp(ButtonEnum btn) {
-	static bool edit = false;
-	static double value;
-	// jump to edit screen if editing is active
-	if (edit) {
-		if (disp_edit_number(btn, value, 20.0, 200.0, 0.5, degc)) {
-			// edit finished
-			edit = false;
-		} else {
-			return;
-		}
-	}
 	line1.begin();
 	line1 << "Schritt " << step_i;
-	line2 = "Temp.: TODO";
+	line2.begin();
 	if (btn == BTN_DN)			screen = Screen::REC_STEP_i_TIME;
 	else if (btn == BTN_UP)		screen = Screen::REC_STEP_i;
 	else if (btn == BTN_SEL)	{
-		//start editing
-		edit = true;
-		value = 0.0; // TODO:recipe[rec_i].temp[step_i]
+		start_edit_number(recipe[rec_i].temps[step_i],
+		1, 20.0, 200.0, 0.5, degc,
+		[](){
+			// anonymous function, called when edit is complete
+			recipe[rec_i].temps[step_i] = editNumData.v;
+			screen = Screen::REC_STEP_i_TEMP;
+		});
 	}
 }
 
 void disp_rec_step_i_time(ButtonEnum btn) {
+	line1.begin();
+	line1 << "Schritt " << step_i;
+	line2.begin();
+	if (btn == BTN_UP)		screen = Screen::REC_STEP_i_TEMP;
+	else if (btn == BTN_SEL)	{
+		start_edit_number(recipe[rec_i].times[step_i] / 60.0,
+		0, 0.0, 999.0, 1.0, "min",
+		[](){
+			// anonymous function, called when edit is complete
+			recipe[rec_i].times[step_i] = (int)editNumData.v * 60;
+			screen = Screen::REC_STEP_i_TIME;
+		});
+	}
 }
 
 void disp_rec_param_i(ButtonEnum btn) {
+	line1.begin();
+	line1 << pararray[param_i].name << ":";
+	line2.begin();
+	line1 << "" << recipe[rec_i].param[param_i] << " " << pararray[param_i].unit;
+
+	if (btn == BTN_UP)		param_i = (param_i - 1) % REC_PARAM_COUNT;
+	else if (btn == BTN_DN)		param_i = (param_i + 1) % REC_PARAM_COUNT;
+	else if (btn == BTN_LE)		screen = Screen::REC_STEP_i;
+	else if (btn == BTN_RI)		screen = Screen::REC_EXIT_SAVE;
+	else if (btn == BTN_SEL)	{
+		start_edit_number(recipe[rec_i].param[param_i],
+		1, pararray[param_i].min, pararray[param_i].max, 0.1, pararray[param_i].unit,
+		[](){
+			// anonymous function, called when edit is complete
+			recipe[rec_i].param[param_i] = editNumData.v;
+			screen = Screen::REC_PARAM_i;
+		});
+	}
 }
 
 void disp_rec_exit_save(ButtonEnum btn) {
+	line1.begin();
+	line1 << "Änderungen";
+	line2.begin();
+	line1 << "speichern?";
+	if (btn == BTN_LE)			screen = Screen::REC_PARAM_i;
+	else if (btn == BTN_DN)		screen = Screen::REC_EXIT_ABORT;
+	else if (btn == BTN_SEL)	{
+		cfg.save();
+		screen = Screen::REC_SELECT;
+	}
 }
 
 void disp_rec_exit_abort(ButtonEnum btn) {
+	line1.begin();
+	line1 << "Änderungen";
+	line2.begin();
+	line1 << "verwerfen?";
+	if (btn == BTN_LE)			screen = Screen::REC_PARAM_i;
+	else if (btn == BTN_UP)		screen = Screen::REC_EXIT_SAVE;
+	else if (btn == BTN_SEL)	{
+		cfg.readRecipes();
+		screen = Screen::REC_SELECT;
+	}
 }
 
 void disp_set_wifi(ButtonEnum btn) {
@@ -321,155 +400,20 @@ void disp_set_wifi(ButtonEnum btn) {
 	}
 }
 
-void disp_set_tz(ButtonEnum btn) {}
+void disp_set_tz(ButtonEnum btn) {
+	// TODO
+}
 
 
 /**
- * This screen should be used for any value to be edited.
- * Edit mode should be activated when ENTER is pressed while the value is displayed
- * The value can be edited in line 2
- * The function will not touch line1.
+ * convert seconds-since-midnight in hh:mm
  */
-bool disp_edit_number(ButtonEnum btn,
-	double &value, double vmin, double vmax, double step,
-	const char *unit)
-{
-	if (btn == BTN_UP) value = value + step;
-	else if (btn == BTN_UP) value = value - step;
-	value = (value > vmax) ? vmax : value;
-	value = (value < vmin) ? vmin : value;
-	line2.begin();
-	line2 << value << " " << unit;
-	if (btn == BTN_SEL) {
-		return true;
-	} else {
-		return false;
-	}
+String secToTime(int sec) {
+	int hours = sec / 3600;
+	int min = (sec - 3600 * hours) / 60;
+	String s;
+	s += (hours > 9) ? "" + hours : "0" + hours;
+	s += ":";
+	s += (min > 9) ? "" + min : "0" + min;
+	return s; 
 }
-
-/*
-  ButtonEnum b = readKey(A0);
-  static int screen;
-  
-  // generally: left/right switch screen.
-  // all other buttons handled seperatuely for each screen
-  switch (b) {
-    case BTN_RI:
-      screen = (screen + 1) % SCREEN_COUNT;
-      break;
-    case BTN_LE:
-      screen = (screen - 1 + SCREEN_COUNT) % SCREEN_COUNT;
-      break;
-    default:
-      ; // do nothing
-  }
-
-    switch (screen) {
-    case DISP_MAIN:
-      line1.begin();
-      line1 << "p.act" << " / " << sm.getCookingTemp() << DEGC;
-      if (b == BTN_UP) sm.setCookingTemp(sm.getCookingTemp() + 0.1);
-      if (b == BTN_DN) sm.setCookingTemp(sm.getCookingTemp() - 0.1);
-      
-      line2.begin();
-      switch (sm.getState()) {
-        case State::COOKING:
-          line2 << "Noch " << sm.getRemainingTime() / 60 << " min";
-          break;
-          
-        case State::IDLE:
-          line2 << "Starten?";
-          if (b == BTN_SEL) {
-            sm.startCooking();
-          }
-          break;
-          
-        case State::FINISHED:
-          line2 << "Guten Appetit!";
-          if (b == BTN_SEL) {
-            sm.next();
-          }
-          break;
-
-        case State::ERROR:
-          line2 << "Störung :-(";
-          if (b == BTN_SEL) {
-            sm.next();
-          }
-          break;
-
-        default:
-          ;        
-      }
-      break;
-
-    case DISP_IP:
-      line1.begin(); 
-      line2.begin();
-      switch (p.AP_mode) {
-        case WIFI_OFFLINE:
-          line1 << "WiFi nicht";
-          line2 << "verbunden.";
-          break;
-          
-        case WIFI_APMODE:
-          line1 << cfg.p.ssid;
-          line2 << WiFi.softAPIP();
-          break;
-        
-        case WIFI_CONN:
-          line1 << cfg.p.hostname << ".local";
-          line2 << WiFi.localIP();
-          break;
-      }
-      break;
-
-    case DISP_SET_SET:
-      if (b == BTN_UP) sm.setCookingTemp(sm.getCookingTemp() + 0.1);
-      if (b == BTN_DN) sm.setCookingTemp(sm.getCookingTemp() - 0.1);
-      line1.begin();
-      line1 << "Solltemperatur:";
-      line2.begin();
-      line2 << ARROW << sm.getCookingTemp() << DEGC;
-      break;
-
-    case DISP_SET_TIME:
-      if (b == BTN_UP) sm.setCookingTime(sm.getCookingTime() + 60);
-      if (b == BTN_DN) sm.setCookingTime(sm.getCookingTime() + 60);
-      line1.begin();
-      line1 << "Kochdauer:";
-      line2.begin();
-      line2 << ARROW << sm.getCookingTime() / 60 << "min";
-      break;
-
-    case DISP_SET_KP:
-      if (b == BTN_UP) cfg.p.kp += 0.1;
-      if (b == BTN_DN) cfg.p.kp -= 0.1;
-      line1.begin();
-      line1 << "Verstaerkung:";
-      line2.begin();
-      line2 << ARROW << cfg.p.kp << "%/" << DEGC;
-      break;
-
-    case DISP_SET_TN:
-      if (b == BTN_UP) cfg.p.tn += 0.1;
-      if (b == BTN_DN) cfg.p.tn -= 0.1;
-      line1.begin();
-      line1 << "Nachstellzeit:";
-      line2.begin();
-      line2 << ARROW << cfg.p.tn << "s";;
-      break;
-
-    case DISP_OUTPUT:
-      line1.begin();
-      line1 << "Heizleistung:";
-      line2.begin();
-      line2 << p.out << "%";
-      
-    default:
-    ;  
-  }
-
-  return 10;
-  */
-
