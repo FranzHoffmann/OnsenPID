@@ -22,5 +22,6 @@ enum class Screen {
 	EDIT_NUMBER
 };
 
-typedef void (*callback)();
 
+typedef void (*callback)();
+enum class EditMode {NUMBER, TIME};

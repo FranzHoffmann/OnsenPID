@@ -61,14 +61,17 @@ ButtonEnum LCDMenu_readKey() {
  * The value can be edited in line 2
  * The function will not touch line1.
  */
+// There is only one global data structure for now.
+// This is ok, because only one value can be edited at any time.
 struct {
 	double v, vmin, vmax, step;
 	int decimals;
 	String unit;
+	EditMode mode;
 	callback onChange;
 } editNumData;
 
-void start_edit_number(double value, int decimals,
+void start_edit_number(double value, int decimals, EditMode mode,
 		double vmin, double vmax, double step, const char *unit,
 		callback onChange) {
 	editNumData.v = value;
@@ -77,6 +80,7 @@ void start_edit_number(double value, int decimals,
 	editNumData.step = step;
 	editNumData.unit = String(*unit);
 	editNumData.decimals = decimals;
+	editNumData.mode = mode;
 	editNumData.onChange = onChange;
 	screen = Screen::EDIT_NUMBER;
 }
@@ -86,7 +90,20 @@ void disp_edit_number(ButtonEnum btn) {
 	else if (btn == BTN_UP) editNumData.v -= editNumData.step;
 	limit(editNumData.v, editNumData.vmin, editNumData.vmax);
 	line2.begin();
-	line2 << String(editNumData.v, editNumData.decimals) << " " << editNumData.unit;
+	switch (editNumData.mode) {
+		case EditMode::NUMBER:
+			line2 << String(editNumData.v, editNumData.decimals);
+			line2 << " " << editNumData.unit;
+			break;
+		case EditMode::TIME:
+			// v is in minutes since midnight. display as hh:mm
+			int h = editNumData.v / 60;
+			int m = editNumData.v - 60 * h;
+			line2 << ((h < 10) ? "0" : "") << h;
+			line2 << ":";
+			line2 << ((m < 10) ? "0" : "") << m; 
+			break;
+	}
 	if (btn == BTN_SEL) (*editNumData.onChange);
 }
 
@@ -236,15 +253,14 @@ void disp_cook_timer(ButtonEnum btn) {
 	else if (btn == BTN_UP) timer_mode = (timer_mode - 1) % 3;
 	else if (btn == BTN_DN) timer_mode = (timer_mode + 1) % 3;
 	else if (btn == BTN_SEL) {
-		start_edit_number(starttime,
-		0, 0.0, 1440.0, 5.0, "hh:mm",
+		start_edit_number(starttime, 0, EditMode::TIME,
+		0.0, 1440.0, 5.0, "hh:mm",
 		[](){
 			// anonymous function, called when edit is complete
 			starttime = editNumData.v * 60.0;
 			screen = Screen::COOK_START;
 		});
 	}
-	// TODO: make a edit screen/function that displays time correctly
 }
 
 
@@ -291,8 +307,8 @@ void disp_rec_step_i_temp(ButtonEnum btn) {
 	if (btn == BTN_DN)			screen = Screen::REC_STEP_i_TIME;
 	else if (btn == BTN_UP)		screen = Screen::REC_STEP_i;
 	else if (btn == BTN_SEL)	{
-		start_edit_number(recipe[rec_i].temps[step_i],
-		1, 20.0, 200.0, 0.5, degc,
+		start_edit_number(recipe[rec_i].temps[step_i], 1, EditMode::NUMBER,
+		20.0, 200.0, 0.5, degc,
 		[](){
 			// anonymous function, called when edit is complete
 			recipe[rec_i].temps[step_i] = editNumData.v;
@@ -307,8 +323,8 @@ void disp_rec_step_i_time(ButtonEnum btn) {
 	line2.begin();
 	if (btn == BTN_UP)		screen = Screen::REC_STEP_i_TEMP;
 	else if (btn == BTN_SEL)	{
-		start_edit_number(recipe[rec_i].times[step_i] / 60.0,
-		0, 0.0, 999.0, 1.0, "min",
+		start_edit_number(recipe[rec_i].times[step_i] / 60.0, 0, EditMode::NUMBER,
+		0.0, 999.0, 1.0, "min",
 		[](){
 			// anonymous function, called when edit is complete
 			recipe[rec_i].times[step_i] = (int)editNumData.v * 60;
@@ -328,8 +344,8 @@ void disp_rec_param_i(ButtonEnum btn) {
 	else if (btn == BTN_LE)		screen = Screen::REC_STEP_i;
 	else if (btn == BTN_RI)		screen = Screen::REC_EXIT_SAVE;
 	else if (btn == BTN_SEL)	{
-		start_edit_number(recipe[rec_i].param[param_i],
-		1, pararray[param_i].min, pararray[param_i].max, 0.1, pararray[param_i].unit,
+		start_edit_number(recipe[rec_i].param[param_i], 1, EditMode::NUMBER,
+		pararray[param_i].min, pararray[param_i].max, 0.1, pararray[param_i].unit,
 		[](){
 			// anonymous function, called when edit is complete
 			recipe[rec_i].param[param_i] = editNumData.v;
