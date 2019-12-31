@@ -78,9 +78,9 @@ String directory() {
 /*
  *  read a file, optionally substitute variable like {{ACT}} and {{SET}}, and send to web server
  *  everything enclosed in {{ }} is treated as a variable and sent to substitute()
- *  use escape character '\' in file to output {{: \{\{
+ *  use escape character '\' in file to output {{: \{{
  */
-String readFile(File f) {
+String readAndSubstitute(File f) {
 	String var, content;
 	enum {TEXT, ESCAPED, VAR1, VAR_START, VAR, VAR_END} state;
 	state = TEXT;
@@ -178,7 +178,7 @@ void send_file(String filename) {
 		fail("file not found: " + filename);
 		return;
 	}
-	String reply = readFile(f);
+	String reply = readAndSubstitute(f);
 	server.send(200, getContentType(filename), reply);
 	f.close();
 }

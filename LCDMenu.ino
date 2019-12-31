@@ -4,8 +4,6 @@
 #include "src/Clock/Clock.h"
 
 
-
-
 Screen screen;
 int rec_i, param_i, wifi_i, step_i, timer_mode, starttime;
 
@@ -14,7 +12,6 @@ PString line1(buf1, sizeof(buf1));
 PString line2(buf2, sizeof(buf2));
 
 static const char degc[2] = {'\1', 'C'};
-
 
 void LCDMenu_setup() {
 	byte char_deg[8]  = {6,  9,  9, 6, 0,  0,  0, 0};
@@ -55,6 +52,7 @@ ButtonEnum LCDMenu_readKey() {
 	return BTN_NONE;
 }
 
+
 /**
  * This screen should be used for any value to be edited.
  * Edit mode should be activated when ENTER is pressed while the value is displayed
@@ -71,6 +69,7 @@ struct {
 	callback onChange;
 } editNumData;
 
+
 void start_edit_number(double value, int decimals, EditMode mode,
 		double vmin, double vmax, double step, const char *unit,
 		callback onChange) {
@@ -84,7 +83,8 @@ void start_edit_number(double value, int decimals, EditMode mode,
 	editNumData.onChange = onChange;
 	screen = Screen::EDIT_NUMBER;
 }
- 
+
+
 void disp_edit_number(ButtonEnum btn) {
 	if (btn == BTN_UP) editNumData.v += editNumData.step;
 	else if (btn == BTN_UP) editNumData.v -= editNumData.step;
@@ -267,7 +267,17 @@ void disp_cook_timer(ButtonEnum btn) {
 void disp_cook_start(ButtonEnum btn) {
 	if (btn == BTN_LE) screen = Screen::COOK_TIMER;
 	else if (btn == BTN_SEL) {
-		sm.startCooking(rec_i);
+		switch(timer_mode) {
+			case 0:
+				sm.startCooking(rec_i);
+				break;
+			case 1:
+				sm.startByEndTime(rec_i, starttime);
+				break;
+			case 2:
+				sm.startByStartTime(rec_i, starttime);
+				break;
+		}
 		screen = Screen::MAIN_COOK;
 	}
 }
@@ -283,6 +293,7 @@ void disp_rec_select(ButtonEnum btn) {
 	else if (btn == BTN_RI)  screen = Screen::REC_NAME;
 	else if (btn == BTN_SEL) screen = Screen::REC_NAME;
 }
+
 
 void disp_rec_step_i(ButtonEnum btn) {
 	line1.begin();
@@ -317,6 +328,7 @@ void disp_rec_step_i_temp(ButtonEnum btn) {
 	}
 }
 
+
 void disp_rec_step_i_time(ButtonEnum btn) {
 	line1.begin();
 	line1 << "Schritt " << step_i;
@@ -332,6 +344,7 @@ void disp_rec_step_i_time(ButtonEnum btn) {
 		});
 	}
 }
+
 
 void disp_rec_param_i(ButtonEnum btn) {
 	line1.begin();
@@ -354,6 +367,7 @@ void disp_rec_param_i(ButtonEnum btn) {
 	}
 }
 
+
 void disp_rec_exit_save(ButtonEnum btn) {
 	line1.begin();
 	line1 << "Änderungen";
@@ -367,6 +381,7 @@ void disp_rec_exit_save(ButtonEnum btn) {
 	}
 }
 
+
 void disp_rec_exit_abort(ButtonEnum btn) {
 	line1.begin();
 	line1 << "Änderungen";
@@ -379,6 +394,7 @@ void disp_rec_exit_abort(ButtonEnum btn) {
 		screen = Screen::REC_SELECT;
 	}
 }
+
 
 void disp_set_wifi(ButtonEnum btn) {
 	line1.begin(); 
@@ -415,6 +431,7 @@ void disp_set_wifi(ButtonEnum btn) {
 		screen = Screen::MAIN_SETTINGS;
 	}
 }
+
 
 void disp_set_tz(ButtonEnum btn) {
 	// TODO

@@ -61,14 +61,7 @@ Process sm;
 Config cfg(sm);
 
 
-// ------------------------------------------------------------------------ useful functions
-
-void init_params() {
-  cfg.read();
-}
-
-
-// -------------------------------------------------------------------------- NTP Task
+// ------------------------------------------------------------ NTP Task
 /* task: ntp client */
 int task_ntp() {
   Clock.update();
@@ -76,7 +69,7 @@ int task_ntp() {
 }
 
 
-// -------------------------------------------------------------------------- Recipe Task
+// --------------------------------------------------------- Recipe Task
 int task_recipe() {
   sm.update();
   // write values from recipe to global struct for PID controller
@@ -91,7 +84,7 @@ int task_recipe() {
   return 1000;
 }
 
-// -------------------------------------------------------------------------- Temperature Task
+// ---------------------------------------------------- Temperature Task
 /* task: read temperature */
 int task_read_temp() {
   static uint32_t counter = 0;
@@ -119,7 +112,7 @@ int task_read_temp() {
   return 1000;  
 }
 
-// -------------------------------------------------------------------------- LCD Task
+// ------------------------------------------------------------ LCD Task
 /* task: update LCD */
 int task_lcd() {
 	LCDMenu_update();
@@ -139,7 +132,7 @@ int task_lcd() {
   return 50;  
 }
 
-// -------------------------------------------------------------------------- Webserver Task
+// ------------------------------------------------------ Webserver Task
 int task_webserver() {
   server.handleClient();
   MDNS.update();
@@ -148,13 +141,13 @@ int task_webserver() {
 }
 
 
-// ----------------------------------------------------------------------------- loop
+// ---------------------------------------------------------------- loop
 void loop() {
 	run_tasks(millis());
 }
 
     
-// ----------------------------------------------------------------------------- start_WiFi
+// ---------------------------------------------------------- setup WiFi
 void start_WiFi() {
   Logger << "Versuche verbindung mit '" << cfg.p.ssid << "'" << endl;
   WiFi.mode(WIFI_STA);
@@ -187,6 +180,8 @@ void start_WiFi() {
   return;
 }
 
+
+// -------------------------------------------------- setup Temp. sensor
 void setup_ds18b20() {
   Logger  << ("Initializing thermometer DS18B20 ") << endl;
   Logger << "DS18B20 Library version: " << DS18B20_LIB_VERSION << endl;
@@ -195,29 +190,28 @@ void setup_ds18b20() {
   thermometer.requestTemperatures();
 }
 
-// ----------------------------------------------------------------------------- setup
+
+// --------------------------------------------------------------- setup
 void setup() {
   pinMode(PWM_PORT, OUTPUT);
   Serial.begin(115200);
 
   filesystem.begin();
   Logger << "------ REBOOT" << endl;
-  Logger << "File system mounted" << endl;
   Dir dir = filesystem.openDir("/");
   while (dir.next()) {
     String fileName = dir.fileName();
     size_t fileSize = dir.fileSize();
     Serial << "- '" << fileName << "', " << fileSize << " bytes" << endl;
-  } 
-    
+  }
+
   cfg = Config(sm, "/config.ini");
-  init_params();
 
   LCDMenu_setup();
   Logger << "LCD initialized" << endl;
     
   start_WiFi();
-  Logger << "WiFi initilaized" << endl;
+  Logger << "WiFi initialized" << endl;
 
   setup_webserver(&server);
   Logger << "Webserver initialized" << endl;
@@ -228,13 +222,12 @@ void setup() {
   
   setup_OTA();
   Logger << "OTA initialized " << endl;
-
-  Logger << "NTPClient initialized" << endl;
   
-  setup_dl(); // data Logger
+  setup_dl();
   Logger << "DataLogger initialized" << endl;
 
   setup_ds18b20();
+  Logger << "Temperature sensor initialized" << endl;
   
   start_task(task_lcd, "lcd");
   start_task(task_ntp, "ntp");
@@ -243,5 +236,6 @@ void setup() {
   start_task(task_statistics, "stats");
   start_task(task_webserver, "apache");
 
+  // controller is running in timer interrupt
   setup_controller();
 }

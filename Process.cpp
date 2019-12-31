@@ -3,20 +3,12 @@
 #include "src/Clock/Clock.h"
 #include "Logfile.h"
 #include "recipe.h"
+#include "config.h"
 
 
 /* constructor */
 Process::Process() {
-	// create a simple recipe for now
-	/*
-	recipe[act_rec].name = String("SimpleRecipe");
-	recipe[act_rec].Kp = 5.0;
-	recipe[act_rec].Tn = 40.0;
-	recipe[act_rec].Emax = 10.0;;
-	recipe[act_rec].noOfSteps = 1;				//TODO: now max. 1 step
-	recipe[act_rec].times[0] = 3600;
-	recipe[act_rec].tempArray[0] = 64.5;
-	**/
+	// TODO: cfg.read();
 }
 
 int Process::getRemainingTime() {

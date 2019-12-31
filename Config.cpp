@@ -4,8 +4,6 @@
 #include <FS.h>
 #include "recipe.h"
 
-//const uint8_t Config::maxFilenameLen = CONFIG_MAX_FILENAME_LEN;
-
 
 // constructor
 Config::Config(Process p, const char* filename) {
@@ -17,9 +15,34 @@ Config::Config(Process p, const char* filename) {
 		_filename[0] = '\0';
 	Logger << "Config initialized (" << filename << ")" << endl;
 }
+
+// TODO: do we need this?
 Config::Config(Process p) {
 	_process = p;
 }
+
+// Note: config file can not be updated.
+// This will delete the file and write a new one.
+bool Config::save(){
+	if (_file) _file.close();
+	_file = SPIFFS.open(_filename, "w");
+	if (!_file) return false;
+
+	writeRecipes();
+
+	write(section_wifi);
+	write(wifi_hostname, p.hostname.c_str());
+	write(wifi_ssid, p.ssid.c_str());
+	write(wifi_pw, p.pw.c_str());
+
+	write(section_system);
+	write(system_tz, p.tzoffset);
+	
+	_file.close();
+	Logger << "Ini-File written" << endl;
+	return true;
+}
+
 
 bool Config::read() {  
 	if (!_ini->open()) {
@@ -37,6 +60,7 @@ bool Config::read() {
 	Logger << "End of config file" << endl;
 	return true;
 }
+
 
 void Config::readRecipes() {
 	String section, key;
@@ -88,6 +112,7 @@ void Config::writeRecipes() {
 	}
 }
 
+
 bool Config::readString(const char* section, const char* key, String &value, String deflt) {
 	const size_t bufferLen = 80;
 	char buffer[bufferLen];
@@ -102,6 +127,7 @@ bool Config::readString(const char* section, const char* key, String &value, Str
 		return false;
 	}
 }
+
 
 bool Config::readInt(const char* section, const char* key, int &value, int deflt) {
 	const size_t bufferLen = 80;
@@ -118,6 +144,7 @@ bool Config::readInt(const char* section, const char* key, int &value, int deflt
 	}
 }
 
+
 bool Config::readDouble(const char* section, const char* key, double &value, double deflt) {
 	const size_t bufferLen = 80;
 	char buffer[bufferLen];
@@ -133,31 +160,6 @@ bool Config::readDouble(const char* section, const char* key, double &value, dou
 	}
 }
 
-bool Config::save(){
-	if (_file) {
-			_file.close();
-	}
-	
-	_file = SPIFFS.open(_filename, "w");
-	if (!_file) {
-			return false;
-	}
-
-	writeRecipes();
-
-	write(section_wifi);
-	write(wifi_hostname, p.hostname.c_str());
-	write(wifi_ssid, p.ssid.c_str());
-	write(wifi_pw, p.pw.c_str());
-
-	write(section_system);
-	write(system_tz, p.tzoffset);
-	
-	_file.close();
-	Logger << "Ini-File written" << endl;
-	return true;
-}
-
 
 void Config::write(const char* section) {
 	_file.write('[');
@@ -165,7 +167,6 @@ void Config::write(const char* section) {
 	_file.write(']');
 	_file.write('\n');
 }
-
 
 
 void Config::write(const char* key, const char* value) {
@@ -179,6 +180,7 @@ void Config::write(const char* key, const char* value) {
 void Config::write(const char* key, double value) {
 	write(key, String(value, 6).c_str());
 }
+
 
 void Config::write(const char* key, int value) {
 	write(key, String(value).c_str());
