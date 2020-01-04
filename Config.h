@@ -48,7 +48,7 @@ class Config {
   private:
   void writeRecipes();
   
-  Process _process;
+//  Process _process;
   char _filename[CONFIG_MAX_FILENAME_LEN];
   mutable File _file;
   SPIFFSIniFile *_ini;

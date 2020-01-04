@@ -3,13 +3,14 @@
 #include "src/Clock/Clock.h"
 #include "Logfile.h"
 #include "recipe.h"
-#include "config.h"
+#include "Config.h"
 
 
 /* constructor */
 Process::Process() {
-	// TODO: cfg.read();
+	//_cfg = cfg;
 }
+
 
 int Process::getRemainingTime() {
 	int actTime = Clock.getEpochTime() - startTime;
@@ -27,8 +28,6 @@ int Process::getRemainingTime() {
 	}
 }
 
-//double Process::getCookingTemp() {return recipe[act_rec].temps[0];}
-
 
 // ---------------------------------------------------- state management
 State Process::getState() {
@@ -40,9 +39,18 @@ void Process::startCooking(int recno) {
 	setState(State::COOKING);
 }
 
-void Process::startByStartTime(int recno, unsigned long starttime) {
-	switch (state) {
 
+/**
+ * start cooking at specified time.
+ * time is "seconds after midnight" today (or tomorrow)
+ */
+void Process::startByStartTime(int recno, unsigned long t) {
+	unsigned long now = Clock.getEpochTime();
+	unsigned long midnight = now - (now % 86400L); // - 3600 * _cfg->p.tzoffset;
+	unsigned long starttime = midnight + t;
+	if (starttime < now) starttime += 86400;
+	
+	switch (state) {
 		case State::IDLE:
 		case State::WAITING:
 			act_rec = recno;
@@ -52,17 +60,26 @@ void Process::startByStartTime(int recno, unsigned long starttime) {
 	}
 }
 
-void Process::startByEndTime(int recno, unsigned long endtime) {
+/**
+ * start cooking so that it finishes at specified time.
+ * time is "seconds after midnight" today (or later)
+ */
+void Process::startByEndTime(int recno, unsigned long t) {
+	unsigned long now = Clock.getEpochTime();
+	unsigned long midnight = now - (now % 86400L); // - 3600 * _cfg->p.tzoffset;
+	unsigned long starttime = midnight + t - calcRecipeDuration(act_rec);
+	while (starttime < now) starttime += 86400;
+	
 	switch (state) {
-
 		case State::IDLE:
 		case State::WAITING:
 			act_rec = recno;
-			startTime = endtime - calcRecipeDuration(act_rec);
+			startTime = starttime;
 			setState(State::WAITING);
 			break;
 	}
 }
+
 
 void Process::next() {
 	switch (Process::state) {
@@ -78,12 +95,13 @@ void Process::next() {
 	}
 }
 
+
 void Process::abort() {
 	setState(State::IDLE);
 }
 
-// ---------------------------------------------------- ????????????????
 
+// ---------------------------------------------------- ????????????????
 String Process::stateAsString(State s) {
 	switch (s) {
 		case State::IDLE:		return String("IDLE");

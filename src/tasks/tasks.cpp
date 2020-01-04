@@ -1,5 +1,6 @@
 #include "tasks.h"
 #include <Arduino.h>
+#include <Streaming.h>
 
 task_t tasklist[MAX_TASKS];
 
@@ -60,6 +61,6 @@ int task_statistics() {
       init_stats(&tasklist[i]);
     }
   }   
-  //Logger << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
-  return 600000; // good thing int seems to be 32 bit
+  //Serial << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
+  return 60000;
 }

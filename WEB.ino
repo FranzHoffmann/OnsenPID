@@ -46,10 +46,10 @@ String subst(String var) {
 	if (var == "ACT") return String(p.act);
 	if (var == "SET") return String(sm.out.set);
 	if (var == "OUT") return String(p.out);
-	if (var == "KP") return String(cfg.p.kp);
-	if (var == "TN") return String(cfg.p.tn);
+//	if (var == "KP") return String(recipe[??].param[Parameter::KP]);
+//	if (var == "TN") return String(cfg.p.tn);
 //	if (var == "TV") return String(cfg.p.tv);
-	if (var == "EMAX") return String(cfg.p.emax);
+//	if (var == "EMAX") return String(cfg.p.emax);
 	if (var == "TIME") return String(Clock.getEpochTime());//timeClient.getFormattedTime());
 	if (var == "TIME_LEFT") return String(sm.getRemainingTime() / 60);
 //	if (var == "TIME_SET") return String(sm.getCookingTime()/60);
@@ -81,6 +81,7 @@ String directory() {
  *  use escape character '\' in file to output {{: \{{
  */
 String readAndSubstitute(File f) {
+	Logger << "readAndSubstitute()" << endl;
 	String var, content;
 	enum {TEXT, ESCAPED, VAR1, VAR_START, VAR, VAR_END} state;
 	state = TEXT;
@@ -119,6 +120,7 @@ String readAndSubstitute(File f) {
 
 			case VAR_END:
 				if (c == '}') {            // found }}
+					Serial << "{{" << var << "}}" << endl;
 					content += subst(var);
 					state = TEXT;
 				} else {                  // found }x inside variable
@@ -171,7 +173,7 @@ void changeParam(String arg_name, String param_name, int *param) {
  * TODO: make this streaming...
  */
 void send_file(String filename) {
-	// Logger << "send_file(): " << filename << endl;
+	Logger << "send_file(): " << filename << endl;
 	File f = filesystem.open(filename, "r");
 	if (!f) {
 		Logger << "send_file(): file not found: " << filename << endl;

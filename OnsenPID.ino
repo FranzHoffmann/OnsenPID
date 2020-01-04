@@ -25,7 +25,6 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
-#include "src/MemInfo/MemoryInfo.h"
 #include "Config.h"
 #include <DS18B20.h>
 #include "Process.h"
@@ -33,6 +32,7 @@
 #include "LCDMenu.h"
 #include "src/util.h"
 #include "src/tasks/tasks.h"
+#include "src/MemInfo/MemoryInfo.h"
 
 #define PWM_PORT D4
 #define TMP_PORT D7
@@ -73,15 +73,18 @@ int task_ntp() {
 int task_recipe() {
   sm.update();
   // write values from recipe to global struct for PID controller
-  noInterrupts();
+  //noInterrupts();
   p.set  = sm.out.set;
   p.kp   = sm.out.kp;
   p.tn   = sm.out.tn;
   p.tv   = sm.out.tv;
   p.emax = sm.out.emax;
   p.pmax = sm.out.pmax;
-  interrupts();
-  return 1000;
+  //interrupts();
+  
+  Serial << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
+
+  return 5000;
 }
 
 // ---------------------------------------------------- Temperature Task
@@ -109,6 +112,7 @@ int task_read_temp() {
 
   // simulation:
   //p.act = pt1((p.out_b ? 150.0 : 20.0), 200, cycle/1000.0);
+  Serial << p.act << endl;
   return 1000;  
 }
 
@@ -116,20 +120,7 @@ int task_read_temp() {
 /* task: update LCD */
 int task_lcd() {
 	LCDMenu_update();
-	
-  // TODO
-  /* 
-  if ((line1 == line1_old) && (line2 == line2_old)) return 50;
-  
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd << line1;
-  lcd.setCursor(0,1);
-  lcd << line2;
-  line1_old.begin(); line1_old << line1;
-  line2_old.begin(); line2_old << line2;
-  */
-  return 50;  
+	return 50;  
 }
 
 // ------------------------------------------------------ Webserver Task
@@ -206,7 +197,8 @@ void setup() {
   }
 
   cfg = Config(sm, "/config.ini");
-
+  cfg.read();
+  
   LCDMenu_setup();
   Logger << "LCD initialized" << endl;
     
@@ -220,8 +212,8 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
   Logger << "MDNS initialized" << endl;
   
-  setup_OTA();
-  Logger << "OTA initialized " << endl;
+  //setup_OTA();
+  //Logger << "OTA initialized " << endl;
   
   setup_dl();
   Logger << "DataLogger initialized" << endl;

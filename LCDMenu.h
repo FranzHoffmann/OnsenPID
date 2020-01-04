@@ -1,3 +1,5 @@
+#include <LiquidCrystal.h>
+
 #define LCD_RS D5
 #define LCD_EN D6
 #define LCD_D4 D0
@@ -14,7 +16,7 @@ enum ButtonEnum {BTN_NONE, BTN_SEL,
 };
 
 enum class Screen {
-	MAIN_VERSION, MAIN_TIME, MAIN_COOK, MAIN_RECIPE, MAIN_SETTINGS,
+	MAIN_VERSION, MAIN_COOK, MAIN_RECIPE, MAIN_SETTINGS,
 	COOK_RECIPE, COOK_TIMER, COOK_START, COOK_ABORT,
 	REC_SELECT, REC_NAME, REC_STEP_i, REC_STEP_i_TIME, REC_STEP_i_TEMP,
 	REC_PARAM_i, REC_EXIT_SAVE, REC_EXIT_ABORT,
@@ -25,3 +27,4 @@ enum class Screen {
 
 typedef void (*callback)();
 enum class EditMode {NUMBER, TIME};
+extern LiquidCrystal lcd;

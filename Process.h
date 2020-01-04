@@ -6,6 +6,7 @@
 #include "Logfile.h"
 #include <Streaming.h>
 #include "recipe.h"
+//#include "Config.h"
 
 enum class State {IDLE, WAITING, COOKING, FINISHED, ERROR};
 
@@ -17,8 +18,8 @@ class Process {
 		// get/change state
 		State getState();
 		void startCooking(int recno);
-		void startByStartTime(int recno, unsigned long starttime);
-		void startByEndTime(int recno, unsigned long endtime);
+		void startByStartTime(int recno, unsigned long t);
+		void startByEndTime(int recno, unsigned long t);
 		void next();
 		void abort();
 

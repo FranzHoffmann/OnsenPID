@@ -7,11 +7,11 @@
 // I can't declare this in the header file.
 // :-(
 
-extern Param_t pararray[REC_PARAM_COUNT] = {
-	{"kp",		"Verstärkung",		5.0,	"%/°C",	0.0,	100.0},
+Param_t pararray[REC_PARAM_COUNT] = {
+	{"kp",		"Verstaerkung",		5.0,	"%/C",	0.0,	100.0},
 	{"tn",		"Nachstellzeit",	40.0,	"s"	,	0.0,	1000.0},
 	{"tv",		"Vorhaltezeit",		40.0,	"s"	,	0.0,	1000.0},
-	{"emax",	"Max. Reglerabw.",	10.0,	"°C",	0.0,	100.0},
+	{"emax",	"Max. Reglerabw.",	10.0,	"C",	0.0,	100.0},
 	{"pmax",	"Max. Leistung",	100.0,	"%",	0.0,	100.0}
 };
 

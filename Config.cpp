@@ -7,10 +7,10 @@
 
 // constructor
 Config::Config(Process p, const char* filename) {
-	_process = p;
+//	_process = p;
 	_ini = new SPIFFSIniFile(filename);
 	if (strlen(filename) <= CONFIG_MAX_FILENAME_LEN)
-		strcpy(_filename, filename);
+		strncpy(_filename, filename, sizeof(_filename));
 	else
 		_filename[0] = '\0';
 	Logger << "Config initialized (" << filename << ")" << endl;
@@ -18,7 +18,7 @@ Config::Config(Process p, const char* filename) {
 
 // TODO: do we need this?
 Config::Config(Process p) {
-	_process = p;
+//	_process = p;
 }
 
 // Note: config file can not be updated.
@@ -56,7 +56,7 @@ bool Config::read() {
 	readString(section_wifi, wifi_pw,       p.pw, String("default_pw"));
 
 	readInt(section_system, system_tz, p.tzoffset, 0);
-	
+
 	Logger << "End of config file" << endl;
 	return true;
 }
@@ -66,14 +66,15 @@ void Config::readRecipes() {
 	String section, key;
 	String strValue;
 	for (int i=0; i<REC_COUNT; i++) {
-		section = "Recipe" + i;
+		section = "Recipe" + String(i);
 		readString(section.c_str(), "name", strValue, section.c_str());
 		strncpy(recipe[i].name, strValue.c_str(), sizeof(recipe[i].name));
+		Serial << strValue << "(" << recipe[i].name << ")" << endl;
 		// read times and temps arrays
 		for (int j=0; j<REC_STEPS; j++) {
-			key = "time" + j;
+			key = "time" + String(j);
 			readInt(section.c_str(), key.c_str(), recipe[i].times[j], 0);
-			key = "temp" + j;
+			key = "temp" + String(j);
 			readDouble(section.c_str(), key.c_str(), recipe[i].temps[j], 0.0);
 			yield();
 		}
@@ -92,14 +93,14 @@ void Config::writeRecipes() {
 	String section, key;
 	String strValue;
 	for (int i=0; i<REC_COUNT; i++) {
-		section = "Recipe" + i;
+		section = "Recipe" + String(i);
 		write(section.c_str());
 		write("name", recipe[i].name);
 		// write times and temps arrays
 		for (int j=0; j<REC_STEPS; j++) {
-			key = "time" + j;
+			key = "time" + String(j);
 			write(key.c_str(), recipe[i].times[j]);
-			key = "temp" + j;
+			key = "temp" + String(j);
 			write(key.c_str(), recipe[i].temps[j]);
 			yield();
 		}
