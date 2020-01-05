@@ -77,7 +77,7 @@ void start_edit_number(double value, int decimals, EditMode mode,
 		callback onChange) {
 	editNumData.v = value;
 	editNumData.vmin = vmin;
-	editNumData.vmin = vmax;
+	editNumData.vmax = vmax;
 	editNumData.step = step;
 	editNumData.unit = String(*unit);
 	editNumData.decimals = decimals;
@@ -272,6 +272,8 @@ void disp_cook_timer(ButtonEnum btn) {
 }
 
 void disp_cook_start(ButtonEnum btn) {
+	line1 = "Starten?";
+	line2.begin();
 	if (btn == BTN_LE) screen = Screen::COOK_TIMER;
 	else if (btn == BTN_SEL) {
 		switch(timer_mode) {
