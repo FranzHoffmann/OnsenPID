@@ -57,8 +57,8 @@ struct param {
   boolean sensorOK;
 } p;
 
-Process sm;
-Config cfg(sm);
+Config cfg;
+Process sm(&cfg);
 
 
 // ------------------------------------------------------------ NTP Task
@@ -195,9 +195,10 @@ void setup() {
     size_t fileSize = dir.fileSize();
     Serial << "- '" << fileName << "', " << fileSize << " bytes" << endl;
   }
-
-  cfg = Config(sm, "/config.ini");
+  cfg.setFilename("/config.ini");
   cfg.read();
+  
+  Clock.setTimeOffset(cfg.p.tzoffset * 3600);
   
   LCDMenu_setup();
   Logger << "LCD initialized" << endl;

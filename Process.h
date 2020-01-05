@@ -6,13 +6,13 @@
 #include "Logfile.h"
 #include <Streaming.h>
 #include "recipe.h"
-//#include "Config.h"
+#include "Config.h"
 
 enum class State {IDLE, WAITING, COOKING, FINISHED, ERROR};
 
 class Process {
 	public:
-		Process();
+		Process(Config *cfg);
 		void update();
 
 		// get/change state
@@ -36,6 +36,7 @@ class Process {
 
 
 	private:
+		Config *_cfg;
 		uint32_t calcRecipeDuration(int recno);
 		double calcRecipeRamp(uint32_t actTime);
 		int act_rec;

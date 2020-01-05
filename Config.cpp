@@ -6,20 +6,19 @@
 
 
 // constructor
-Config::Config(Process p, const char* filename) {
-//	_process = p;
-	_ini = new SPIFFSIniFile(filename);
-	if (strlen(filename) <= CONFIG_MAX_FILENAME_LEN)
-		strncpy(_filename, filename, sizeof(_filename));
-	else
-		_filename[0] = '\0';
-	Logger << "Config initialized (" << filename << ")" << endl;
+Config::Config() {
 }
 
-// TODO: do we need this?
-Config::Config(Process p) {
-//	_process = p;
+
+void Config::setFilename(const char *fn) {
+	if (strlen(fn) <= CONFIG_MAX_FILENAME_LEN)
+		strncpy(_filename, fn, sizeof(_filename));
+	else
+		strncpy(_filename, "config.ini", sizeof(_filename));
+	_ini = new SPIFFSIniFile(_filename);
+	Logger << "Config initialized (" << _filename << ")" << endl;
 }
+
 
 // Note: config file can not be updated.
 // This will delete the file and write a new one.

@@ -14,6 +14,7 @@ class ClockT {
 	public:
 		ClockT();
 
+		void setTimeOffset(int timeOffset);
 		unsigned long getEpochTime();
 		void update();
 		String getFormattedTime();

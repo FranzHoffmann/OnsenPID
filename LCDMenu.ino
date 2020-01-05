@@ -171,7 +171,7 @@ void disp_main_cook(ButtonEnum btn) {
 			line1.begin();
 			line1 << p.act << " / " << sm.out.set << degc;
 			line2.begin();
-			line2 << "Noch " << sm.getRemainingTime()/60 << " min";
+			line2 << "Noch " << sm.getRemainingTime()/60+1 << " min";
 			if (btn == BTN_RI) screen = Screen::COOK_ABORT;
 			break;
 

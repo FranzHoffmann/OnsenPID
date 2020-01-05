@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include <SPIFFSIniFile.h>
-#include "Process.h"
 
 #define CONFIG_MAX_FILENAME_LEN 26
 
@@ -38,9 +37,9 @@ class Config {
   } p;
 
   // constructor
-  Config(Process p, const char* filename);
-  Config(Process p);
+  Config();
   
+  void setFilename(const char *fn);
   bool read();
   bool save();
   void readRecipes();

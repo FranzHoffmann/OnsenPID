@@ -7,8 +7,8 @@
 
 
 /* constructor */
-Process::Process() {
-	//_cfg = cfg;
+Process::Process(Config *cfg) {
+	_cfg = cfg;
 }
 
 
