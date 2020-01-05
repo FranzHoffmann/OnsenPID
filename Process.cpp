@@ -9,6 +9,7 @@
 /* constructor */
 Process::Process(Config *cfg) {
 	_cfg = cfg;
+	_callback = NULL;
 }
 
 
@@ -26,6 +27,10 @@ int Process::getRemainingTime() {
 		default:
 			return 0;
 	}
+}
+
+void Process::setCallback(void (*f)()) {
+	_callback = f;
 }
 
 
@@ -118,10 +123,9 @@ void Process::setState(State newState) {
 
 	if (newState == State::COOKING) {
 		startTime = Clock.getEpochTime();
-		// TODO dl_startBatch();
 	}
-
 	state = newState;
+	if (_callback != NULL) _callback();
 }
 
 void Process::update() {

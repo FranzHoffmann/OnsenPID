@@ -25,6 +25,7 @@ class Process {
 
 		// get recipe or setpoints
 		int getRemainingTime();
+		void setCallback(void (*f)());
 
 		String stateAsString(State s);
 
@@ -37,6 +38,7 @@ class Process {
 
 	private:
 		Config *_cfg;
+		void (*_callback)();
 		uint32_t calcRecipeDuration(int recno);
 		double calcRecipeRamp(uint32_t actTime);
 		int act_rec;

@@ -80,11 +80,12 @@ int task_recipe() {
   p.tv   = sm.out.tv;
   p.emax = sm.out.emax;
   p.pmax = sm.out.pmax;
+  p.released = (sm.getState() == State::COOKING);
   interrupts();
   
-  Serial << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
+  // debug Serial << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
 
-  return 5000;
+  return 1000;
 }
 
 // ---------------------------------------------------- Temperature Task
@@ -230,4 +231,19 @@ void setup() {
 
   // controller is running in timer interrupt
   setup_controller();
+  
+  sm.setCallback(&onStateChanged);
+}
+
+
+void onStateChanged() {
+	Serial << "onStateChanged() callback" << endl;
+	switch(sm.getState()) {
+		case State::COOKING:
+			dl_startBatch();
+			break;
+		case State::FINISHED:
+			dl_endBatch();
+			break;
+	}
 }

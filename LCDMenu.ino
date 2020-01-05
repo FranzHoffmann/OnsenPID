@@ -12,7 +12,7 @@ PString line1(buf1, sizeof(buf1));
 PString line2(buf2, sizeof(buf2));
 PString line1_old(buf3, sizeof(buf3));	// needed in OnsenPID.ino
 PString line2_old(buf4, sizeof(buf4));
-int cursor = -1;
+int cursor = -1, cursor_old;
 
 static const char degc[3] = {'\1', 'C', '\0'};
 
@@ -34,12 +34,22 @@ ButtonEnum LCDMenu_readKey() {
 	static ButtonEnum previous;
 	ButtonEnum btn;
 
+
 	int ai = analogRead(LCD_AI);
+/*
+	Serial << ai << endl;
 	if (ai < 100)      btn = BTN_RI;
 	else if (ai < 250) btn = BTN_UP;
 	else if (ai < 450) btn = BTN_DN;
 	else if (ai < 720) btn = BTN_LE;
 	else if (ai < 999) btn = BTN_SEL;
+	else               btn = BTN_NONE;
+*/
+	if (ai < 100)      btn = BTN_RI;
+	else if (ai < 250) btn = BTN_UP;
+	else if (ai < 460) btn = BTN_DN;
+	else if (ai < 700) btn = BTN_LE;
+	else if (ai < 1015) btn = BTN_SEL;
 	else               btn = BTN_NONE;
 
 	// once on click, and start running while holding
@@ -53,6 +63,56 @@ ButtonEnum LCDMenu_readKey() {
 		return btn;
 	}
 	return BTN_NONE;
+}
+
+
+// -------------------------------------------------------------------------- LCD UI Task
+/* read keyboard and write menu */
+void LCDMenu_update() {
+	ButtonEnum btn = LCDMenu_readKey();
+
+	switch (screen) {
+		case Screen::MAIN_VERSION:		disp_main_version(btn);		break;
+		case Screen::MAIN_COOK:			disp_main_cook(btn);		break;
+		case Screen::MAIN_RECIPE:		disp_main_recipe(btn);		break;
+		case Screen::MAIN_SETTINGS:		disp_main_settings(btn);	break;
+
+		case Screen::COOK_ABORT:		disp_cook_abort(btn);		break;
+		case Screen::COOK_RECIPE:		disp_cook_recipe(btn);		break;
+		case Screen::COOK_TIMER:		disp_cook_timer(btn);		break;
+		case Screen::COOK_START:		disp_cook_start(btn);		break;
+
+		case Screen::REC_SELECT:		disp_rec_select(btn);		break;
+		case Screen::REC_NAME:			disp_rec_name(btn);			break;
+		case Screen::REC_STEP_i:		disp_rec_step_i(btn);		break;
+		case Screen::REC_STEP_i_TEMP:	disp_rec_step_i_temp(btn);	break;
+		case Screen::REC_STEP_i_TIME:	disp_rec_step_i_time(btn);	break;
+		case Screen::REC_PARAM_i:		disp_rec_param_i(btn);		break;
+		case Screen::REC_EXIT_SAVE:		disp_rec_exit_save(btn);	break;
+		case Screen::REC_EXIT_ABORT:	disp_rec_exit_abort(btn);	break;
+
+		case Screen::SET_WIFI:			disp_set_wifi(btn);			break;
+		case Screen::SET_TIMEZONE:		disp_set_tz(btn);			break;
+
+		case Screen::EDIT_NUMBER:		disp_edit_number(btn);		break;
+		case Screen::EDIT_TEXT:			disp_edit_text(btn);		break;
+	}
+	if (!((line1 == line1_old) && (line2 == line2_old) && (cursor == cursor_old))) {
+		lcd.clear();
+		lcd.setCursor(0,0);
+		lcd << line1;
+		lcd.setCursor(0,1);
+		lcd << line2;
+		line1_old.begin(); line1_old << line1;
+		line2_old.begin(); line2_old << line2;
+		if (cursor >= 0) {
+			lcd.setCursor(cursor, 1);
+			lcd.blink();
+		} else {
+			lcd.noBlink();
+		}
+		cursor_old = cursor;
+	}
 }
 
 
@@ -166,56 +226,6 @@ void disp_edit_text(ButtonEnum btn) {
 }
 
 
-
-// -------------------------------------------------------------------------- LCD UI Task
-/* read keyboard and write menu */
-void LCDMenu_update() {
-	ButtonEnum btn = LCDMenu_readKey();
-
-	switch (screen) {
-		case Screen::MAIN_VERSION:		disp_main_version(btn);		break;
-		case Screen::MAIN_COOK:			disp_main_cook(btn);		break;
-		case Screen::MAIN_RECIPE:		disp_main_recipe(btn);		break;
-		case Screen::MAIN_SETTINGS:		disp_main_settings(btn);	break;
-
-		case Screen::COOK_ABORT:		disp_cook_abort(btn);		break;
-		case Screen::COOK_RECIPE:		disp_cook_recipe(btn);		break;
-		case Screen::COOK_TIMER:		disp_cook_timer(btn);		break;
-		case Screen::COOK_START:		disp_cook_start(btn);		break;
-
-		case Screen::REC_SELECT:		disp_rec_select(btn);		break;
-		case Screen::REC_NAME:			disp_rec_name(btn);			break;
-		case Screen::REC_STEP_i:		disp_rec_step_i(btn);		break;
-		case Screen::REC_STEP_i_TEMP:	disp_rec_step_i_temp(btn);	break;
-		case Screen::REC_STEP_i_TIME:	disp_rec_step_i_time(btn);	break;
-		case Screen::REC_PARAM_i:		disp_rec_param_i(btn);		break;
-		case Screen::REC_EXIT_SAVE:		disp_rec_exit_save(btn);	break;
-		case Screen::REC_EXIT_ABORT:	disp_rec_exit_abort(btn);	break;
-
-		case Screen::SET_WIFI:			disp_set_wifi(btn);			break;
-		case Screen::SET_TIMEZONE:		disp_set_tz(btn);			break;
-
-		case Screen::EDIT_NUMBER:		disp_edit_number(btn);		break;
-		case Screen::EDIT_TEXT:			disp_edit_text(btn);		break;
-	}
-	if (!((line1 == line1_old) && (line2 == line2_old))) {
-		lcd.clear();
-		lcd.setCursor(0,0);
-		lcd << line1;
-		lcd.setCursor(0,1);
-		lcd << line2;
-		line1_old.begin(); line1_old << line1;
-		line2_old.begin(); line2_old << line2;
-		if (cursor >= 0) {
-			lcd.setCursor(cursor, 1);
-			lcd.blink();
-		} else {
-			lcd.noBlink();
-		}
-	}
-}
-
-
 void disp_main_version(ButtonEnum btn) {
 	uint32_t ts = Clock.getEpochTime();
 	line1.begin();
@@ -223,7 +233,6 @@ void disp_main_version(ButtonEnum btn) {
 	line2.begin();
 	line2 << Clock.getFormattedTime();
 	if (btn == BTN_DN) screen = Screen::MAIN_COOK;
-	else if (btn == BTN_UP) screen = Screen::MAIN_SETTINGS;
 
 }
 
@@ -246,7 +255,7 @@ void disp_main_cook(ButtonEnum btn) {
 			break;
 
 		case State::IDLE:
-			line1 = "Kochen";
+			line1 = "Kochen...";
 			line2.begin();
 			if (btn == BTN_RI) screen = Screen::COOK_RECIPE;
 			break;
@@ -266,7 +275,7 @@ void disp_main_cook(ButtonEnum btn) {
 
 void disp_main_recipe(ButtonEnum btn) {
 	line1 = "Rezepte";
-	line2 = "bearbeiten";
+	line2 = "bearbeiten...";
 	if (btn == BTN_DN) screen = Screen::MAIN_SETTINGS;
 	else if (btn == BTN_UP) screen = Screen::MAIN_COOK;
 	else if (btn == BTN_RI) screen = Screen::REC_SELECT;
@@ -274,7 +283,7 @@ void disp_main_recipe(ButtonEnum btn) {
 
 
 void disp_main_settings(ButtonEnum btn) {
-	line1 = "Einstellungen";
+	line1 = "Einstellungen...";
 	line2.begin();
 	if (btn == BTN_UP) screen = Screen::MAIN_RECIPE;
 	else if (btn == BTN_RI) screen = Screen::SET_WIFI;
@@ -467,14 +476,14 @@ void disp_rec_param_i(ButtonEnum btn) {
 	line1.begin();
 	line1 << pararray[param_i].name << ":";
 	line2.begin();
-	line2 << "" << recipe[rec_i].param[param_i] << " " << pararray[param_i].unit;
+	line2 << "" << String(recipe[rec_i].param[param_i], 0) << " " << pararray[param_i].unit;
 
-	if (btn == BTN_UP)			{if (param_i > 0) param_i = (param_i - 1);}
-	else if (btn == BTN_DN)		{if (param_i < REC_PARAM_COUNT) param_i = (param_i + 1);}
+	if (btn == BTN_UP)			param_i = dec(param_i, 0, REC_PARAM_COUNT-1, false);
+	else if (btn == BTN_DN)		param_i = inc(param_i, 0, REC_PARAM_COUNT-1, false);
 	else if (btn == BTN_LE)		screen = Screen::REC_STEP_i;
 	else if (btn == BTN_RI)		screen = Screen::REC_EXIT_SAVE;
 	else if (btn == BTN_SEL)	{
-		start_edit_number(recipe[rec_i].param[param_i], 1, EditMode::NUMBER,
+		start_edit_number(recipe[rec_i].param[param_i], 0, EditMode::NUMBER,
 		pararray[param_i].min, pararray[param_i].max, 0.1, pararray[param_i].unit,
 		[](){
 			// anonymous function, called when edit is complete

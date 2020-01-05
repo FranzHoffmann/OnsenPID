@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de" class="">
+
+<head>
+<meta charset='utf-8'>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<title>{{HOSTNAME}} - Einschalten</title>
+<link rel="stylesheet" href="/stylesheet.css" type="text/css">
+</head>
+
+<body>
+<div style='text-align:left;display:inline-block;min-width:340px;'>
+	<div style='text-align:center;'><noscript>Bitte aktivieren Sie JavaScript<br /></noscript>
+		<h3>OnsenPID</h3>
+		<h2>{{HOSTNAME}}</h2>
+	</div>
+		<form method='get' action='/rec.html'>
+		<fieldset>
+		<legend><b>&nbsp;Kochen&nbsp;</b></legend>
+			<p><b>&nbsp;Rezept&nbsp;<br /></b>
+			<select name='rec' size='1'>
+				<option>{{NAME:0}}</option>
+				<option>{{NAME:1}}</option>
+				<option>{{NAME:2}}</option>
+				<option>{{NAME:3}}</option>
+				<option>{{NAME:4}}</option>
+			</select>
+		</fieldset>
+		<fieldset>
+			<p><b>&nbsp;Zeitsteuerung&nbsp;<br /></b>
+			<input type='radio' name='mode' id='nw' value='nw' checked><label for='st'>Sofort anfangen</label><br />
+			<input type='radio' name='mode' id='st' value='st'><label for='st'>Zur vorgeben Uhrzeit anfangen</label><br />
+			<input type='radio' name='mode' id='et' value='et'><label for='st'>Zur vorgegebenen Uhrzeit fertig sein</label><br />
+			<input type='time' name='time' value='{{STARTTIME}}'>
+			</p>
+			<br /><button name='start' type='submit' class='button bgrn'>Einschalten!</button>
+		</fieldset>
+	</form>
+	<div></div>
+	<p><form action='/' method='get'><button>Zurück</button></form>	</p><br />
+	<div style='text-align:right;font-size:11px;'><hr /><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>OnsenPID by Franz Hoffmann</a></div>
+</div>
+</body>
+
+</html>

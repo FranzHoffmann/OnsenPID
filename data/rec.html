@@ -15,16 +15,47 @@
 		<h2>{{HOSTNAME}}</h2>
 	</div>
 	<fieldset>
-		<legend><b>&nbsp;Rezept&nbsp;</b></legend>
-		<form method='get' action='rec'>
-			<p><b>Temperatur (&deg;C)</b><br /><input id='temp' name='temp' value='{{SET}}'></p>
-			<p><b>Kochzeit (min)</b><br /><input id='duration' name='duration' value='{{TIME_SET}}'></p>
-			<p></p><b>&nbsp;Zeitsteuerung&nbsp;<br /></b>
-			<input type='radio' name='mode' id='nw' value='nw' checked><label for='st'>Sofort anfangen</label><br />
-			<input type='radio' name='mode' id='st' value='st'><label for='st'>Zur vorgeben Uhrzeit anfangen</label><br />
-			<input type='radio' name='mode' id='et' value='et'><label for='st'>Zur vorgegebenen Uhrzeit fertig sein</label><br />
-			<input type='time' name='time' value='{{STARTTIME}}'>
-			</p>
+		<p><b>&nbsp;gespeicherte Rezepte&nbsp;<br /></b>
+		<ul>
+			<li><a href='rec&rec=0'>{{NAME:0}}</a></li>
+			<li><a href='rec&rec=1'>{{NAME:1}}</a></li>
+			<li><a href='rec&rec=2'>{{NAME:2}}</a></li>
+			<li><a href='rec&rec=3'>{{NAME:3}}</a></li>
+			<li><a href='rec&rec=4'>{{NAME:4}}</a></li>
+		</ul>
+	</fieldset>
+	<fieldset>
+		<legend><b>&nbsp;Rezept {{NAME}}&nbsp;</b></legend>
+		<form method='get' action='/rec.html'>
+			<table>
+				<th><td>Schritt</td><td>Temperatur (&deg;C)</td><td>Dauer (min)</td></th>
+				<tr><td>1</td>
+					<td><input id='temp0' name='temp0' value='{{TEMP:0}}'</td>
+					<td><input id='time0' name='time0' value='{{TIME:0}}'</td>
+				</tr>
+				<tr><td>1</td>
+					<td><input id='temp1' name='temp1' value='{{TEMP:1}}'</td>
+					<td><input id='time1' name='time1' value='{{TIME:1}}'</td>
+				</tr>
+				<tr><td>1</td>
+					<td><input id='temp2' name='temp2' value='{{TEMP:2}}'</td>
+					<td><input id='time2' name='time2' value='{{TIME:2}}'</td>
+				</tr>
+				<tr><td>1</td>
+					<td><input id='temp3' name='temp3' value='{{TEMP:3}}'</td>
+					<td><input id='time3' name='time3' value='{{TIME:3}}'</td>
+				</tr>
+				<tr><td>1</td>
+					<td><input id='temp4' name='temp4' value='{{TEMP:4}}'</td>
+					<td><input id='time4' name='time4' value='{{TIME:4}}'</td>
+				</tr>
+			</table>
+			<p><b>Verstärkung Kp (%/&deg;C)</b><br /><input id='kp' name='kp' value='{{KP}}'></p>
+			<p><b>Nachstellzeit Tn (s)</b><br /><input id='tn' name='tn' value='{{TN}}'></p>
+			<p><b>Vorhaltezeit Tv (s)</b><br /><input id='tv' name='tv' value='{{TV}}'></p>
+			<p><b>Max. Abweichung für Regler Emax (&deg;C)</b><br /><input id='emax' name='emax' value='{{EMAX}}'></p>
+			<p><b>Max. Ausgangsleistung (%)</b><br /><input id='pmax' name='pmax' value='{{PMAX}}'></p>
+
 			<br /><button name='start' type='submit' class='button bgrn'>Einschalten!</button>
 		</form>
 	</fieldset>
