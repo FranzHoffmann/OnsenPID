@@ -73,14 +73,14 @@ int task_ntp() {
 int task_recipe() {
   sm.update();
   // write values from recipe to global struct for PID controller
-  //noInterrupts();
+  noInterrupts();
   p.set  = sm.out.set;
   p.kp   = sm.out.kp;
   p.tn   = sm.out.tn;
   p.tv   = sm.out.tv;
   p.emax = sm.out.emax;
   p.pmax = sm.out.pmax;
-  //interrupts();
+  interrupts();
   
   Serial << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
 
@@ -112,7 +112,6 @@ int task_read_temp() {
 
   // simulation:
   //p.act = pt1((p.out_b ? 150.0 : 20.0), 200, cycle/1000.0);
-  Serial << p.act << endl;
   return 1000;  
 }
 
@@ -213,8 +212,8 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
   Logger << "MDNS initialized" << endl;
   
-  //setup_OTA();
-  //Logger << "OTA initialized " << endl;
+  setup_OTA();
+  Logger << "OTA initialized " << endl;
   
   setup_dl();
   Logger << "DataLogger initialized" << endl;

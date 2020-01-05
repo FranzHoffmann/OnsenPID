@@ -21,10 +21,10 @@ enum class Screen {
 	REC_SELECT, REC_NAME, REC_STEP_i, REC_STEP_i_TIME, REC_STEP_i_TEMP,
 	REC_PARAM_i, REC_EXIT_SAVE, REC_EXIT_ABORT,
 	SET_WIFI, SET_TIMEZONE,
-	EDIT_NUMBER
+	EDIT_NUMBER, EDIT_TEXT
 };
 
 
 typedef void (*callback)();
-enum class EditMode {NUMBER, TIME};
+enum class EditMode {NUMBER, TIME, TEXT};
 extern LiquidCrystal lcd;

@@ -18,7 +18,7 @@ int Process::getRemainingTime() {
 	switch (state) {
 
 		case State::COOKING:
-			return (recipe[act_rec].times[0] - actTime);
+			return (calcRecipeDuration(act_rec) - actTime);
 
 		case State::WAITING:
 			return (startTime - Clock.getEpochTime());
@@ -118,6 +118,7 @@ void Process::setState(State newState) {
 
 	if (newState == State::COOKING) {
 		startTime = Clock.getEpochTime();
+		// TODO dl_startBatch();
 	}
 
 	state = newState;

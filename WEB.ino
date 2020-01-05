@@ -81,7 +81,6 @@ String directory() {
  *  use escape character '\' in file to output {{: \{{
  */
 String readAndSubstitute(File f) {
-	Logger << "readAndSubstitute()" << endl;
 	String var, content;
 	enum {TEXT, ESCAPED, VAR1, VAR_START, VAR, VAR_END} state;
 	state = TEXT;
@@ -120,7 +119,7 @@ String readAndSubstitute(File f) {
 
 			case VAR_END:
 				if (c == '}') {            // found }}
-					Serial << "{{" << var << "}}" << endl;
+					// debug Serial << "{{" << var << "}}" << endl;
 					content += subst(var);
 					state = TEXT;
 				} else {                  // found }x inside variable
@@ -173,7 +172,7 @@ void changeParam(String arg_name, String param_name, int *param) {
  * TODO: make this streaming...
  */
 void send_file(String filename) {
-	Logger << "send_file(): " << filename << endl;
+	// debug Logger << "send_file(): " << filename << endl;
 	File f = filesystem.open(filename, "r");
 	if (!f) {
 		Logger << "send_file(): file not found: " << filename << endl;
