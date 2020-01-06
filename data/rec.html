@@ -11,41 +11,42 @@
 <body>
 <div style='text-align:left;display:inline-block;min-width:340px;'>
 	<div style='text-align:center;'><noscript>Bitte aktivieren Sie JavaScript<br /></noscript>
-		<h3>OnsenPID</h3>
+		<h3>{{VERSION}}</h3>
 		<h2>{{HOSTNAME}}</h2>
 	</div>
 	<fieldset>
-		<p><b>&nbsp;gespeicherte Rezepte&nbsp;<br /></b>
+		<legend><b>&nbsp;Gespeicherte Rezepte&nbsp;</b></legend>
 		<ul>
-			<li><a href='rec&rec=0'>{{NAME:0}}</a></li>
-			<li><a href='rec&rec=1'>{{NAME:1}}</a></li>
-			<li><a href='rec&rec=2'>{{NAME:2}}</a></li>
-			<li><a href='rec&rec=3'>{{NAME:3}}</a></li>
-			<li><a href='rec&rec=4'>{{NAME:4}}</a></li>
+			<li><a href='rec?rec=0'>{{NAME#:0}}</a></li>
+			<li><a href='rec?rec=1'>{{NAME#:1}}</a></li>
+			<li><a href='rec?rec=2'>{{NAME#:2}}</a></li>
+			<li><a href='rec?rec=3'>{{NAME#:3}}</a></li>
+			<li><a href='rec?rec=4'>{{NAME#:4}}</a></li>
 		</ul>
 	</fieldset>
 	<fieldset>
 		<legend><b>&nbsp;Rezept {{NAME}}&nbsp;</b></legend>
-		<form method='get' action='/rec.html'>
+		<form method='get' action='rec'>
+			<p><b>Name</b><br /><input id='name' name='name' value='{{NAME}}'></p>
 			<table>
-				<th><td>Schritt</td><td>Temperatur (&deg;C)</td><td>Dauer (min)</td></th>
+				<tr><th>#</th><th>Temperatur (&deg;C)</th><th>Dauer (min)</th></tr>
 				<tr><td>1</td>
 					<td><input id='temp0' name='temp0' value='{{TEMP:0}}'</td>
 					<td><input id='time0' name='time0' value='{{TIME:0}}'</td>
 				</tr>
-				<tr><td>1</td>
+				<tr><td>2</td>
 					<td><input id='temp1' name='temp1' value='{{TEMP:1}}'</td>
 					<td><input id='time1' name='time1' value='{{TIME:1}}'</td>
 				</tr>
-				<tr><td>1</td>
+				<tr><td>3</td>
 					<td><input id='temp2' name='temp2' value='{{TEMP:2}}'</td>
 					<td><input id='time2' name='time2' value='{{TIME:2}}'</td>
 				</tr>
-				<tr><td>1</td>
+				<tr><td>4</td>
 					<td><input id='temp3' name='temp3' value='{{TEMP:3}}'</td>
 					<td><input id='time3' name='time3' value='{{TIME:3}}'</td>
 				</tr>
-				<tr><td>1</td>
+				<tr><td>5</td>
 					<td><input id='temp4' name='temp4' value='{{TEMP:4}}'</td>
 					<td><input id='time4' name='time4' value='{{TIME:4}}'</td>
 				</tr>
@@ -56,7 +57,7 @@
 			<p><b>Max. Abweichung für Regler Emax (&deg;C)</b><br /><input id='emax' name='emax' value='{{EMAX}}'></p>
 			<p><b>Max. Ausgangsleistung (%)</b><br /><input id='pmax' name='pmax' value='{{PMAX}}'></p>
 
-			<br /><button name='start' type='submit' class='button bgrn'>Einschalten!</button>
+			<br /><button name='start' type='submit' class='button bgrn'>Speichern</button>
 		</form>
 	</fieldset>
 	<div></div>

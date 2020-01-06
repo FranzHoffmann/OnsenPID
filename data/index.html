@@ -54,20 +54,20 @@ window.onload = read_state();
 		<h2>{{HOSTNAME}}</h2>
 	</div>
 	<div>
-	<table style="width:100%; font-weight:normal;font-size:24px">
-	<tbody>
-	<tr><td>Temperatur:</td><td align="right"><span id="act">{{ACT}}</span>&deg;C</td></tr>
-	<tr><td>Sollwert:</td><td align="right"><span id="set">{{SET}}</span>&deg;C</td></tr>
-	<tr><td>Leistung:</td><td align="right"><span id="out">{{OUT}}</span>%</td></tr>
-	<tr><td>Status:</td><td align="right"><span id="state">{{STATE}}</span></td></tr>
-	<tr><td>Restzeit:</td><td align="right"><span id="time">{{TIME_LEFT}}</span> min</td></tr>
-	</tbody>
-	</table>
+		<table style="width:100%; font-weight:normal;font-size:24px">
+			<tbody>
+				<tr><td>Temperatur:</td><td align="right"><span id="act">{{ACT}}</span>&deg;C</td></tr>
+				<tr><td>Sollwert:</td><td align="right"><span id="set">{{SET}}</span>&deg;C</td></tr>
+				<tr><td>Leistung:</td><td align="right"><span id="out">{{OUT}}</span>%</td></tr>
+				<tr><td>Status:</td><td align="right"><span id="state">{{STATE}}</span></td></tr>
+				<tr><td>Restzeit:</td><td align="right"><span id="time">{{TIME_LEFT}}</span> min</td></tr>
+			</tbody>
+		</table>
 	</div>
-	<table style="width:100%"><tbody><tr><td style="width:100%"><button onclick='read_state("cmd=1");'>Einschalten!</button></td></tr></tbody></table>
-	<div></div>
+	<form action="start" method="get"><button>Kochen</button></form>
 	<p></p>
-	<form action="rec" method="get"><button>Rezept</button></form>
+	<p></p>
+	<form action="rec" method="get"><button>Rezepte</button></form>
 	<p></p>
 	<p></p>
 	<form action="data" method="get"><button>Kurven</button></form>

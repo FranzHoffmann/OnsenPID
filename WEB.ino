@@ -1,5 +1,6 @@
 void setup_webserver(ESP8266WebServer *s) {
 	s->on("/",     handleRoot);
+	s->on("/start",handleStart);
 	s->on("/rec",  handleRecipe);
 	s->on("/data", handleData);
 	s->on("/cfg",  handleConfig);
@@ -41,26 +42,66 @@ void redirect(String url) {
 }
 
 
-String subst(String var) {
-	String s;
-	if (var == "ACT") return String(p.act);
-	if (var == "SET") return String(sm.out.set);
-	if (var == "OUT") return String(p.out);
-//	if (var == "KP") return String(recipe[??].param[Parameter::KP]);
-//	if (var == "TN") return String(cfg.p.tn);
-//	if (var == "TV") return String(cfg.p.tv);
-//	if (var == "EMAX") return String(cfg.p.emax);
-	if (var == "TIME") return String(Clock.getEpochTime());//timeClient.getFormattedTime());
-	if (var == "TIME_LEFT") return String(sm.getRemainingTime() / 60);
-//	if (var == "TIME_SET") return String(sm.getCookingTime()/60);
-	if (var == "STATE") return sm.stateAsString(sm.getState());
-	if (var == "HOSTNAME") return String(cfg.p.hostname);
-	if (var == "SSID") return cfg.p.ssid;
-	if (var == "PW") return cfg.p.pw;
-	if (var == "TZ") return String(cfg.p.tzoffset);
-	if (var == "DIR") return directory();
+/**
+ * split a string, e.g.:
+ * spliString("foo:bar:baz", ':', 0) --> "foo"
+ **/
+String splitString(String s, char seperator, int column) {
+	int actCol = 0;
+	String result = "";
+	for (int i=0; i<s.length(); i++) {
+		char c = s.charAt(i);
+		if (c != seperator) result += c;
+		if ((c == seperator) || i == s.length()-1) {
+			if (actCol == column) {
+				return result;
+			} else {
+				result = "";
+				actCol++;
+			}
+		}
+	}
+	return String("");
+}
+
+
+/**
+ * replace some keywords by values.
+ * keywords can contain up to two parameters, like this: "FOO:1:3"
+ */
+String subst(String var, int par) {
+	String code = splitString(var, ':', 0);
+	int j = splitString(var, ':', 1).toInt();
+	int k = splitString(var, ':', 2).toInt();
+
+	if (code == "ACT") return String(p.act);
+	if (code == "SET") return String(sm.out.set);
+	if (code == "OUT") return String(p.out);
+
+	if (code == "NAME#") 	return String(recipe[j].name);
+	if (code == "NAME") 	return String(recipe[par].name);
+	if (code == "TEMP")		return String(recipe[par].temps[j]);
+	if (code == "TIME")		return String(recipe[par].times[j] / 60);
+	if (code == "KP") 		return String(recipe[par].param[(int)Parameter::KP]);
+	if (code == "TN") 		return String(recipe[par].param[(int)Parameter::TN]);
+	if (code == "TV") 		return String(recipe[par].param[(int)Parameter::TV]);
+	if (code == "EMAX") 	return String(recipe[par].param[(int)Parameter::EMAX]);
+	if (code == "PMAX") 	return String(recipe[par].param[(int)Parameter::PMAX]);
+	
+	if (code == "CLOCK") return String(Clock.getEpochTime());//timeClient.getFormattedTime());
+	if (code == "TIME_LEFT") return String(sm.getRemainingTime() / 60);
+
+	if (code == "STATE")	return sm.stateAsString(sm.getState());
+	if (code == "HOSTNAME")	return String(cfg.p.hostname);
+	if (code == "VERSION")	return String("OnsenPID ") + VERSION;
+	
+	if (code == "SSID") return cfg.p.ssid;
+	if (code == "PW") return cfg.p.pw;
+	if (code == "TZ") return String(cfg.p.tzoffset);
+	if (code == "DIR") return directory();
 	return var; // ignore unknown strings
 }
+
 
 String directory() {
 	Dir dir = filesystem.openDir("/");
@@ -80,7 +121,8 @@ String directory() {
  *  everything enclosed in {{ }} is treated as a variable and sent to substitute()
  *  use escape character '\' in file to output {{: \{{
  */
-String readAndSubstitute(File f) {
+String readAndSubstitute(File f) { return readAndSubstitute(f, 0); }
+String readAndSubstitute(File f, int par) {
 	String var, content;
 	enum {TEXT, ESCAPED, VAR1, VAR_START, VAR, VAR_END} state;
 	state = TEXT;
@@ -120,7 +162,7 @@ String readAndSubstitute(File f) {
 			case VAR_END:
 				if (c == '}') {            // found }}
 					// debug Serial << "{{" << var << "}}" << endl;
-					content += subst(var);
+					content += subst(var, par);
 					state = TEXT;
 				} else {                  // found }x inside variable
 					var += '}';
@@ -171,7 +213,8 @@ void changeParam(String arg_name, String param_name, int *param) {
  * only works with small files.
  * TODO: make this streaming...
  */
-void send_file(String filename) {
+void send_file(String filename) { send_file(filename, 0); }
+void send_file(String filename, int par) {
 	// debug Logger << "send_file(): " << filename << endl;
 	File f = filesystem.open(filename, "r");
 	if (!f) {
@@ -179,7 +222,7 @@ void send_file(String filename) {
 		fail("file not found: " + filename);
 		return;
 	}
-	String reply = readAndSubstitute(f);
+	String reply = readAndSubstitute(f, par);
 	server.send(200, getContentType(filename), reply);
 	f.close();
 }
@@ -300,9 +343,8 @@ void handleWifi()   {
 	}
 }
 
-
 // --------------------------------------------------------------------------------------------- recipe
-void handleRecipe() {
+void handleStart() {
 	if (server.hasArg("start")) {
 		String t = server.arg("time");
 		unsigned long epoch = Clock.getEpochTime();
@@ -339,8 +381,24 @@ void handleRecipe() {
 		}
 		cfg.save();
 	}
-	send_file("/rec.html");
+	send_file("/start.html");
 	//TODO
+}
+
+
+// --------------------------------------------------------------------------------------------- recipe
+void handleRecipe() {
+	int rec = 0;
+	if (server.hasArg("rec")) {
+		rec = server.arg("rec").toInt();
+		rec = limit(rec, 0, REC_COUNT-1);
+	}
+	
+	if (server.hasArg("save")) {
+		// TODO
+		Logger << "Webserver: recipe save() not supported yet";
+	}
+	send_file("/rec.html", rec);
 }
 
 // --------------------------------------------------------------------------------------------- data

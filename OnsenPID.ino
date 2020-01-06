@@ -140,6 +140,9 @@ void loop() {
     
 // ---------------------------------------------------------- setup WiFi
 void start_WiFi() {
+  Logger << "WiFi-Configuration:" << endl;
+  WiFi.printDiag(Logger);
+ 
   Logger << "Versuche verbindung mit '" << cfg.p.ssid << "'" << endl;
   WiFi.mode(WIFI_STA);
   WiFi.begin(cfg.p.ssid, cfg.p.pw);
@@ -160,14 +163,13 @@ void start_WiFi() {
   for (int i = 4; i < 6; i++) {
     ssid += String(macAddr[i], HEX);
   }
-  boolean success = WiFi.softAP(ssid);
-  if (success) {
-    Logger << "Access Point erstellt: '" << ssid << "'" << endl;
-    p.AP_mode = WIFI_APMODE;
-  } else {
-    Logger << "Acces Point erstellen fehlgeschlagen" << endl;
-    p.AP_mode = WIFI_OFFLINE;
-  }
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid);
+  Logger << "Access Point erstellt: '" << ssid << "'" << endl;
+  Logger << "WiFi-Configuration:" << endl;
+  WiFi.printDiag(Logger);
+
   return;
 }
 

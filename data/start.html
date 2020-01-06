@@ -14,16 +14,16 @@
 		<h3>OnsenPID</h3>
 		<h2>{{HOSTNAME}}</h2>
 	</div>
-		<form method='get' action='/rec.html'>
+		<form method='get' action='/start'>
 		<fieldset>
 		<legend><b>&nbsp;Kochen&nbsp;</b></legend>
 			<p><b>&nbsp;Rezept&nbsp;<br /></b>
 			<select name='rec' size='1'>
-				<option>{{NAME:0}}</option>
-				<option>{{NAME:1}}</option>
-				<option>{{NAME:2}}</option>
-				<option>{{NAME:3}}</option>
-				<option>{{NAME:4}}</option>
+				<option value='0'>{{NAME#:0}}</option>
+				<option value='1'>{{NAME#:1}}</option>
+				<option value='2'>{{NAME#:2}}</option>
+				<option value='3'>{{NAME#:3}}</option>
+				<option value='4'>{{NAME#:4}}</option>
 			</select>
 		</fieldset>
 		<fieldset>
@@ -33,7 +33,7 @@
 			<input type='radio' name='mode' id='et' value='et'><label for='st'>Zur vorgegebenen Uhrzeit fertig sein</label><br />
 			<input type='time' name='time' value='{{STARTTIME}}'>
 			</p>
-			<br /><button name='start' type='submit' class='button bgrn'>Einschalten!</button>
+			<br /><button name='start' type='submit' class='button bgrn'>Einschalten</button>
 		</fieldset>
 	</form>
 	<div></div>
