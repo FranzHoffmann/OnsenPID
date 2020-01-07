@@ -6,23 +6,6 @@
 
 #define CONFIG_MAX_FILENAME_LEN 26
 
-
-#define section_controller "controller"
-#define controller_kp "Kp"
-#define controller_tn "Tn"
-#define controller_tv "Tv"
-#define controller_emax "Emax"
-#define controller_time "time"
-#define controller_temp "temp"
-
-#define section_wifi "wifi"
-#define wifi_hostname "hostname"
-#define wifi_ssid "ssid"
-#define wifi_pw "pw"
-
-#define section_system "system"
-#define system_tz "tz"
-
 class Config {
   public:
 

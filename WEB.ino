@@ -318,73 +318,79 @@ void handleWifi()   {
 		Logger << "WiFi-Scan gestartet" << endl;
 		int n = WiFi.scanNetworks();
 		Logger << "WiFi-Scan abgeschlossen (" << n << " Netze gefunden)" << endl;
-		bool first = true;
 		server.setContentLength(CONTENT_LENGTH_UNKNOWN);
 		server.send(200, "text/json", String(""));
 		server.sendContent("{\"result\":" + String(n) + ", \"list\":[\n");
 		for (int i=0; i<n; i++) {
-			if (!first) {
-				server.sendContent(",\n");
+			String reply;
+			if (i>0) {
+				reply = ",\n";
+			} else {
+				reply = "";
 			}
-			first = false;
-			server.sendContent("{\"ssid\":\"" + WiFi.SSID(i) + "\""
+			reply += "{\"ssid\":\"" + WiFi.SSID(i) + "\""
 				+ ", \"Ch\":" + String(WiFi.channel(i))
 				+ ", \"encryption\":" + (WiFi.encryptionType(i) == ENC_TYPE_NONE ? "\"open\"" : "\"encrypted\"")
 				+ ", \"RSSI\":" + String(WiFi.RSSI(i))
-				+ "}");
+				+ "}";
+			if (i == n-1) reply += "]}";
+			server.sendContent(reply);
 		}
-		server.sendContent("]}");
-	} else if (server.hasArg("save")) {
-		changeParam("ssid", "SSID", cfg.p.ssid);
-		changeParam("pwd", "Password", cfg.p.pw);
-		changeParam("hn", "Hostname", cfg.p.hostname);
-		cfg.save();
-		send_file("/wifi.html");
+		WiFi.scanDelete();
+
 	} else {
+		if (server.hasArg("save")) {
+			changeParam("ssid", "SSID", cfg.p.ssid);
+			changeParam("pwd", "Password", cfg.p.pw);
+			changeParam("hn", "Hostname", cfg.p.hostname);
+			cfg.save();
+		}
 		send_file("/wifi.html");
 	}
 }
 
+
 // --------------------------------------------------------------------------------------------- recipe
 void handleStart() {
-	if (server.hasArg("start")) {
-		String t = server.arg("time");
-		unsigned long epoch = Clock.getEpochTime();
-		unsigned long midnight = epoch - (epoch % 86400L) - 3600 * cfg.p.tzoffset;
-		int hrs = t.substring(0, 2).toInt();
-		int mins = t.substring(3).toInt();
-		unsigned long timearg = midnight + 60 * mins + 3600 * hrs;
-		if (timearg < epoch) timearg += 86400;
-		Logger << "time: " << hrs << ":" << mins << ", timearg: " << timearg << endl;
-
-		int rec = 0;
-		if (server.hasArg("rec")) {
-			String s = server.arg("rec");
-			rec = s.toInt();
-		} else {
-			// TODO
-			Logger << "TODO: start command without recipe number" << endl;
-		}
-
-		String m = server.arg("mode");
-		if (m == "nw") {
-			Logger << "Web: Kochen sofort" << endl;
-			sm.startCooking(rec);
-		} else
-		if (m == "st") {
-			sm.startByStartTime(rec, timearg);
-			Logger << "Web: Kochen später (Start um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
-		} else
-		if (m == "et") {
-			Logger << "Web: Kochen später (Fertig um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
-			sm.startByEndTime(rec, timearg);
-		} else {
-			Logger << "Web: unverständlichen Startbefehl ignoriert" << endl;
-		}
-		cfg.save();
+	if (!server.hasArg("start")) {
+		send_file("/start.html");
+		return;
 	}
-	send_file("/start.html");
-	//TODO
+
+	String t = server.arg("time");
+	unsigned long epoch = Clock.getEpochTime();
+	unsigned long midnight = epoch - (epoch % 86400L) - 3600 * cfg.p.tzoffset;
+	int hrs = t.substring(0, 2).toInt();
+	int mins = t.substring(3).toInt();
+	unsigned long timearg = midnight + 60 * mins + 3600 * hrs;
+	while (timearg < epoch) timearg += 86400;
+	Logger << "time: " << hrs << ":" << mins << ", timearg: " << timearg << endl;
+
+	int rec = 0;
+	if (server.hasArg("rec")) {
+		String s = server.arg("rec");
+		rec = s.toInt();
+	} else {
+		send_file("/start.html");
+		return;
+	}
+
+	String m = server.arg("mode");
+	if (m == "nw") {
+		Logger << "Web: Kochen sofort" << endl;
+		sm.startCooking(rec);
+	} else
+	if (m == "st") {
+		sm.startByStartTime(rec, timearg);
+		Logger << "Web: Kochen später (Start um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
+	} else
+	if (m == "et") {
+		Logger << "Web: Kochen später (Fertig um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
+		sm.startByEndTime(rec, timearg);
+	} else {
+		Logger << "Web: unverständlichen Startbefehl ignoriert" << endl;
+	}
+	redirect("/");
 }
 
 

@@ -29,13 +29,13 @@ bool Config::save(){
 
 	writeRecipes();
 
-	write(section_wifi);
-	write(wifi_hostname, p.hostname.c_str());
-	write(wifi_ssid, p.ssid.c_str());
-	write(wifi_pw, p.pw.c_str());
+	write("wifi");
+	write("hostname", p.hostname.c_str());
+	write("wifi", p.ssid.c_str());
+	write("pw", p.pw.c_str());
 
-	write(section_system);
-	write(system_tz, p.tzoffset);
+	write("system");
+	write("tz", p.tzoffset);
 	
 	_file.close();
 	Logger << "Ini-File written" << endl;
@@ -50,11 +50,11 @@ bool Config::read() {
 
 	readRecipes();
 
-	readString(section_wifi, wifi_hostname, p.hostname, String("onsenPID"));
-	readString(section_wifi, wifi_ssid,     p.ssid, String("default_ssid"));
-	readString(section_wifi, wifi_pw,       p.pw, String("default_pw"));
+	readString("wifi", "hostname", p.hostname, String("onsenPID"));
+	readString("wifi", "wifi",     p.ssid, String("default_ssid"));
+	readString("wifi", "pw",       p.pw, String("default_pw"));
 
-	readInt(section_system, system_tz, p.tzoffset, 0);
+	readInt("system", "tz", p.tzoffset, 0);
 
 	Logger << "End of config file" << endl;
 	return true;

@@ -5,7 +5,8 @@
 
 
 Screen screen;
-int rec_i, param_i, wifi_i, step_i, timer_mode, starttime;
+int rec_i, step_i, timer_mode, starttime;
+String wifi_ssid, wifi_pw;
 
 char buf1[17], buf2[17], buf3[17], buf4[17];
 PString line1(buf1, sizeof(buf1));
@@ -92,6 +93,9 @@ void LCDMenu_update() {
 		case Screen::REC_EXIT_ABORT:	disp_rec_exit_abort(btn);	break;
 
 		case Screen::SET_WIFI:			disp_set_wifi(btn);			break;
+		case Screen::SET_WIFI_SCAN:		disp_set_wifi_scan(btn);	break;
+		case Screen::SET_WIFI_PW:		disp_set_wifi_pw(btn);		break;
+		case Screen::SET_WIFI_SAVE:		disp_set_wifi_save(btn);	break;
 		case Screen::SET_TIMEZONE:		disp_set_tz(btn);			break;
 
 		case Screen::EDIT_NUMBER:		disp_edit_number(btn);		break;
@@ -393,7 +397,6 @@ void disp_rec_name(ButtonEnum btn) {
 		start_edit_text(recipe[rec_i].name, EditMode::TEXT,
 		[](){
 			// anonymous function, called when edit is complete
-			recipe[rec_i].temps[step_i] = editNumData.v;
 			strncpy(recipe[rec_i].name, editNumData.s.c_str(), sizeof(recipe[rec_i].name));
 			screen = Screen::REC_NAME;
 		});
@@ -473,6 +476,7 @@ void disp_rec_step_i_time(ButtonEnum btn) {
 
 
 void disp_rec_param_i(ButtonEnum btn) {
+	static int param_i = 0;
 	line1.begin();
 	line1 << pararray[param_i].name << ":";
 	line2.begin();
@@ -524,9 +528,10 @@ void disp_rec_exit_abort(ButtonEnum btn) {
 
 
 void disp_set_wifi(ButtonEnum btn) {
+	static int page = 0;
 	line1.begin(); 
 	line2.begin();
-	switch (wifi_i) {
+	switch (page) {
 		 case 0:
 			line1 << "WLAN";
 			if (p.AP_mode == WIFI_OFFLINE)	line2 << "offline";
@@ -534,29 +539,111 @@ void disp_set_wifi(ButtonEnum btn) {
 			if (p.AP_mode == WIFI_APMODE)	line2 << "AP aktiv";
 			break;
 		case 1:
-			line1 << "SSID";
-			line2 << cfg.p.ssid;
-			break;
-		case 2:
-			line1 << "Hostname";
-			line2 << cfg.p.hostname;
-			break;
-		case 3:
-			line1 << "IP";
+			line1 << cfg.p.ssid;
 			if (p.AP_mode == WIFI_OFFLINE)	line2 << "---";
 			if (p.AP_mode == WIFI_CONN)		line2 << WiFi.localIP();
 			if (p.AP_mode == WIFI_APMODE)	line2 << WiFi.softAPIP();
+			break;
+		case 2:
+			if (p.AP_mode == WIFI_OFFLINE)	line1 << "---";
+			if (p.AP_mode == WIFI_CONN)		line1 << WiFi.localIP();
+			if (p.AP_mode == WIFI_APMODE)	line1 << WiFi.softAPIP();
+			line2 << cfg.p.hostname;
+			break;
 	}
-	if (btn == BTN_DN) wifi_i = inc(wifi_i, 0, 3, false);
-	else if (btn == BTN_UP) wifi_i = dec(wifi_i, 0, 3, false);
+	if (btn == BTN_DN) page = inc(page, 0, 2, false);
+	else if (btn == BTN_UP) page = dec(page, 0, 2, false);
 	else if (btn == BTN_RI) {
-		wifi_i = 0;
-		screen = Screen::SET_TIMEZONE;
+		page = 0;
+		screen = Screen::SET_WIFI_SCAN;
 	}
 	else if (btn == BTN_LE) {
-		wifi_i = 0;
+		page = 0;
 		screen = Screen::MAIN_SETTINGS;
 	}
+}
+
+
+void disp_set_wifi_scan(ButtonEnum btn) {
+	static int netNo = 0;
+	int scanState = WiFi.scanComplete();
+	switch (scanState) {
+		case -2:
+			// scan has not been started
+			line1 = "WLAN-Netzsuche";
+			line2 = "starten?";
+			if (btn == BTN_SEL) WiFi.scanNetworks(true, false);
+			netNo = 0;
+			break;
+		case -1:
+			// scan running
+			line1 = "WLAN-Netzsuche";
+			line2 = "laeuft...";
+			netNo = 0;
+			break;
+		default:
+			// scan finished
+			line1 =  String(scanState) + (scanState == 1 ? " Netz:" : " Netze:");
+			line2 = String(netNo) + ": " + WiFi.SSID(netNo);
+			if (btn == BTN_UP) netNo = dec(netNo, 0, scanState, false);
+			if (btn == BTN_DN) netNo = inc(netNo, 0, scanState, false);
+			if (btn == BTN_SEL) {
+				wifi_ssid = WiFi.SSID(netNo);
+				WiFi.scanDelete();
+				screen = Screen::SET_WIFI_PW;
+			}
+			break;
+	}
+	if (btn == BTN_LE) {
+		WiFi.scanDelete();
+		screen = Screen::SET_WIFI;
+	}
+	if (btn == BTN_RI) {
+		WiFi.scanDelete();
+		screen = Screen::SET_TIMEZONE;
+	}
+}
+
+
+void disp_set_wifi_pw(ButtonEnum btn) {
+	line1 = "Passwort:";
+	line2 = wifi_pw;
+	if (btn == BTN_LE) screen = Screen::SET_WIFI_SCAN;
+	if (btn == BTN_SEL) 
+		start_edit_text(wifi_pw, EditMode::TEXT,
+		[](){
+			// anonymous function, called when edit is complete
+			wifi_pw = editNumData.s;
+			screen = Screen::SET_WIFI_SAVE;
+		});
+}
+
+
+void disp_set_wifi_save(ButtonEnum btn) {
+	static int page = 0;
+	switch (page) {
+		case 0:
+			line1 = "Speichern und";
+			line2 = "verbinden?";
+			if (btn == BTN_SEL) {
+				cfg.p.ssid = wifi_ssid;
+				cfg.p.pw = wifi_pw;
+				cfg.save();
+				// TODO: connect
+				screen = Screen::SET_WIFI;
+			}
+			break;
+		case 1: 
+			line1 = "Aenderungen";
+			line2 = "verwerfen?";
+			if (btn == BTN_SEL) {
+				screen = Screen::SET_WIFI;
+				break;
+			}
+	}
+	if (btn == BTN_UP) page = dec(page, 0, 1, false);
+	if (btn == BTN_DN) page = inc(page, 0, 1, false);
+	if (btn == BTN_LE) screen = Screen::SET_WIFI_PW;
 }
 
 

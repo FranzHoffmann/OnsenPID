@@ -11,7 +11,7 @@
  * 
  */
 
-#define DL_RAMBUF 10
+#define DL_RAMBUF 60
 
 struct dl_t {
   bool recording;
@@ -60,7 +60,7 @@ int dl_log() {
     }
   }
   
-  return 1000;
+  return 10000;
 }
 
 int dl_cleanup() {
