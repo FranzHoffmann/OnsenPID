@@ -27,37 +27,38 @@
 	<fieldset>
 		<legend><b>&nbsp;Rezept {{NAME}}&nbsp;</b></legend>
 		<form method='get' action='rec'>
+			<input type='hidden' name='rec' value='{{#}}'>
 			<p><b>Name</b><br /><input id='name' name='name' value='{{NAME}}'></p>
 			<table>
 				<tr><th>#</th><th>Temperatur (&deg;C)</th><th>Dauer (min)</th></tr>
 				<tr><td>1</td>
-					<td><input id='temp0' name='temp0' value='{{TEMP:0}}'</td>
-					<td><input id='time0' name='time0' value='{{TIME:0}}'</td>
+					<td><input type='number' step='0.1' name='temp0' value='{{TEMP:0}}'></td>
+					<td><input type='number' name='time0' value='{{TIME:0}}'></td>
 				</tr>
 				<tr><td>2</td>
-					<td><input id='temp1' name='temp1' value='{{TEMP:1}}'</td>
-					<td><input id='time1' name='time1' value='{{TIME:1}}'</td>
+					<td><input type='number' step='0.1' name='temp1' value='{{TEMP:1}}'></td>
+					<td><input type='number' name='time1' value='{{TIME:1}}'></td>
 				</tr>
 				<tr><td>3</td>
-					<td><input id='temp2' name='temp2' value='{{TEMP:2}}'</td>
-					<td><input id='time2' name='time2' value='{{TIME:2}}'</td>
+					<td><input type='number' step='0.1' name='temp2' value='{{TEMP:2}}'></td>
+					<td><input type='number' name='time2' value='{{TIME:2}}'></td>
 				</tr>
 				<tr><td>4</td>
-					<td><input id='temp3' name='temp3' value='{{TEMP:3}}'</td>
-					<td><input id='time3' name='time3' value='{{TIME:3}}'</td>
+					<td><input type='number' step='0.1' name='temp3' value='{{TEMP:3}}'></td>
+					<td><input type='number' name='time3' value='{{TIME:3}}'</td>
 				</tr>
 				<tr><td>5</td>
-					<td><input id='temp4' name='temp4' value='{{TEMP:4}}'</td>
-					<td><input id='time4' name='time4' value='{{TIME:4}}'</td>
+					<td><input type='number' step='0.1' name='temp4' value='{{TEMP:4}}'></td>
+					<td><input type='number' name='time4' value='{{TIME:4}}'></td>
 				</tr>
 			</table>
-			<p><b>Verstärkung Kp (%/&deg;C)</b><br /><input id='kp' name='kp' value='{{KP}}'></p>
-			<p><b>Nachstellzeit Tn (s)</b><br /><input id='tn' name='tn' value='{{TN}}'></p>
-			<p><b>Vorhaltezeit Tv (s)</b><br /><input id='tv' name='tv' value='{{TV}}'></p>
-			<p><b>Max. Abweichung für Regler Emax (&deg;C)</b><br /><input id='emax' name='emax' value='{{EMAX}}'></p>
-			<p><b>Max. Ausgangsleistung (%)</b><br /><input id='pmax' name='pmax' value='{{PMAX}}'></p>
+			<p><b>Verstärkung Kp (%/&deg;C)</b><br /><input type='number' name='par0' value='{{KP}}'></p>
+			<p><b>Nachstellzeit Tn (s)</b><br /><input type='number' name='par1' value='{{TN}}'></p>
+			<p><b>Vorhaltezeit Tv (s)</b><br /><input type='number' name='par2' value='{{TV}}'></p>
+			<p><b>Max. Abweichung für Regler Emax (&deg;C)</b><br /><input type='number' name='par3' value='{{EMAX}}'></p>
+			<p><b>Max. Ausgangsleistung (%)</b><br /><input type='number' min='1' max='100' step='1' name='par4' value='{{PMAX}}'></p>
 
-			<br /><button name='start' type='submit' class='button bgrn'>Speichern</button>
+			<br /><button name='save' type='submit' class='button bgrn'>Speichern</button>
 		</form>
 	</fieldset>
 	<div></div>

@@ -74,6 +74,8 @@ String subst(String var, int par) {
 	int j = splitString(var, ':', 1).toInt();
 	int k = splitString(var, ':', 2).toInt();
 
+	if (code == "#")	return String(par);
+
 	if (code == "ACT") return String(p.act);
 	if (code == "SET") return String(sm.out.set);
 	if (code == "OUT") return String(p.out);
@@ -395,11 +397,49 @@ void handleRecipe() {
 	}
 	
 	if (server.hasArg("save")) {
-		// TODO
-		Logger << "Webserver: recipe save() not supported yet";
+		String arg, val;
+		for (int i=0; i<server.args(); i++) {
+			arg = server.argName(i);
+			val = server.arg(i);
+			Serial << arg << " = " << val << endl;
+
+			if (arg == "name") {
+				strncpy(recipe[rec].name, val.c_str(), sizeof(recipe[rec].name));
+				continue;
+			}
+			
+			// temperatures
+			for (int j=0; j<REC_STEPS; j++) {
+				String keyword = String("temp") + String(j);
+				if (arg == keyword) {
+					recipe[rec].temps[j] = val.toDouble();
+					break;
+				}
+			}
+			
+			// times
+			for (int j=0; j<REC_STEPS; j++) {
+				String keyword = String("time") + String(j);
+				if (arg == keyword) {
+					recipe[rec].times[j] = val.toInt()*60;
+					break;
+				}
+			}
+			
+			// parameters
+			for (int j=0; j<REC_PARAM_COUNT; j++) {
+				String keyword = String("par") + String(j);
+				if (arg == keyword) {
+					recipe[rec].param[j] = val.toDouble();
+					break;
+				}
+			}
+		}
+		cfg.save();
 	}
 	send_file("/rec.html", rec);
 }
+
 
 // --------------------------------------------------------------------------------------------- data
 void handleData()   {

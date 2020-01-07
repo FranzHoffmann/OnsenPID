@@ -68,7 +68,7 @@ void Config::readRecipes() {
 		section = "Recipe" + String(i);
 		readString(section.c_str(), "name", strValue, section.c_str());
 		strncpy(recipe[i].name, strValue.c_str(), sizeof(recipe[i].name));
-		Serial << strValue << "(" << recipe[i].name << ")" << endl;
+		// debug Serial << strValue << "(" << recipe[i].name << ")" << endl;
 		// read times and temps arrays
 		for (int j=0; j<REC_STEPS; j++) {
 			key = "time" + String(j);
@@ -85,6 +85,7 @@ void Config::readRecipes() {
 		}
 	}
 }
+
 
 // Note: only the whole file can be written at once.
 // Don't call this, except from save()
@@ -119,7 +120,9 @@ bool Config::readString(const char* section, const char* key, String &value, Str
 	Logger << "- " << section << ", " << key <<": ";
 	if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
 		value = String(buffer);
-		Logger << "'" << value << "'" << endl;
+		value.trim();
+		if (value.length() == 0) value = deflt;
+		// debug Logger << "'" << value << "'" << endl;
 		return true;
 	} else {
 		Logger << "not found, using default (" << deflt << ")" << endl;
@@ -135,7 +138,7 @@ bool Config::readInt(const char* section, const char* key, int &value, int deflt
 	Logger << "- " << section << ", " << key <<": ";
 	if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
 		value = atoi(buffer);
-		Logger << value << endl;
+		// debug Logger << value << endl;
 		return true;
 	} else {
 		Logger << "not found, using default (" << deflt << ")" << endl;
@@ -151,7 +154,7 @@ bool Config::readDouble(const char* section, const char* key, double &value, dou
 	Logger << "- " << section << ", " << key <<": ";
 	if (_ini && _ini->getValue(section, key, buffer, bufferLen)) {
 		value = atof(buffer);
-		Logger << value << endl;
+		// debug Logger << value << endl;
 		return true;
 	} else {
 		Logger << "not found, using default (" << deflt << ")" << endl;
