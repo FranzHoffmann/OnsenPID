@@ -14,12 +14,9 @@ Process::Process(Config *cfg) {
 
 
 int Process::getRemainingTime() {
-	int actTime = Clock.getEpochTime() - startTime;
-	
 	switch (state) {
-
 		case State::COOKING:
-			return (calcRecipeDuration(act_rec) - actTime);
+			return (calcRecipeDuration(act_rec) - (Clock.getEpochTime() - startTime));
 
 		case State::WAITING:
 			return (startTime - Clock.getEpochTime());
@@ -51,9 +48,14 @@ void Process::startCooking(int recno) {
  */
 void Process::startByStartTime(int recno, unsigned long t) {
 	unsigned long now = Clock.getEpochTime();
-	unsigned long midnight = now - (now % 86400L); // - 3600 * _cfg->p.tzoffset;
+	unsigned long midnight = now - (now % 86400L) - 3600 * _cfg->p.tzoffset;
 	unsigned long starttime = midnight + t;
 	if (starttime < now) starttime += 86400;
+	
+	Logger << "Process::startByStartTime(" << recno << ", " << t << ")" << endl;
+	Logger << "Now: " << String(now) << endl;
+	Logger << "Midnight: " << String(midnight) << endl;
+	Logger << "Starttime: " << String(starttime) << endl;
 	
 	switch (state) {
 		case State::IDLE:
@@ -71,7 +73,7 @@ void Process::startByStartTime(int recno, unsigned long t) {
  */
 void Process::startByEndTime(int recno, unsigned long t) {
 	unsigned long now = Clock.getEpochTime();
-	unsigned long midnight = now - (now % 86400L); // - 3600 * _cfg->p.tzoffset;
+	unsigned long midnight = now - (now % 86400L) - 3600 * _cfg->p.tzoffset;
 	unsigned long starttime = midnight + t - calcRecipeDuration(act_rec);
 	while (starttime < now) starttime += 86400;
 	

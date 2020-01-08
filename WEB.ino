@@ -287,20 +287,6 @@ void handleRoot() {
 
 // --------------------------------------------------------------------------------------------- Ajax (and commands)
 void handleAjax() {
-	if (server.hasArg("cmd")) {
-		String cmd = server.arg("cmd");
-		if (cmd == "1") {
-			int rec = 0;
-			if (server.hasArg("rec")) {
-				String s = server.arg("rec");
-				rec = s.toInt();
-			} else {
-				// TODO
-				Logger << "TODO: start command without recipe number" << endl;
-			}
-			sm.startCooking(rec);
-		}
-	}
 	send_file("/ajax.json");
 }
 
