@@ -570,11 +570,8 @@ void handleLog() {
 // --------------------------------------------------------------------------------------------- config
 void handleConfig() {
 	if (server.hasArg("save")) {
-		changeParam("kp", "Verstärkung", &(cfg.p.kp));
-		changeParam("tn", "Nachstellzeit", &(cfg.p.tn));
-		changeParam("tv", "Vorhaltezeit", &(cfg.p.tv));
-		changeParam("emax", "Max. Regelabweichung", &(cfg.p.emax));
 		changeParam("tz", "UTC Offset", &(cfg.p.tzoffset));
+		Clock.setTimeOffset(cfg.p.tzoffset * 3600);
 		cfg.save();
 	}
 	send_file("/cfg.html");

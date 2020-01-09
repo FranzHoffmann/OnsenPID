@@ -14,6 +14,15 @@ void ClockT::setTimeOffset (int timeOffset) {
 	_timeClient->setTimeOffset(timeOffset);
 }
 
+/*
+ * this can be used to set the time when no NTP server is available
+ */
+void ClockT::setTime (int timeOffset) {
+	// TODO
+	_timeClient->setTimeOffset(timeOffset);
+}
+
+
 void ClockT::update() {
 	_timeClient->update();
 }

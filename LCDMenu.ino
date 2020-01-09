@@ -586,7 +586,7 @@ void disp_set_wifi_scan(ButtonEnum btn) {
 			line1 =  String(scanState) + (scanState == 1 ? " Netz:" : " Netze:");
 			line2 = String(netNo) + ": " + WiFi.SSID(netNo);
 			if (btn == BTN_UP) netNo = dec(netNo, 0, scanState, false);
-			if (btn == BTN_DN) netNo = inc(netNo, 0, scanState, false);
+			if (btn == BTN_DN) netNo = inc(netNo, 0, scanState-1, false);
 			if (btn == BTN_SEL) {
 				wifi_ssid = WiFi.SSID(netNo);
 				WiFi.scanDelete();
@@ -629,7 +629,7 @@ void disp_set_wifi_save(ButtonEnum btn) {
 				cfg.p.ssid = wifi_ssid;
 				cfg.p.pw = wifi_pw;
 				cfg.save();
-				// TODO: connect
+				start_WiFi();
 				screen = Screen::SET_WIFI;
 			}
 			break;
@@ -648,10 +648,34 @@ void disp_set_wifi_save(ButtonEnum btn) {
 
 
 void disp_set_tz(ButtonEnum btn) {
-	line1 = "Zeitzone";
-	line2.begin();
-	line2 << String(cfg.p.tzoffset);
-	if (btn == BTN_LE) screen = Screen::SET_WIFI;
+	if ((WiFi.status() == WL_CONNECTED) && false) {	// TODO / debug
+		// time comes from NTP
+		line1 = "Zeitzone:";
+		line2.begin();
+		line2 << String(cfg.p.tzoffset);
+		if (btn == BTN_SEL)
+		start_edit_number(cfg.p.tzoffset / 3600, 0, EditMode::NUMBER,
+		-12.0, 12.0, 1.0, "h",
+		[](){
+			// anonymous function, called when edit is complete
+			cfg.p.tzoffset = (int)editNumData.v;
+			screen = Screen::SET_TIMEZONE;
+			Clock.setTimeOffset(cfg.p.tzoffset * 3600);
+			cfg.save();
+		});
+	} else {
+		line1 = "Uhr stellen";
+		line2 << Clock.getFormattedTime();
+		if (btn == BTN_SEL)
+		start_edit_number(Clock.getEpochTime() % 86400, 0, EditMode::TIME,
+		0.0, 86400.0, 60.0, "",
+		[](){
+			// anonymous function, called when edit is complete
+			screen = Screen::SET_TIMEZONE;
+			Clock.setTime((int)editNumData.v);
+		});
+	}
+	if (btn == BTN_LE) screen = Screen::SET_WIFI_SCAN;
 }
 
 
