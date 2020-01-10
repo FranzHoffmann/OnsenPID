@@ -15,7 +15,7 @@
   - better statistics: runtime and ms/s for each task
 */
 
-#define VERSION "0.901"
+#define VERSION "0.902"
 
 #include <Streaming.h>
 #include <ESP8266WiFi.h>
@@ -34,7 +34,8 @@
 #include "src/tasks/tasks.h"
 #include "src/MemInfo/MemoryInfo.h"
 
-#define PWM_PORT D4
+// #define PWM_PORT D4
+#define PWM_PORT D8
 #define TMP_PORT D7
 
 

@@ -12,8 +12,6 @@ class Config {
   enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
   struct param {
     WiFiEnum AP_mode;
- //   double emax;
- //   double kp, tn, tv;            // controller parameter
     String ssid, pw;
     String hostname;
     int tzoffset;

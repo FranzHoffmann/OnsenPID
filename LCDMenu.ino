@@ -27,6 +27,7 @@ void LCDMenu_setup() {
 	lcd.createChar(1, char_deg);
 	lcd.createChar(2, char_updn);
 	lcd.clear();
+	lcd << "Booting...";
 }
 
 
@@ -34,7 +35,6 @@ ButtonEnum LCDMenu_readKey() {
 	static int count = 0;
 	static ButtonEnum previous;
 	ButtonEnum btn;
-
 
 	int ai = analogRead(LCD_AI);
 /*
@@ -102,6 +102,8 @@ void LCDMenu_update() {
 		case Screen::EDIT_TEXT:			disp_edit_text(btn);		break;
 	}
 	if (!((line1 == line1_old) && (line2 == line2_old) && (cursor == cursor_old))) {
+		//fixSpecialChars(line1);
+		//fixSpecialChars(line2);
 		lcd.clear();
 		lcd.setCursor(0,0);
 		lcd << line1;
@@ -117,6 +119,23 @@ void LCDMenu_update() {
 		}
 		cursor_old = cursor;
 	}
+}
+
+
+void fixSpecialChars(PString &s) {
+	char buf[17];
+	PString tmp(buf, sizeof(buf));
+	for(int i=0; i<s.length(); i++) {
+		char c = s[i];
+		switch (c) {
+			case '°':
+				tmp += '\1';
+				break;
+			default:
+				tmp += c;
+		}
+	}
+	s = tmp;
 }
 
 
@@ -147,7 +166,8 @@ void start_edit_number(double value, int decimals, EditMode mode,
 	editNumData.vmin = vmin;
 	editNumData.vmax = vmax;
 	editNumData.step = step;
-	editNumData.unit = String(*unit);
+	editNumData.unit = "";
+	for (const char *ptr = unit; ptr++; *ptr != 0) editNumData.unit += *ptr;
 	editNumData.decimals = decimals;
 	editNumData.mode = mode;
 	editNumData.onChange = onChange;
@@ -208,22 +228,22 @@ void disp_edit_text(ButtonEnum btn) {
 	int i = findIndex(editNumData.s.charAt(editNumData.pos));
 	cursor =  editNumData.pos + 2;
 	if (btn == BTN_LE) {
-		editNumData.pos = dec(editNumData.pos, 0, 13, true);
+		editNumData.pos = dec(editNumData.pos, 0, 13, false);
 		return;
 	}
 	if (btn == BTN_RI) {
-		editNumData.pos = inc(editNumData.pos, 0, 13, true);
+		editNumData.pos = inc(editNumData.pos, 0, 13, false);
+		if (editNumData.pos >= editNumData.s.length()) editNumData.s += " ";
 		return;
 	}
-	if (btn == BTN_UP) i = inc(i, 0, letters.length(), true);
-	else if (btn == BTN_DN) i = dec(i, 0, letters.length(), true);
-	if (editNumData.pos >= editNumData.s.length()) editNumData.s += " ";
+	if (btn == BTN_UP) i = inc(i, 0, letters.length()-1, true);
+	else if (btn == BTN_DN) i = dec(i, 0, letters.length()-1, true);
 	editNumData.s.setCharAt(editNumData.pos, letters.charAt(i));
 	line2.begin();
 	line2 = "x>";
 	line2 << editNumData.s;
 	if (btn == BTN_SEL) {
-		Serial << "disp_edit_text: finished. " << endl;
+		editNumData.s.trim();
 		(editNumData.onChange)();
 		cursor = -1;
 	}
@@ -378,7 +398,7 @@ void disp_rec_select(ButtonEnum btn) {
 	line2 << recipe[rec_i].name;
 	if (btn == BTN_UP)       rec_i = (rec_i - 1) % REC_COUNT;
 	else if (btn == BTN_DN)  rec_i = (rec_i + 1) % REC_COUNT;
-	else if (btn == BTN_LE)  screen = Screen::MAIN_RECIPE;
+	else if (btn == BTN_LE)  screen = Screen::REC_EXIT_SAVE;
 	else if (btn == BTN_RI)  screen = Screen::REC_NAME;
 	else if (btn == BTN_SEL) screen = Screen::REC_NAME;
 }
@@ -487,7 +507,7 @@ void disp_rec_param_i(ButtonEnum btn) {
 	else if (btn == BTN_LE)		screen = Screen::REC_STEP_i;
 	else if (btn == BTN_RI)		screen = Screen::REC_EXIT_SAVE;
 	else if (btn == BTN_SEL)	{
-		start_edit_number(recipe[rec_i].param[param_i], 0, EditMode::NUMBER,
+		start_edit_number(recipe[rec_i].param[param_i], 1, EditMode::NUMBER,
 		pararray[param_i].min, pararray[param_i].max, 0.1, pararray[param_i].unit,
 		[](){
 			// anonymous function, called when edit is complete
@@ -665,6 +685,7 @@ void disp_set_tz(ButtonEnum btn) {
 		});
 	} else {
 		line1 = "Uhr stellen";
+		line2.begin();
 		line2 << Clock.getFormattedTime();
 		if (btn == BTN_SEL)
 		start_edit_number(Clock.getEpochTime() % 86400, 0, EditMode::TIME,
