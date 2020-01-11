@@ -4,7 +4,7 @@
 #define REC_STEPS 5
 #define REC_NAME_LEN 16
 #define REC_PARAM_COUNT 5
-#define REC_COUNT 5
+#define REC_COUNT 10
 
 
 // these are the parameters.

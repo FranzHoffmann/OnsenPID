@@ -8,8 +8,6 @@
 #define LCD_D7 D3
 #define LCD_AI A0
 
-#define REC_COUNT 5
-
 enum ButtonEnum {BTN_NONE, BTN_SEL,
 				BTN_UP, BTN_DN, BTN_LE, BTN_RI,
 				BTN_UP_FAST, BTN_DN_FAST

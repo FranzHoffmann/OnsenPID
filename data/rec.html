@@ -22,13 +22,18 @@
 			<li><a href='rec?rec=2'>{{NAME#:2}}</a></li>
 			<li><a href='rec?rec=3'>{{NAME#:3}}</a></li>
 			<li><a href='rec?rec=4'>{{NAME#:4}}</a></li>
+			<li><a href='rec?rec=5'>{{NAME#:5}}</a></li>
+			<li><a href='rec?rec=6'>{{NAME#:6}}</a></li>
+			<li><a href='rec?rec=7'>{{NAME#:7}}</a></li>
+			<li><a href='rec?rec=8'>{{NAME#:8}}</a></li>
+			<li><a href='rec?rec=9'>{{NAME#:9}}</a></li>
 		</ul>
 	</fieldset>
 	<fieldset>
 		<legend><b>&nbsp;Rezept {{NAME}}&nbsp;</b></legend>
 		<form method='get' action='rec'>
 			<input type='hidden' name='rec' value='{{#}}'>
-			<p><b>Name</b><br /><input id='name' name='name' value='{{NAME}}' required></p>
+			<p><b>Name</b><br /><input id='name' name='name' value='{{NAME}}' maxlength='14' required></p>
 			<table>
 				<tr><th>#</th><th>Temperatur (&deg;C)</th><th>Dauer (min)</th></tr>
 				<tr><td>1</td>
