@@ -94,7 +94,7 @@ void Config::readRecipes() {
 		// read params
 		for (int j=0; j<REC_PARAM_COUNT; j++) {
 			key = pararray[j].id;
-			readDouble(section.c_str(), key.c_str(), recipe[i].param[j], 0.0);
+			readDouble(section.c_str(), key.c_str(), recipe[i].param[j], pararray[j].value);
 			yield();
 		}
 	}
