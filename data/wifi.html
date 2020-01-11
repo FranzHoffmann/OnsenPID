@@ -62,6 +62,17 @@ function scan() {
 	btn.innerHTML="Scan läuft...";
 	return false;
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelector('#check').addEventListener('click', function () {
+	  if (document.getElementById('pwd').type == 'password' ) { 
+	    document.getElementById('pwd').type = 'text';
+	  } else {
+	    document.getElementById('pwd').type = 'password';
+	  }
+  });
+ 
+});
 </script>
 <link rel="stylesheet" href="/stylesheet.css" type="text/css">
 </head>
@@ -79,7 +90,7 @@ function scan() {
 			<legend><b>&nbsp;Wifi-Parameter&nbsp;</b></legend>
 			<form method='post' action='/wifi?save=1'>
 				<p><b>SSId</b><br /><input id='ssid' name='ssid' placeholder='' value='{{SSID}}'></p>
-				<p><b>Passwort</b><br /><input id='pwd' name='pwd' type='password' placeholder='Passwort' value='{{PW}}'></p>
+				<p><b>Passwort</b><br /><div style='display: flex; flex-direction: row;'><input id='pwd' name='pwd' type='password' autocomplete='off' value='{{PW}}'><button id='check' type='button' style='width: auto;'>(o)</button></div></p>
 				<p><b>Hostname</b><br /><input id='hn' name='hn' value='{{HOSTNAME}}'></p>
 				<br /><button name='save' type='submit' class='button bgrn'>Speichern</button>
 			</form>
