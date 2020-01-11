@@ -15,6 +15,8 @@ class Config {
     String ssid, pw;
     String hostname;
     int tzoffset;
+    int btn_up, btn_dn, btn_le, btn_ri, btn_sel, btn_tol;
+    int pwm_port;
   } p;
 
   // constructor

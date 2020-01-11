@@ -29,7 +29,12 @@ void LCDMenu_setup() {
 	lcd.createChar(1, char_deg);
 	lcd.createChar(2, char_updn);
 	lcd.clear();
-	lcd << "Booting...";
+	lcd << "Halte RECHTS";
+	lcd.setCursor(0,1);
+	lcd << "fuer Tastentest";
+
+	int ai = analogRead(LCD_AI);
+	if (ai < 512) screen = Screen::SET_BUTTONS;
 }
 
 
@@ -39,20 +44,11 @@ ButtonEnum LCDMenu_readKey() {
 	ButtonEnum btn;
 
 	int ai = analogRead(LCD_AI);
-/*
-	Serial << ai << endl;
-	if (ai < 100)      btn = BTN_RI;
-	else if (ai < 250) btn = BTN_UP;
-	else if (ai < 450) btn = BTN_DN;
-	else if (ai < 720) btn = BTN_LE;
-	else if (ai < 999) btn = BTN_SEL;
-	else               btn = BTN_NONE;
-*/
-	if (ai < 100)      btn = BTN_RI;
-	else if (ai < 250) btn = BTN_UP;
-	else if (ai < 460) btn = BTN_DN;
-	else if (ai < 700) btn = BTN_LE;
-	else if (ai < 1015) btn = BTN_SEL;
+	if (abs(ai - cfg.p.btn_up) < cfg.p.btn_tol) btn = BTN_UP;
+	else if (abs(ai - cfg.p.btn_dn) < cfg.p.btn_tol) btn = BTN_DN;
+	else if (abs(ai - cfg.p.btn_le) < cfg.p.btn_tol) btn = BTN_LE;
+	else if (abs(ai - cfg.p.btn_ri) < cfg.p.btn_tol) btn = BTN_RI;
+	else if (abs(ai - cfg.p.btn_sel) < cfg.p.btn_tol) btn = BTN_SEL;
 	else               btn = BTN_NONE;
 
 	// once on click, and start running while holding
@@ -99,13 +95,12 @@ void LCDMenu_update() {
 		case Screen::SET_WIFI_PW:		disp_set_wifi_pw(btn);		break;
 		case Screen::SET_WIFI_SAVE:		disp_set_wifi_save(btn);	break;
 		case Screen::SET_TIMEZONE:		disp_set_tz(btn);			break;
+		case Screen::SET_BUTTONS:		disp_set_button(btn);		break;
 
 		case Screen::EDIT_NUMBER:		disp_edit_number(btn);		break;
 		case Screen::EDIT_TEXT:			disp_edit_text(btn);		break;
 	}
 	if (!((line1 == line1_old) && (line2 == line2_old) && (cursor == cursor_old))) {
-		//fixSpecialChars(line1);
-		//fixSpecialChars(line2);
 		lcd.clear();
 		lcd.setCursor(0,0);
 		lcd << line1;
@@ -121,23 +116,6 @@ void LCDMenu_update() {
 		}
 		cursor_old = cursor;
 	}
-}
-
-
-void fixSpecialChars(PString &s) {
-	char buf[17];
-	PString tmp(buf, sizeof(buf));
-	for(int i=0; i<s.length(); i++) {
-		char c = s[i];
-		switch (c) {
-			case '°':
-				tmp += '\1';
-				break;
-			default:
-				tmp += c;
-		}
-	}
-	s = tmp;
 }
 
 
@@ -257,8 +235,8 @@ void disp_main_version(ButtonEnum btn) {
 	line1.begin();
 	line1 << "OnsenPID " << VERSION;
 	line2.begin();
-	line2 << analogRead(LCD_AI);
-	// line2 << Clock.getFormattedTime();
+	// line2 << analogRead(LCD_AI);
+	line2 << Clock.getFormattedTime();
 	if (btn == BTN_DN) screen = Screen::MAIN_COOK;
 
 }
@@ -718,6 +696,25 @@ void disp_set_tz(ButtonEnum btn) {
 	if (btn == BTN_LE) screen = Screen::SET_WIFI_SCAN;
 }
 
+
+void disp_set_button(ButtonEnum btn) {
+	int ai = analogRead(LCD_AI);
+	line1 = "Button test";
+	line2.begin();
+	if (ai < 10) line2 << " ";
+	if (ai < 100) line2 << " ";
+	if (ai < 1000) line2 << " ";
+	line2 << ai;
+	line2 << " - ";
+	switch (btn) {
+		case BTN_UP:	line2 << "UP";	break;
+		case BTN_DN:	line2 << "DN";	break;
+		case BTN_LE:	line2 << "LE";	break;
+		case BTN_RI:	line2 << "RI";	break;
+		case BTN_SEL:	line2 << "SEL";	break;
+		default:		line2 << "---";
+	}
+}
 
 /**
  * convert seconds-since-midnight in hh:mm

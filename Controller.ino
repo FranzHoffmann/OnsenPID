@@ -1,5 +1,16 @@
+int pwm_port;
 
 void setup_controller() {
+	switch (cfg.p.pwm_port) {
+	case 4: 
+		pwm_port = D4;
+		break;
+	case 8:
+		pwm_port = D8;
+		break;
+	}
+	pinMode(pwm_port, OUTPUT);
+
 	noInterrupts();
 	timer1_isr_init();
 	timer1_attachInterrupt(controllerISR);
@@ -46,6 +57,6 @@ ICACHE_RAM_ATTR void controllerISR() {
 	T += dt;
 	if (T>=Tmax)  T = 0;
 	bOut = T < Thi;
-	digitalWrite(PWM_PORT, bOut);
+	digitalWrite(pwm_port, bOut);
 
 }

@@ -36,6 +36,13 @@ bool Config::save(){
 
 	write("system");
 	write("tz", p.tzoffset);
+	write("btn_up", p.btn_up);
+	write("btn_dn", p.btn_dn);
+	write("btn_le", p.btn_le);
+	write("btn_ri", p.btn_ri);
+	write("btn_sel", p.btn_sel);
+	write("btn_tol", p.btn_tol);
+	write("pwm_port", p.pwm_port);
 	
 	_file.close();
 	Logger << "Ini-File written" << endl;
@@ -55,6 +62,13 @@ bool Config::read() {
 	readString("wifi", "pw",       p.pw, String("default_pw"));
 
 	readInt("system", "tz", p.tzoffset, 0);
+	readInt("system", "btn_up", p.btn_up, 200);
+	readInt("system", "btn_dn", p.btn_dn, 460);
+	readInt("system", "btn_le", p.btn_le, 690);
+	readInt("system", "btn_ri", p.btn_ri, 10);
+	readInt("system", "btn_sel", p.btn_sel, 1010);
+	readInt("system", "btn_tol", p.btn_tol, 10);
+	readInt("system", "pwm_port", p.pwm_port, 4);
 
 	Logger << "End of config file" << endl;
 	return true;
