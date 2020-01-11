@@ -162,12 +162,12 @@ void start_WiFi() {
   for (int i = 4; i < 6; i++) {
     ssid += String(macAddr[i], HEX);
   }
-
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid);
   Logger << "Access Point erstellt: '" << ssid << "'" << endl;
   Logger << "WiFi-Configuration:" << endl;
   WiFi.printDiag(Logger);
+  p.AP_mode = WIFI_APMODE;
 
   return;
 }

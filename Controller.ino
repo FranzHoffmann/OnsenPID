@@ -36,10 +36,11 @@ ICACHE_RAM_ATTR void controllerISR() {
 		double e = p.set - p.act;
 		double ppart = p.kp * e;
 		if (abs(e) < abs(p.emax)) {
-			ipart = limit(ipart + ta/1000.0/p.tn * e, 0, 100.0);
-			p.out = limit(ppart + ipart, 0.0, 100.0);
+			ipart = limit(ipart + ta/1000.0/p.tn * e, 0, p.pmax);
+			p.out = limit(ppart + ipart, 0.0, p.pmax);
 		} else {
-			p.out = limit( 10.0*e, 0.0, 100.0);
+			//TODO: ist das richtig?
+			p.out = limit( 10.0*e, 0.0, p.pmax);
 		}  
 	} else {
 		p.out = 0.0;

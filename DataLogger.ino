@@ -60,7 +60,7 @@ int dl_log() {
     }
   }
   
-  return 10000;
+  return 1000;
 }
 
 int dl_cleanup() {

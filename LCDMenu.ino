@@ -22,13 +22,7 @@ static const char degc[3] = {'\1', 'C', '\0'};
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 void LCDMenu_setup() {
-	byte char_deg[8]  = {6,  9,  9, 6, 0,  0,  0, 0};
-	byte char_updn[8] = {4, 14, 31, 4, 4, 31, 14, 4}; 
-
-	lcd.begin(16, 2);
-	lcd.createChar(1, char_deg);
-	lcd.createChar(2, char_updn);
-	lcd.clear();
+	init_lcd();
 	lcd << "Halte RECHTS";
 	lcd.setCursor(0,1);
 	lcd << "fuer Tastentest";
@@ -65,9 +59,29 @@ ButtonEnum LCDMenu_readKey() {
 }
 
 
+void init_lcd()  {
+		byte char_deg[8]  = {6,  9,  9, 6, 0,  0,  0, 0};
+	byte char_updn[8] = {4, 14, 31, 4, 4, 31, 14, 4}; 
+
+	lcd.begin(16, 2);
+	lcd.createChar(1, char_deg);
+	lcd.createChar(2, char_updn);
+	lcd.clear();
+	
+	line1_old.begin();
+	line2_old.begin();
+}
+
 // -------------------------------------------------------------------------- LCD UI Task
 /* read keyboard and write menu */
 void LCDMenu_update() {
+	static int counter = 0;
+	counter++;
+	if (counter > 1200) {
+		// init display every minute
+		counter = 0;
+		init_lcd();
+	}
 	ButtonEnum btn = LCDMenu_readKey();
 
 	switch (screen) {
@@ -156,9 +170,14 @@ void start_edit_number(double value, int decimals, EditMode mode,
 
 
 void disp_edit_number(ButtonEnum btn) {
-	if (btn == BTN_UP) editNumData.v += editNumData.step;
-	else if (btn == BTN_DN) editNumData.v -= editNumData.step;
-	editNumData.v = limit(editNumData.v, editNumData.vmin, editNumData.vmax);
+	if (btn == BTN_UP) {
+		editNumData.v += editNumData.step;
+		while (editNumData.v > editNumData.vmax) editNumData.v -= (editNumData.vmax - editNumData.vmin);
+	}
+	else if (btn == BTN_DN) {
+		editNumData.v -= editNumData.step;
+		while (editNumData.v < editNumData.vmin) editNumData.v += (editNumData.vmax - editNumData.vmin);
+	}
 	line2.begin();
 	switch (editNumData.mode) {
 		case EditMode::NUMBER:
@@ -255,7 +274,7 @@ void disp_main_cook(ButtonEnum btn) {
 		case State::WAITING:
 			line1 = "Start in";
 			line2.begin();
-			line2 << sm.getRemainingTime()/60 << " min";
+			line2 << sm.getRemainingTime()/60+1 << " min";
 			if (btn == BTN_RI) screen = Screen::COOK_ABORT;
 			break;
 
@@ -550,6 +569,7 @@ void disp_set_wifi(ButtonEnum btn) {
 	switch (page) {
 		 case 0:
 			line1 << "WLAN";
+			//TODO
 			if (p.AP_mode == WIFI_OFFLINE)	line2 << "offline";
 			if (p.AP_mode == WIFI_CONN)		line2 << "verbunden";
 			if (p.AP_mode == WIFI_APMODE)	line2 << "AP aktiv";
