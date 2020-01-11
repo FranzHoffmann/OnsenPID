@@ -16,6 +16,8 @@ PString line2_old(buf4, sizeof(buf4));
 int cursor = -1, cursor_old;
 
 static const char degc[3] = {'\1', 'C', '\0'};
+#define CHAR_DEGC '\1'
+#define CHAR_UPDN '\2'
 
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
@@ -160,14 +162,14 @@ struct {
 String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_.0123456789 ";
 
 void start_edit_number(double value, int decimals, EditMode mode,
-		double vmin, double vmax, double step, const char *unit,
+		double vmin, double vmax, double step, String unit, //const char *unit,
 		callback onChange) {
 	editNumData.v = value;
 	editNumData.vmin = vmin;
 	editNumData.vmax = vmax;
 	editNumData.step = step;
-	editNumData.unit = "";
-	for (const char *ptr = unit; ptr++; *ptr != 0) editNumData.unit += *ptr;
+	editNumData.unit = unit;
+	//for (char *ptr = *unit; ptr++; *ptr != 0) editNumData.unit += *ptr;
 	editNumData.decimals = decimals;
 	editNumData.mode = mode;
 	editNumData.onChange = onChange;
@@ -255,7 +257,8 @@ void disp_main_version(ButtonEnum btn) {
 	line1.begin();
 	line1 << "OnsenPID " << VERSION;
 	line2.begin();
-	line2 << Clock.getFormattedTime();
+	line2 << analogRead(LCD_AI);
+	// line2 << Clock.getFormattedTime();
 	if (btn == BTN_DN) screen = Screen::MAIN_COOK;
 
 }
@@ -396,8 +399,8 @@ void disp_rec_select(ButtonEnum btn) {
 	line1 = "Rezept:";
 	line2.begin();
 	line2 << recipe[rec_i].name;
-	if (btn == BTN_UP)       rec_i = (rec_i - 1) % REC_COUNT;
-	else if (btn == BTN_DN)  rec_i = (rec_i + 1) % REC_COUNT;
+	if (btn == BTN_UP)       rec_i = dec(rec_i, 0, REC_COUNT-1, false);
+	else if (btn == BTN_DN)  rec_i = inc(rec_i, 0, REC_COUNT-1, false);
 	else if (btn == BTN_LE)  screen = Screen::REC_EXIT_SAVE;
 	else if (btn == BTN_RI)  screen = Screen::REC_NAME;
 	else if (btn == BTN_SEL) screen = Screen::REC_NAME;
@@ -426,7 +429,7 @@ void disp_rec_name(ButtonEnum btn) {
 
 void disp_rec_step_i(ButtonEnum btn) {
 	line1.begin();
-	line1 << "Schritt " << step_i + 1;
+	line1 << CHAR_UPDN << "Schritt " << step_i + 1;
 	line2.begin();
 	line2 << String(recipe[rec_i].temps[step_i], 1) << degc;
 	line2 << ", " << String(recipe[rec_i].times[step_i]/60) << "min";
@@ -437,25 +440,34 @@ void disp_rec_step_i(ButtonEnum btn) {
 	}
 	else if (btn == BTN_RI) {
 		if (step_i == 4) screen = Screen::REC_PARAM_i;
-		else step_i++;
+		else {
+			step_i++;
+			screen = Screen::REC_STEP_i;
+		}
 	}
 }
 
 
 void disp_rec_step_i_temp(ButtonEnum btn) {
 	line1.begin();
-	line1 << "Temp. Schritt " << step_i + 1 << ":";
+	line1 << CHAR_UPDN << " #" << step_i+1 << " Temp. :";
 	line2.begin();
 	line2 << String(recipe[rec_i].temps[step_i], 1) << degc;
 	if (btn == BTN_DN)			screen = Screen::REC_STEP_i_TIME;
 	else if (btn == BTN_UP)		screen = Screen::REC_STEP_i;
 	else if (btn == BTN_LE)	{
 		if (step_i == 0) screen = Screen::REC_NAME;
-		else step_i--;
+		else {
+			step_i--;
+			screen = Screen::REC_STEP_i;
+		}
 	}
 		else if (btn == BTN_RI) {
 		if (step_i == 4) screen = Screen::REC_PARAM_i;
-		else step_i++;
+		else {
+			step_i++;
+			screen = Screen::REC_STEP_i;
+		}
 	}
 	else if (btn == BTN_SEL)	{
 		start_edit_number(recipe[rec_i].temps[step_i], 1, EditMode::NUMBER,
@@ -471,17 +483,23 @@ void disp_rec_step_i_temp(ButtonEnum btn) {
 
 void disp_rec_step_i_time(ButtonEnum btn) {
 	line1.begin();
-	line1 << "Zeit Schritt " << step_i + 1 << ":";
+	line1 << CHAR_UPDN << " #" << step_i+1 << " Zeit:";
 	line2.begin();
 	line2 << String(recipe[rec_i].times[step_i]/60) << "min";
 	if (btn == BTN_UP)		screen = Screen::REC_STEP_i_TEMP;
 	else if (btn == BTN_LE)	{
 		if (step_i == 0) screen = Screen::REC_NAME;
-		else step_i--;
+		else {
+			step_i--;
+			screen = Screen::REC_STEP_i;
+		}
 	}
 		else if (btn == BTN_RI) {
 		if (step_i == 4) screen = Screen::REC_PARAM_i;
-		else step_i++;
+		else {
+			step_i++;
+			screen = Screen::REC_STEP_i;
+		}
 	}
 	else if (btn == BTN_SEL)	{
 		start_edit_number(recipe[rec_i].times[step_i] / 60.0, 0, EditMode::NUMBER,
@@ -498,9 +516,9 @@ void disp_rec_step_i_time(ButtonEnum btn) {
 void disp_rec_param_i(ButtonEnum btn) {
 	static int param_i = 0;
 	line1.begin();
-	line1 << pararray[param_i].name << ":";
+	line1 << CHAR_UPDN << pararray[param_i].name << ":";
 	line2.begin();
-	line2 << "" << String(recipe[rec_i].param[param_i], 0) << " " << pararray[param_i].unit;
+	line2 << String(recipe[rec_i].param[param_i], 1) << " " << pararray[param_i].unit;
 
 	if (btn == BTN_UP)			param_i = dec(param_i, 0, REC_PARAM_COUNT-1, false);
 	else if (btn == BTN_DN)		param_i = inc(param_i, 0, REC_PARAM_COUNT-1, false);
@@ -521,9 +539,9 @@ void disp_rec_param_i(ButtonEnum btn) {
 
 void disp_rec_exit_save(ButtonEnum btn) {
 	line1.begin();
-	line1 << "Aenderungen";
+	line1 << CHAR_UPDN << "Aenderungen";
 	line2.begin();
-	line2 << "speichern?";
+	line2 << " speichern?";
 	if (btn == BTN_LE)			screen = Screen::REC_PARAM_i;
 	else if (btn == BTN_DN)		screen = Screen::REC_EXIT_ABORT;
 	else if (btn == BTN_SEL)	{
@@ -535,9 +553,9 @@ void disp_rec_exit_save(ButtonEnum btn) {
 
 void disp_rec_exit_abort(ButtonEnum btn) {
 	line1.begin();
-	line1 << "Aenderungen";
+	line1 << CHAR_UPDN << "Aenderungen";
 	line2.begin();
-	line2 << "verwerfen?";
+	line2 << " verwerfen?";
 	if (btn == BTN_LE)			screen = Screen::REC_PARAM_i;
 	else if (btn == BTN_UP)		screen = Screen::REC_EXIT_SAVE;
 	else if (btn == BTN_SEL)	{
@@ -668,7 +686,7 @@ void disp_set_wifi_save(ButtonEnum btn) {
 
 
 void disp_set_tz(ButtonEnum btn) {
-	if ((WiFi.status() == WL_CONNECTED) && false) {	// TODO / debug
+	if ((WiFi.status() == WL_CONNECTED)) {
 		// time comes from NTP
 		line1 = "Zeitzone:";
 		line2.begin();
@@ -693,6 +711,7 @@ void disp_set_tz(ButtonEnum btn) {
 		[](){
 			// anonymous function, called when edit is complete
 			screen = Screen::SET_TIMEZONE;
+			// TODO: Uhr stellen geht nicht
 			Clock.setTime((int)editNumData.v);
 		});
 	}

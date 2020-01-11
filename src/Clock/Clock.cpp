@@ -28,6 +28,7 @@ void ClockT::update() {
 }
 
 
+/* note: this returns local time */
 unsigned long ClockT::getEpochTime() {
 	return _timeClient->getEpochTime();
 }
