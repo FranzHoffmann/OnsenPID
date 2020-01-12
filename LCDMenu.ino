@@ -172,11 +172,11 @@ void start_edit_number(double value, int decimals, EditMode mode,
 void disp_edit_number(ButtonEnum btn) {
 	if (btn == BTN_UP) {
 		editNumData.v += editNumData.step;
-		while (editNumData.v > editNumData.vmax) editNumData.v -= (editNumData.vmax - editNumData.vmin);
+		if (editNumData.v > editNumData.vmax) editNumData.v = editNumData.vmin;
 	}
 	else if (btn == BTN_DN) {
 		editNumData.v -= editNumData.step;
-		while (editNumData.v < editNumData.vmin) editNumData.v += (editNumData.vmax - editNumData.vmin);
+		if (editNumData.v < editNumData.vmin) editNumData.v = editNumData.vmax;
 	}
 	line2.begin();
 	switch (editNumData.mode) {
@@ -557,7 +557,7 @@ void disp_rec_exit_abort(ButtonEnum btn) {
 	else if (btn == BTN_UP)		screen = Screen::REC_EXIT_SAVE;
 	else if (btn == BTN_SEL)	{
 		cfg.readRecipes();
-		screen = Screen::REC_SELECT;
+		screen = Screen::MAIN_RECIPE;
 	}
 }
 
