@@ -10,11 +10,6 @@
 var req = null;
 var timer;
 
-function pad(num, size) {
-	var s = num+"";
-	while (s.length < size) s = "0" + s;
-	return s;
-}
 function read_state(cmd) {
 	var arg = '';
 	if (read_state.arguments.length == 1) {
@@ -32,8 +27,7 @@ function read_state(cmd) {
 			document.getElementById('set').innerHTML = obj.set;
 			document.getElementById('out').innerHTML = obj.out;
 			document.getElementById('state').innerHTML = obj.state;
-			document.getElementById('time').innerHTML = 
-				Math.floor(obj.time / 60) + ":" + pad(obj.time % 60, 2);
+			document.getElementById('time').innerHTML = Math.floor(obj.time / 60);
 		}
 	};
 	req.open('GET', '/s'+arg, true);

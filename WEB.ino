@@ -90,8 +90,8 @@ String subst(String var, int par) {
 	if (code == "EMAX") 	return String(recipe[par].param[(int)Parameter::EMAX]);
 	if (code == "PMAX") 	return String(recipe[par].param[(int)Parameter::PMAX]);
 	
-	if (code == "CLOCK") return String(Clock.getEpochTime());//timeClient.getFormattedTime());
-	if (code == "TIME_LEFT") return String(sm.getRemainingTime() / 60);
+//	if (code == "CLOCK") return String(Clock.getEpochTime());//timeClient.getFormattedTime());
+	if (code == "TIME_LEFT") return String(sm.getRemainingTime());	// seconds
 
 	if (code == "STATE")	return sm.stateAsString(sm.getState());
 	if (code == "HOSTNAME")	return String(cfg.p.hostname);
@@ -343,15 +343,6 @@ void handleStart() {
 		return;
 	}
 
-	String t = server.arg("time");
-	unsigned long epoch = Clock.getEpochTime();
-	unsigned long midnight = epoch - (epoch % 86400L) - 3600 * cfg.p.tzoffset;
-	int hrs = t.substring(0, 2).toInt();
-	int mins = t.substring(3).toInt();
-	unsigned long timearg = midnight + 60 * mins + 3600 * hrs;
-	while (timearg < epoch) timearg += 86400;
-	Logger << "time: " << hrs << ":" << mins << ", timearg: " << timearg << endl;
-
 	int rec = 0;
 	if (server.hasArg("rec")) {
 		String s = server.arg("rec");
@@ -361,20 +352,23 @@ void handleStart() {
 		return;
 	}
 
+	// "time" is String in format "08:09".
+	// Convert to 0-86400 seconds
+	String t = server.arg("time");
+	long time = t.substring(0, 2).toInt() * 3600 + t.substring(3).toInt() * 60;
+	Logger << "startbefehl über Web (Rezept: " << rec;
+
 	String m = server.arg("mode");
-	if (m == "nw") {
-		Logger << "Web: Kochen sofort" << endl;
-		sm.startCooking(rec);
-	} else
 	if (m == "st") {
-		sm.startByStartTime(rec, timearg);
-		Logger << "Web: Kochen später (Start um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
-	} else
+		sm.startByStartTime(rec, time);
+		Logger << ", Startzeit: " << t << ")" << endl;
+	} else 
 	if (m == "et") {
-		Logger << "Web: Kochen später (Fertig um " << hrs << ":" << mins << ", " << timearg << ")" << endl;
-		sm.startByEndTime(rec, timearg);
+		Logger << ", Endzeit: " << t << ")" << endl;
+		sm.startByEndTime(rec, time);
 	} else {
-		Logger << "Web: unverständlichen Startbefehl ignoriert" << endl;
+		Logger << ")" << endl;
+		sm.startCooking(rec);
 	}
 	redirect("/");
 }

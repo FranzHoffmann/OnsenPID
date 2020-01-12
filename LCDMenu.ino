@@ -566,27 +566,67 @@ void disp_set_wifi(ButtonEnum btn) {
 	static int page = 0;
 	line1.begin(); 
 	line2.begin();
+	
+	switch (WiFi.getMode()) {
+	case (WIFI_OFF):
+		line1 << "Offline";
+		break;
+
+	case (WIFI_STA):
+		if (page == 0) {
+			line1 << "Station mode";
+			line2 << (WiFi.isConnected() ? "verbunden" : "nicht verbunden");
+		} else 
+		if (page == 1) {
+			line1 << WiFi.SSID();
+			line2 << WiFi.localIP();
+		} else 
+		if (page == 2) {
+			line1 << cfg.p.hostname; // WiFi.hostname();
+		}
+		break;
+
+	case (WIFI_AP_STA):
+		line1 << "Station + AP";
+		break;
+		
+	case (WIFI_AP):
+		if (page == 0) {
+			line1 << "AP aktiv";
+			line2 << WiFi.softAPSSID();
+		} else 
+		if (page == 1) {
+			line1 << WiFi.softAPIP();
+			line2 << cfg.p.hostname;
+		} else 
+		if (page == 2) {
+			line1 << "Verbunden: " << WiFi.softAPgetStationNum();
+		}
+		break;
+	}
+		/*
 	switch (page) {
 		 case 0:
 			line1 << "WLAN";
 			//TODO
-			if (p.AP_mode == WIFI_OFFLINE)	line2 << "offline";
-			if (p.AP_mode == WIFI_CONN)		line2 << "verbunden";
-			if (p.AP_mode == WIFI_APMODE)	line2 << "AP aktiv";
+			if (WiFi.getMode() == WIFI_OFF)	line2 << "offline";
+			if (WiFi.getMode() == WIFI_STA)		line2 << "verbunden";
+			if (WiFi.getMode() == WIFI_APMODE)	line2 << "AP aktiv";
 			break;
 		case 1:
 			line1 << cfg.p.ssid;
-			if (p.AP_mode == WIFI_OFFLINE)	line2 << "---";
-			if (p.AP_mode == WIFI_CONN)		line2 << WiFi.localIP();
-			if (p.AP_mode == WIFI_APMODE)	line2 << WiFi.softAPIP();
+			if (WiFi.getMode() == WIFI_OFFLINE)	line2 << "---";
+			if (WiFi.getMode() == WIFI_CONN)		line2 << WiFi.localIP();
+			if (WiFi.getMode() == WIFI_APMODE)	line2 << WiFi.softAPIP();
 			break;
 		case 2:
-			if (p.AP_mode == WIFI_OFFLINE)	line1 << "---";
-			if (p.AP_mode == WIFI_CONN)		line1 << WiFi.localIP();
-			if (p.AP_mode == WIFI_APMODE)	line1 << WiFi.softAPIP();
+			if (WiFi.getMode() == WIFI_OFFLINE)	line1 << "---";
+			if (WiFi.getMode() == WIFI_CONN)	line1 << WiFi.localIP();
+			if (WiFi.getMode() == WIFI_APMODE)	line1 << WiFi.softAPIP();
 			line2 << cfg.p.hostname;
 			break;
 	}
+	* */
 	if (btn == BTN_DN) page = inc(page, 0, 2, false);
 	else if (btn == BTN_UP) page = dec(page, 0, 2, false);
 	else if (btn == BTN_RI) {

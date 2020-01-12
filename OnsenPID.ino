@@ -137,42 +137,6 @@ void loop() {
 }
 
     
-// ---------------------------------------------------------- setup WiFi
-void start_WiFi() {
-  Logger << "WiFi-Configuration:" << endl;
-  WiFi.printDiag(Logger);
- 
-  Logger << "Versuche verbindung mit '" << cfg.p.ssid << "'" << endl;
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(cfg.p.ssid, cfg.p.pw);
-  for (int i=0; i<100; i++) {
-    if (WiFi.status() == WL_CONNECTED) {
-      Logger << "WiFi verbunden (IP: " << WiFi.localIP() << ")" << endl;
-      p.AP_mode = WIFI_CONN;
-      return;
-    }
-    delay(100);
-  }
-  Logger << "WiFi-Verbindung fehlgeschlagen" << endl;
-
-  // open AP
-  uint8_t macAddr[6];
-  String ssid = "Onsenei-";
-  WiFi.softAPmacAddress(macAddr);
-  for (int i = 4; i < 6; i++) {
-    ssid += String(macAddr[i], HEX);
-  }
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(ssid);
-  Logger << "Access Point erstellt: '" << ssid << "'" << endl;
-  Logger << "WiFi-Configuration:" << endl;
-  WiFi.printDiag(Logger);
-  p.AP_mode = WIFI_APMODE;
-
-  return;
-}
-
-
 // -------------------------------------------------- setup Temp. sensor
 void setup_ds18b20() {
   Logger  << ("Initializing thermometer DS18B20 ") << endl;
@@ -201,26 +165,26 @@ void setup() {
   Clock.setTimeOffset(cfg.p.tzoffset * 3600);
   
   LCDMenu_setup();
-  Logger << "LCD initialized" << endl;
+  Logger << "LCD initialisiert" << endl;
     
   start_WiFi();
-  Logger << "WiFi initialized" << endl;
+  Logger << "WiFi gestartet" << endl;
 
   setup_webserver(&server);
-  Logger << "Webserver initialized" << endl;
+  Logger << "Webserver gestartet" << endl;
   
   MDNS.begin(cfg.p.hostname);
   MDNS.addService("http", "tcp", 80);
-  Logger << "MDNS initialized" << endl;
+  Logger << "MDNS gestartet" << endl;
   
   setup_OTA();
-  Logger << "OTA initialized " << endl;
+  Logger << "OTA gestartet" << endl;
   
   setup_dl();
-  Logger << "DataLogger initialized" << endl;
+  Logger << "DataLogger gestartet" << endl;
 
   setup_ds18b20();
-  Logger << "Temperature sensor initialized" << endl;
+  Logger << "Thermometer initialisiert" << endl;
   
   start_task(task_lcd, "lcd");
   start_task(task_ntp, "ntp");
@@ -237,7 +201,6 @@ void setup() {
 
 
 void onStateChanged() {
-	Serial << "onStateChanged() callback" << endl;
 	switch(sm.getState()) {
 		case State::COOKING:
 			dl_startBatch();

@@ -47,15 +47,17 @@ void Process::startCooking(int recno) {
  * time is "seconds after midnight" today (or tomorrow)
  */
 void Process::startByStartTime(int recno, unsigned long t) {
-	unsigned long now = Clock.getEpochTime();//- 3600 * _cfg->p.tzoffset;
-	unsigned long midnight = now - (now % 86400L);// - 3600 * _cfg->p.tzoffset;
+	unsigned long now = Clock.getEpochTime();
+	unsigned long midnight = now - (now % 86400L);
 	unsigned long starttime = midnight + t;
 	if (starttime < now) starttime += 86400;
 	
+	/* debug
 	Logger << "Process::startByStartTime(" << recno << ", " << t << ")" << endl;
 	Logger << "Now:       " << String(now) << endl;
 	Logger << "Midnight:  " << String(midnight) << endl;
 	Logger << "Starttime: " << String(starttime) << endl;
+	*/
 	
 	switch (state) {
 		case State::IDLE:
@@ -72,15 +74,17 @@ void Process::startByStartTime(int recno, unsigned long t) {
  * time is "seconds after midnight" today (or later)
  */
 void Process::startByEndTime(int recno, unsigned long t) {
-	unsigned long now = Clock.getEpochTime();//- 3600 * _cfg->p.tzoffset;
-	unsigned long midnight = now - (now % 86400L);// - 3600 * _cfg->p.tzoffset;
+	unsigned long now = Clock.getEpochTime();
+	unsigned long midnight = now - (now % 86400L);
 	unsigned long starttime = midnight + t - calcRecipeDuration(act_rec);
 	while (starttime < now) starttime += 86400;
 	
+	/* debug
 	Logger << "Process::startByEndTime(" << recno << ", " << t << ")" << endl;
 	Logger << "Now:       " << String(now) << endl;
 	Logger << "Midnight:  " << String(midnight) << endl;
 	Logger << "Starttime: " << String(starttime) << endl;
+	*/
 	
 	switch (state) {
 		case State::IDLE:
@@ -116,17 +120,17 @@ void Process::abort() {
 // ---------------------------------------------------- ????????????????
 String Process::stateAsString(State s) {
 	switch (s) {
-		case State::IDLE:		return String("IDLE");
-		case State::WAITING:	return String("WAITING");
-		case State::COOKING:	return String("COOKING");
-		case State::FINISHED:	return String("FINISHED");
-		case State::ERROR:		return String("ERROR");
+		case State::IDLE:		return String("tut nichts");
+		case State::WAITING:	return String("wartet");
+		case State::COOKING:	return String("kocht");
+		case State::FINISHED:	return String("fertig");
+		case State::ERROR:		return String("Fehler");
 	}
 }
 
 
 void Process::setState(State newState) {
-	Logger << "Change state from " << stateAsString(state) << " to " << stateAsString(newState) << endl;
+	Logger << "Neuer Status:  '" << stateAsString(newState) << "' (vorher: '" << stateAsString(state) << "')"  << endl;
 
 	if (newState == State::COOKING) {
 		startTime = Clock.getEpochTime();
@@ -140,7 +144,6 @@ void Process::update() {
 	switch (state) {
 	case State::WAITING:
 		if (Clock.getEpochTime() >= startTime) {
-			Logger << "Time: " << Clock.getEpochTime() << ", startTime: " << startTime << endl;
 			setState(State::COOKING);
 		}
 		break;
@@ -176,7 +179,7 @@ double Process::calcRecipeRamp(uint32_t actTime) {
 		}
 	}
 	// should not happen
-	Logger << "Process::calcRecipeRamp: actTime > duration " << endl;
+	Logger << "Fehler: Process::calcRecipeRamp: actTime > duration " << endl;
 	return 0.0;
 }
 
