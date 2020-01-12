@@ -89,8 +89,7 @@ String subst(String var, int par) {
 	if (code == "TV") 		return String(recipe[par].param[(int)Parameter::TV]);
 	if (code == "EMAX") 	return String(recipe[par].param[(int)Parameter::EMAX]);
 	if (code == "PMAX") 	return String(recipe[par].param[(int)Parameter::PMAX]);
-	
-//	if (code == "CLOCK") return String(Clock.getEpochTime());//timeClient.getFormattedTime());
+
 	if (code == "TIME_LEFT") return String(sm.getRemainingTime());	// seconds
 
 	if (code == "STATE")	return sm.stateAsString(sm.getState());
@@ -117,6 +116,7 @@ String directory() {
 	s += "</ul>";
 	return s;
 }
+
 
 /*
  *  read a file, optionally substitute variable like {{ACT}} and {{SET}}, and send to web server
@@ -163,7 +163,6 @@ String readAndSubstitute(File f, int par) {
 
 			case VAR_END:
 				if (c == '}') {            // found }}
-					// debug Serial << "{{" << var << "}}" << endl;
 					content += subst(var, par);
 					state = TEXT;
 				} else {                  // found }x inside variable
@@ -176,6 +175,7 @@ String readAndSubstitute(File f, int par) {
 	return content;
 }
 
+
 void changeParam(String arg_name, String param_name, double *param) {
 	String str_param = "Parameter";
 	String str_from  = "geändert von";
@@ -187,6 +187,7 @@ void changeParam(String arg_name, String param_name, double *param) {
 	}
 }
 
+
 void changeParam(String arg_name, String param_name, String &param) {
 	String str_param = "Parameter";
 	String str_from  = "geändert von";
@@ -197,6 +198,7 @@ void changeParam(String arg_name, String param_name, String &param) {
 			param = val;
 	}
 }
+
 
 void changeParam(String arg_name, String param_name, int *param) {
 	String str_param = "Parameter";
@@ -217,10 +219,9 @@ void changeParam(String arg_name, String param_name, int *param) {
  */
 void send_file(String filename) { send_file(filename, 0); }
 void send_file(String filename, int par) {
-	// debug Logger << "send_file(): " << filename << endl;
 	File f = filesystem.open(filename, "r");
 	if (!f) {
-		Logger << "send_file(): file not found: " << filename << endl;
+		Logger << "WEB: send_file(" << filename << "): Datei nicht gefunden." << endl;
 		fail("file not found: " + filename);
 		return;
 	}
@@ -243,7 +244,7 @@ bool stream_file(String filename) {
 	} else if (filesystem.exists(filename)) {
 		fn = filename;
 	} else {
-			Logger << "stream_file(): could not open file" << filename << endl;
+			Logger << "WEB: stream_file(" << filename << "): Datei nicht gefunden" << endl;
 			return false;
 	}
 	File f = filesystem.open(fn, "r");
@@ -255,6 +256,7 @@ bool stream_file(String filename) {
 	return true;
 }
 
+
 // --------------------------------------------------------------------------------------------- not found
 // this is called when the URL is not one of the special URLs defined above.
 // 1) if the URL refers to a file, stream it
@@ -264,7 +266,7 @@ void handleNotFound() {
 	if (stream_file(filename)) {
 		return;
 	}
-	Logger << "URL nicht gefunden: " << server.uri() << endl;
+	Logger << "WEB: URL nicht gefunden: " << server.uri() << endl;
 	String message = "File Not Found\n\n";
 	message += "URI: " + server.uri();
 	message += "\nMethod: " + (server.method() == HTTP_GET) ? "GET" : "POST";
@@ -442,12 +444,8 @@ void handleData()   {
 }
 
 void sendJsonData(unsigned long t) {
-	bool first = true;
-
-	//Logger << "request: json data since " << t << endl;
 	dl_rewind("TODO", t);
 	if (!dl_hasMore()) {
-		Logger << "answer: nothing" << endl;
 		server.send(200, "text/json", "{\"data\":[]}");
 		return;
 	}
@@ -460,8 +458,7 @@ void sendJsonData(unsigned long t) {
 	PString pstr(buf, sizeof(buf));
 	char Q = '"';
 	while (dl_hasMore() && count < 30000) {
-		if (!first) server.sendContent(",");
-		first = false;
+		if (count > 0) server.sendContent(",");
 		dl_data_t data = dl_getNext();
 		pstr = "{";
 		pstr << Q << "t"   << Q << ":" << data.ts  << ", ";
@@ -478,17 +475,15 @@ void sendJsonData(unsigned long t) {
 	} else {
 		server.sendContent("], \"more\":1}");
 	}
-	//Logger << "answer: " << count << " data points" << endl;
 }
 
 
 void sendCSVData() {
-	Logger << "request: CSV data" << endl;
+	Logger << "WEB request: CSV data" << endl;
 
 	uint32_t count = 0;
 	dl_rewind("TODO", 0);
 	if (!dl_hasMore()) {
-		Logger << "answer: nothing" << endl;
 		server.send(200, "text/csv", "");
 		return;
 	}
@@ -588,18 +583,18 @@ void handleFileUpload() {
 			filesystem.remove(fn);
 		}
 		uploadFile = filesystem.open(fn, "w");
-		Logger << "Upload: START, filename: " << fn << endl;
+		Logger << "WEB upload gestartet, Datei: " << fn << endl;
 		if (!uploadFile) {
-			Logger << "Warning: could not open file" << endl;
+			Logger << "Fehler: konnte Datei nicht öffnen" << endl;
 		}
 	}
 
 	else if (upload.status == UPLOAD_FILE_WRITE) {
 		if (uploadFile) {
 			uploadFile.write(upload.buf, upload.currentSize);
-			Logger << "Upload: WRITE, Bytes: " << upload.currentSize << endl;
+			Logger << "WEB upload: " << upload.currentSize << " Bytes empfangen" << endl;
 		} else {
-			Logger << "Upload: WRITE (failed)" << endl;
+			Logger << "WEB upload: konnte nicht schreiben" << endl;
 		}
 	}
 
@@ -607,16 +602,16 @@ void handleFileUpload() {
 		if (uploadFile) {
 			uploadFile.close();
 		}
-		Logger << "Upload: END, Size: " << upload.totalSize << endl;
+		Logger << "WEN upload beednet, " << upload.totalSize << " Bytes" << endl;
 	}
 }
 
 void handleFileDelete() {
 	if (server.hasArg("fn")) {
 		String fn = server.arg("fn");
-		Logger << "deleting file '" << fn << "'" << endl;
+		Logger << "WEB: Datei '" << fn << "' gelöscht" << endl;
 		if (!filesystem.remove(fn)) {
-			Logger << "file delete failed" << endl;
+			Logger << "Datei löschen ist fehlgeschlagen" << endl;
 		}
 	}
 	redirect("/cfg");

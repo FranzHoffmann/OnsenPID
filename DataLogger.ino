@@ -41,6 +41,7 @@ void setup_dl() {
   start_task(dl_cleanup, "Data Logger cleanup");
 }
 
+
 /**
  * Task for logging
  */
@@ -63,9 +64,10 @@ int dl_log() {
   return 1000;
 }
 
+
 int dl_cleanup() {
-  Logger << "dataLogger cleanup" << endl;
-  return 3600000;
+	// TODO
+	return 3600000;
 }
 
 
@@ -78,7 +80,7 @@ void dl_startBatch() {
   // TODO
   dl.filename = "/data.dat";
   File f = filesystem.open(dl.filename, "w");
-  Logger << "dataLogger: started logfile '" << dl.filename << "'" << endl;
+  Logger << "Datalogger: beginne Logging in Datei '" << dl.filename << "'" << endl;
   f.write("TODO: Rezeptname\r");
   f.close();
 }
@@ -87,7 +89,7 @@ void dl_startBatch() {
  * 
  */
 void dl_endBatch() {
-  Logger << "dataLogger: closed logfile '" << dl.filename << "'" << endl;
+  Logger << "DataLogger: Logging in Datei '" << dl.filename << "' beendet." << endl;
   dl.recording = false;
   dl_flush();
   dl.filename = "";
@@ -95,7 +97,6 @@ void dl_endBatch() {
 
 
 void dl_flush() {
-  Serial << "dl_flush()" << endl;
   File f = filesystem.open(dl.filename, "a");
   if (f) {
     for (int i=0; i<dl.pointer; i++) {

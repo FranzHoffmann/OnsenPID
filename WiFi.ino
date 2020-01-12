@@ -38,7 +38,6 @@ void start_WiFi() {
   for (int i=0; i<100; i++) {
     if (WiFi.status() == WL_CONNECTED) {
       Logger << "WiFi verbunden (IP: " << WiFi.localIP() << ")" << endl;
-      p.AP_mode = WIFI_CONN;
       return;
     }
     delay(100);
@@ -56,7 +55,6 @@ void start_WiFi() {
   WiFi.softAP(ssid);
   Logger << "Access Point erstellt: '" << ssid << "'" << endl;
   WiFi.printDiag(Logger);
-  p.AP_mode = WIFI_APMODE;
 
   return;
 }

@@ -1,5 +1,5 @@
 void setup_OTA() {
-    Logger << "Starting OTA service... ";
+    Logger << "Starte OTA update service... ";
     
     ArduinoOTA.setHostname(cfg.p.hostname.c_str());
   
@@ -14,11 +14,11 @@ void setup_OTA() {
 		lcd.clear();
 		lcd.setCursor(0,0);
 		lcd << "OTA Update...";
-		Logger << "Start updating " << type << endl;
+		Logger << "OTA Update beginnt (" << type << ")" << endl;
 	});
   
     ArduinoOTA.onEnd([]() {
-      Logger << "OTA update finished" << endl;
+      Logger << "OTA update beendet" << endl;
     });
   
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
@@ -28,15 +28,8 @@ void setup_OTA() {
     });
   
     ArduinoOTA.onError([](ota_error_t error) {
-      Logger << "OTA update failed" << endl;
+      Logger << "OTA update fehlgeschlagen" << endl;
     });
   
     ArduinoOTA.begin();
-    Logger << "done (";
-    if (p.AP_mode == WIFI_APMODE) {
-      Logger << WiFi.softAPIP();
-    } else {
-      Logger << WiFi.localIP();
-    }
-    Logger << ")" << endl;
 }

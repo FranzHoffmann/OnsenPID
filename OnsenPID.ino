@@ -15,7 +15,7 @@
   - better statistics: runtime and ms/s for each task
 */
 
-#define VERSION "0.908"
+#define VERSION "0.909"
 
 #include <Streaming.h>
 #include <ESP8266WiFi.h>
@@ -37,25 +37,19 @@
 #define TMP_PORT D7
 
 
-ESP8266WebServer server(80);
-FS filesystem = SPIFFS;
-OneWire oneWire(TMP_PORT);
-DS18B20 thermometer(&oneWire);
-
-
-enum WiFiEnum {WIFI_OFFLINE, WIFI_CONN, WIFI_APMODE};
-
 struct param {
-  WiFiEnum AP_mode;
   double set;			// temperature setpoint, from recipe
   double kp, tn, tv, emax, pmax;
   double act;			// actual temperature, from thermometer
   double out;			// actual power, from controller
   boolean released;				// controller is released
-  int screen;                   // active screen
   boolean sensorOK;
 } p;
 
+ESP8266WebServer server(80);
+FS filesystem = SPIFFS;
+OneWire oneWire(TMP_PORT);
+DS18B20 thermometer(&oneWire);
 Config cfg;
 Process sm(&cfg);
 
@@ -96,7 +90,7 @@ int task_read_temp() {
     counter = 0;
     if (!p.sensorOK) {
       p.sensorOK = true;
-      Logger << "thermometer ok" << endl;
+      Logger << "Thermometer ok" << endl;
     }
     thermometer.requestTemperatures();
   } else {
@@ -104,7 +98,7 @@ int task_read_temp() {
     if (counter > 5) {
       if (p.sensorOK) {
         p.sensorOK = false;
-        Logger << "thermometer failure, resetting" << endl;
+        Logger << "Thermometer gestört" << endl;
       }
       thermometer.requestTemperatures();    
     }
@@ -139,8 +133,7 @@ void loop() {
     
 // -------------------------------------------------- setup Temp. sensor
 void setup_ds18b20() {
-  Logger  << ("Initializing thermometer DS18B20 ") << endl;
-  Logger << "DS18B20 Library version: " << DS18B20_LIB_VERSION << endl;
+  Logger << "DS18B20 Bibliothek version: " << DS18B20_LIB_VERSION << endl;
   thermometer.begin();
   thermometer.setResolution(12);
   thermometer.requestTemperatures();
