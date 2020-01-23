@@ -132,6 +132,19 @@ void LCDMenu_update() {
 	}
 }
 
+/**
+ * use this to show things like up/dn-character on the right side
+ */
+String combineStrChar(const char *s, char c) {
+	String result;
+	result.reserve(16);
+	char si;
+	while (si = *s++) result += si;
+	while (result.length() < 16) result += ' ';
+	result[15] = c;
+	return result;
+}
+
 
 /**
  * This screen should be used for any value to be edited.
@@ -296,7 +309,7 @@ void disp_main_cook(ButtonEnum btn) {
 
 
 void disp_main_recipe(ButtonEnum btn) {
-	line1 = "Rezepte";
+	line1 = combineStrChar("Rezepte", CHAR_UPDN);
 	line2 = "bearbeiten...";
 	if (btn == BTN_DN) screen = Screen::MAIN_SETTINGS;
 	else if (btn == BTN_UP) screen = Screen::MAIN_COOK;
@@ -305,7 +318,7 @@ void disp_main_recipe(ButtonEnum btn) {
 
 
 void disp_main_settings(ButtonEnum btn) {
-	line1 = "Einstellungen...";
+	line1 = combineStrChar("Einstellungen...", CHAR_UPDN);
 	line2.begin();
 	if (btn == BTN_UP) screen = Screen::MAIN_RECIPE;
 	else if (btn == BTN_RI) screen = Screen::SET_WIFI;
@@ -324,8 +337,7 @@ void disp_cook_abort(ButtonEnum btn) {
 
 
 void disp_cook_recipe(ButtonEnum btn) {
-	line1.begin();
-	line1 << "Rezept:";
+	line1 = combineStrChar("Rezept:", CHAR_UPDN);
 	line2.begin();
 	line2 << recipe[rec_i].name;
 	if (btn == BTN_LE) screen = Screen::MAIN_COOK;
@@ -337,7 +349,7 @@ void disp_cook_recipe(ButtonEnum btn) {
 
 
 void disp_cook_timer(ButtonEnum btn) {
-	line1 = "Timer-Modus";
+	line1 = combineStrChar("Timer-Modus", CHAR_UPDN);
 	line2.begin();
 	switch (timer_mode) {
 		case 0:
@@ -391,7 +403,7 @@ void disp_cook_start(ButtonEnum btn) {
 
 
 void disp_rec_select(ButtonEnum btn) {
-	line1 = "Rezept:";
+	line1 = combineStrChar("Rezept:", CHAR_UPDN);
 	line2.begin();
 	line2 << recipe[rec_i].name;
 	if (btn == BTN_UP)       rec_i = dec(rec_i, 0, REC_COUNT-1, false);
@@ -428,7 +440,7 @@ void disp_rec_step_i(ButtonEnum btn) {
 	line2.begin();
 	line2 << String(recipe[rec_i].temps[step_i], 1) << degc;
 	line2 << ", " << String(recipe[rec_i].times[step_i]/60) << "min";
-	if (btn == BTN_DN) screen = Screen::REC_STEP_i_TEMP;
+	if (btn == BTN_SEL) screen = Screen::REC_STEP_i_TEMP;
 	else if (btn == BTN_LE)	{
 		if (step_i == 0) screen = Screen::REC_NAME;
 		else step_i--;
@@ -533,8 +545,7 @@ void disp_rec_param_i(ButtonEnum btn) {
 
 
 void disp_rec_exit_save(ButtonEnum btn) {
-	line1.begin();
-	line1 << CHAR_UPDN << "Aenderungen";
+	line1 = combineStrChar("Aenderungen", CHAR_UPDN);
 	line2.begin();
 	line2 << " speichern?";
 	if (btn == BTN_LE)			screen = Screen::REC_PARAM_i;
@@ -547,8 +558,7 @@ void disp_rec_exit_save(ButtonEnum btn) {
 
 
 void disp_rec_exit_abort(ButtonEnum btn) {
-	line1.begin();
-	line1 << CHAR_UPDN << "Aenderungen";
+	line1 = combineStrChar("Aenderungen", CHAR_UPDN);
 	line2.begin();
 	line2 << " verwerfen?";
 	if (btn == BTN_LE)			screen = Screen::REC_PARAM_i;
