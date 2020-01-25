@@ -6,7 +6,7 @@
 
   - D-Part
   - repalce "Einschalten" by "Start dialog"
-  
+
   more ideas
   ==========
   - autotuning
@@ -15,7 +15,7 @@
   - better statistics: runtime and ms/s for each task
 */
 
-#define VERSION "0.909"
+#define VERSION "0.910"
 
 #include <Streaming.h>
 #include <ESP8266WiFi.h>
@@ -75,7 +75,7 @@ int task_recipe() {
   p.pmax = sm.out.pmax;
   p.released = (sm.getState() == State::COOKING);
   interrupts();
-  
+
   // debug Serial << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
 
   return 1000;
@@ -100,20 +100,20 @@ int task_read_temp() {
         p.sensorOK = false;
         Logger << "Thermometer gestört" << endl;
       }
-      thermometer.requestTemperatures();    
+      thermometer.requestTemperatures();
     }
   }
 
   // simulation:
   //p.act = pt1((p.out_b ? 150.0 : 20.0), 200, cycle/1000.0);
-  return 1000;  
+  return 1000;
 }
 
 // ------------------------------------------------------------ LCD Task
 /* task: update LCD */
 int task_lcd() {
-	LCDMenu_update();
-	return 50;  
+  LCDMenu_update();
+  return 50;
 }
 
 // ------------------------------------------------------ Webserver Task
@@ -127,10 +127,10 @@ int task_webserver() {
 
 // ---------------------------------------------------------------- loop
 void loop() {
-	run_tasks(millis());
+  run_tasks(millis());
 }
 
-    
+
 // -------------------------------------------------- setup Temp. sensor
 void setup_ds18b20() {
   Logger << "DS18B20 Bibliothek version: " << DS18B20_LIB_VERSION << endl;
@@ -154,31 +154,31 @@ void setup() {
   }
   cfg.setFilename("/config.ini");
   cfg.read();
-  
+
   Clock.setTimeOffset(cfg.p.tzoffset * 3600);
-  
+
   LCDMenu_setup();
   Logger << "LCD initialisiert" << endl;
-    
+
   start_WiFi();
   Logger << "WiFi gestartet" << endl;
 
   setup_webserver(&server);
   Logger << "Webserver gestartet" << endl;
-  
+
   MDNS.begin(cfg.p.hostname);
   MDNS.addService("http", "tcp", 80);
   Logger << "MDNS gestartet" << endl;
-  
+
   setup_OTA();
   Logger << "OTA gestartet" << endl;
-  
+
   setup_dl();
   Logger << "DataLogger gestartet" << endl;
 
   setup_ds18b20();
   Logger << "Thermometer initialisiert" << endl;
-  
+
   start_task(task_lcd, "lcd");
   start_task(task_ntp, "ntp");
   start_task(task_recipe, "recipe");
@@ -188,18 +188,18 @@ void setup() {
 
   // controller is running in timer interrupt
   setup_controller();
-  
+
   sm.setCallback(&onStateChanged);
 }
 
 
 void onStateChanged() {
-	switch(sm.getState()) {
-		case State::COOKING:
-			dl_startBatch();
-			break;
-		case State::FINISHED:
-			dl_endBatch();
-			break;
-	}
+  switch (sm.getState()) {
+    case State::COOKING:
+      dl_startBatch();
+      break;
+    case State::FINISHED:
+      dl_endBatch();
+      break;
+  }
 }
