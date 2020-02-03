@@ -2,9 +2,9 @@
 <html lang="de" class="">
 
 <head>
-	<meta charset='utf-8'>
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-	<title>{{HOSTNAME}} - WiFi einrichten</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>{{HOSTNAME}} - WiFi einrichten</title>
 	
 <script>
 	var x = null,
@@ -89,14 +89,14 @@ document.addEventListener('DOMContentLoaded', function () {
 		<fieldset>
 			<legend><b>&nbsp;Wifi-Parameter&nbsp;</b></legend>
 			<form method='post' action='/wifi?save=1'>
-				<p><b>SSId</b><br /><input id='ssid' name='ssid' placeholder='' value='{{SSID}}'></p>
-				<p><b>Passwort</b><br /><div style='display: flex; flex-direction: row;'><input id='pwd' name='pwd' type='password' autocomplete='off' value='{{PW}}'><button id='check' type='button' style='width: auto;'>(o)</button></div></p>
-				<p><b>Hostname</b><br /><input id='hn' name='hn' value='{{HOSTNAME}}'></p>
+				<b>SSId</b><br /><input id='ssid' name='ssid' placeholder='' value='{{SSID}}'>
+				<b>Passwort</b><br /><div style='display: flex; flex-direction: row;'><input id='pwd' name='pwd' type='password' autocomplete='off' value='{{PW}}'><button id='check' type='button' style='width: auto;'>(o)</button></div>
+				<b>Hostname</b><br /><input id='hn' name='hn' value='{{HOSTNAME}}'>
 				<br /><button name='save' type='submit' class='button bgrn'>Speichern</button>
 			</form>
 		</fieldset>
 		<div></div>
-		<p><form action='/' method='get'><button>Zurück</button></form>	</p><br />
+		<form action='/' method='get'><p><button>Zurück</button></p></form><br />
 		<div style='text-align:right;font-size:11px;'><hr /><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>OnsenPID by Franz Hoffmann</a></div>
 	</div>
 </body>

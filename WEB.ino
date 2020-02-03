@@ -91,6 +91,7 @@ String subst(String var, int par) {
 	if (code == "PMAX") 	return String(recipe[par].param[(int)Parameter::PMAX]);
 
 	if (code == "TIME_LEFT") return String(sm.getRemainingTime());	// seconds
+	if (code == "STARTTIME") return secToTime(starttime);
 
 	if (code == "STATE")	return sm.stateAsString(sm.getState());
 	if (code == "HOSTNAME")	return String(cfg.p.hostname);
