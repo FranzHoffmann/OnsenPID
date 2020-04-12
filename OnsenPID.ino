@@ -15,7 +15,7 @@
   - better statistics: runtime and ms/s for each task
 */
 
-#define VERSION "0.911"
+#define VERSION "0.912"
 
 #include <Streaming.h>
 #include <ESP8266WiFi.h>

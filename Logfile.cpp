@@ -10,6 +10,10 @@ LogfileT::LogfileT() {
 	latest_timestamp = 0;
 	_logToFile = true;
 	_logToSerial = true;
+	
+	SPIFFS.remove(FILENAME_OLD);
+	SPIFFS.rename(FILENAME_ACT, FILENAME_OLD);
+
 }
 
 	void LogfileT::enableLogToFile(bool b) {
