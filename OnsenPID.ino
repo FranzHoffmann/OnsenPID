@@ -15,7 +15,7 @@
   - better statistics: runtime and ms/s for each task
 */
 
-#define VERSION "0.910"
+#define VERSION "0.911"
 
 #include <Streaming.h>
 #include <ESP8266WiFi.h>
@@ -201,5 +201,7 @@ void onStateChanged() {
     case State::FINISHED:
       dl_endBatch();
       break;
+    case State::IDLE:
+      dl_endBatch();
   }
 }
