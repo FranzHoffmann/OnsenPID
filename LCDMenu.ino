@@ -795,3 +795,11 @@ int dec(int val, int min, int max, bool wrap) {
 	}
 	return val;
 }
+
+// synchronize last used reciepe between web interface and LCD
+int get_selected_recipe_no() {
+	return rec_i;
+}
+void set_selected_recipe_no(int no) {
+	rec_i = no;
+}

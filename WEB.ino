@@ -101,6 +101,7 @@ String subst(String var, int par) {
 	if (code == "PW") return cfg.p.pw;
 	if (code == "TZ") return String(cfg.p.tzoffset);
 	if (code == "DIR") return directory();
+	if (code == "LAST_REC") return get_selected_recipe_no() == j ? "selected" : "";
 	return var; // ignore unknown strings
 }
 
@@ -350,6 +351,7 @@ void handleStart() {
 	if (server.hasArg("rec")) {
 		String s = server.arg("rec");
 		rec = s.toInt();
+		set_selected_recipe_no(rec);
 	} else {
 		send_file("/start.html");
 		return;
@@ -458,7 +460,7 @@ void sendJsonData(unsigned long t) {
 	char buf[100];
 	PString pstr(buf, sizeof(buf));
 	char Q = '"';
-	while (dl_hasMore() && count < 30000) {
+	while (dl_hasMore() && count < 1000) {
 		if (count > 0) server.sendContent(",");
 		dl_data_t data = dl_getNext();
 		pstr = "{";
@@ -471,11 +473,7 @@ void sendJsonData(unsigned long t) {
 		count++;
 		yield();
 	}
-	if (count < 300) {
-		server.sendContent("], \"more\":0}");
-	} else {
-		server.sendContent("], \"more\":1}");
-	}
+	server.sendContent("]}");
 }
 
 
