@@ -37,8 +37,8 @@ dl_data_t dl_data[DL_RAMBUF];
  * setup data Logger
  */
 void setup_dl() {
-  start_task(dl_log, "Data Logger");
-  start_task(dl_cleanup, "Data Logger cleanup");
+  start_task(dl_log, "DLog");
+  start_task(dl_cleanup, "DLogClean");
 }
 
 

@@ -1,6 +1,7 @@
 #include "tasks.h"
 #include <Arduino.h>
 #include <Streaming.h>
+#include "../../Logfile.h"
 
 task_t tasklist[MAX_TASKS];
 
@@ -19,48 +20,43 @@ boolean start_task(task t, const char *name) {
 
 
 void run_tasks(unsigned long t) {
-  unsigned long t0, dt;
-  
-  for (int i=0; i<MAX_TASKS; i++) {
-    if (tasklist[i].t != NULL && t > tasklist[i].nextrun) {
-      t0 = millis();
-      tasklist[i].nextrun += (tasklist[i].t)();
-      dt = millis()- t0;
-      tasklist[i].tcount++;
-      tasklist[i].tsum += dt;
-      tasklist[i].tmin = min(tasklist[i].tmin, dt);
-      tasklist[i].tmax = max(tasklist[i].tmax, dt);
-    }
-  }
+	unsigned long t0, dt;
+
+	for (int i=0; i<MAX_TASKS; i++) {
+		if (tasklist[i].t != NULL && t >= tasklist[i].nextrun) {
+			t0 = millis();
+			tasklist[i].nextrun += (tasklist[i].t)();
+			dt = millis()- t0;
+			tasklist[i].tsum += dt;
+		}
+	}
 }
 
 
 void init_stats(task_t *t) {
       t->tsum = 0;
-      t->tmin = 999999;
-      t->tmax = 0;
-      t->tcount = 0;
 }
 
 
 // -------------------------------------------------------------------------- Statistik Task
 /* task: calculate debug statistics */
 int task_statistics() {
-  //Logger << endl << "Statistics: " << endl;
-  for (int i=0; i<MAX_TASKS; i++) {
-    if (tasklist[i].t != NULL) {
-      double avg = tasklist[i].tcount > 0 
-                 ? (double)tasklist[i].tsum / tasklist[i].tcount
-                 : 0;
-      //Logger << tasklist[i].taskname;
-      //for (int i=strlen(tasklist[i].taskname); i<20; i++) { Serial << '.'; }  // crashes?
-      //Logger << ',' << tasklist[i].tmin
-     //      << ','<< avg
-     //      << ','<< tasklist[i].tmax
-     //      << "ms" << endl;
-      init_stats(&tasklist[i]);
-    }
-  }   
-  //Serial << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
-  return 60000;
+	//Serial << endl << "Statistics: " << endl;
+	//Serial << "task,min,average,max" << endl;
+	static unsigned long Tlast;
+	unsigned long Tnow = millis();
+	double dt = (double)(Tnow -Tlast);
+	Tlast = Tnow;
+
+	for (int i=0; i<MAX_TASKS; i++) {
+		if (tasklist[i].t != NULL) {
+			double percent = (double)tasklist[i].tsum / dt * 100.0;
+	//		Logger << tasklist[i].taskname;
+	//		Logger << ": " << percent << '%' << endl;
+			init_stats(&tasklist[i]);
+		}
+	}
+	//Logger << "System: " << tsys << "ms/10s" << endl;
+	//Serial << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
+	return 10000;
 }

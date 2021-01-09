@@ -2,6 +2,7 @@
 #define logfile_h
 
 #include <Arduino.h>
+#include <LittleFS.h>
 
 #define MSG_LEN 80
 #define MSG_NUM 200

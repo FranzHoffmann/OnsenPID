@@ -13,7 +13,7 @@ struct task_t {
   task t;
   unsigned long nextrun;
   const char *taskname;
-  unsigned long tsum, tmin, tmax, tcount;
+  unsigned long tsum;
 };
 
 boolean start_task(task t, const char *name);

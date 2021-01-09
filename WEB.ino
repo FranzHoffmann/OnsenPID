@@ -249,6 +249,7 @@ bool stream_file(String filename) {
 			Logger << "WEB: stream_file(" << filename << "): Datei nicht gefunden" << endl;
 			return false;
 	}
+  Logger << "WEB: stream_file(" << fn << ')' << endl;
 	File f = filesystem.open(fn, "r");
 	if (!f) {
 		return false;

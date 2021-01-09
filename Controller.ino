@@ -39,7 +39,7 @@ ICACHE_RAM_ATTR void controllerISR() {
 	static double ipart = 0.0;
 	static double T = 0.0;
 	static double out;
-	static double eold = 0.0;
+	static double eold = 0.0; 
 
 	T += Ta;
 	if (T >= Tpwm) {
@@ -56,7 +56,7 @@ ICACHE_RAM_ATTR void controllerISR() {
 			out = limit(ppart + ipart + dpart, 0.0, p.pmax);
 		} else {
 			// error is very high, use to two-point/controller
-			out = (e < 0,0) ? 0.0 : 100.0;
+			out = (e < 0.0) ? 0.0 : 100.0;
 			ipart = 0.0;
 		}
 		eold = e;

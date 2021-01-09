@@ -15,13 +15,13 @@
   - better statistics: runtime and ms/s for each task
 */
 
-#define VERSION "0.914"
+#define VERSION "0.916"
 
 #include <Streaming.h>
 #include <ESP8266WiFi.h>
 #include <PString.h>
 #include "Logfile.h"
-#include <FS.h>
+#include <LittleFS.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
@@ -47,7 +47,7 @@ struct param {
 } p;
 
 ESP8266WebServer server(80);
-FS filesystem = SPIFFS;
+FS filesystem = LittleFS;
 OneWire oneWire(TMP_PORT);
 DS18B20 thermometer(&oneWire);
 Config cfg;
@@ -197,6 +197,7 @@ void onStateChanged() {
   switch (sm.getState()) {
     case State::COOKING:
       dl_startBatch();
+      setScreen(Screen::MAIN_COOK);
       break;
     case State::FINISHED:
       dl_endBatch();

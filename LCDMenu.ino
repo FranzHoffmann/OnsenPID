@@ -72,6 +72,11 @@ void init_lcd()  {
 	line2_old.begin();
 }
 
+/* set screen in case of external event */
+void setScreen(Screen newScreen) {
+	screen = newScreen;
+}
+
 // -------------------------------------------------------------------------- LCD UI Task
 /* read keyboard and write menu */
 void LCDMenu_update() {
@@ -117,11 +122,11 @@ void LCDMenu_update() {
 	if (!((line1 == line1_old) && (line2 == line2_old) && (cursor == cursor_old))) {
 		lcd.clear();
 		lcd.setCursor(0,0);
-		lcd << line1;
+		lcd << buf1; //line1;
 		lcd.setCursor(0,1);
-		lcd << line2;
-		line1_old.begin(); line1_old << line1;
-		line2_old.begin(); line2_old << line2;
+		lcd << buf2; // line2;
+		line1_old.begin(); line1_old << buf1; //line1;
+		line2_old.begin(); line2_old << buf2; //line2;
 		if (cursor >= 0) {
 			lcd.setCursor(cursor, 1);
 			lcd.blink();
@@ -386,6 +391,7 @@ void disp_cook_start(ButtonEnum btn) {
 	line2.begin();
 	if (btn == BTN_LE) screen = Screen::COOK_TIMER;
 	else if (btn == BTN_SEL) {
+		Logger << "timer mode: " << timer_mode << endl;
 		switch(timer_mode) {
 			case 0:
 				sm.startCooking(rec_i);

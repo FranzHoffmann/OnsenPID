@@ -11,8 +11,8 @@ LogfileT::LogfileT() {
 	_logToFile = true;
 	_logToSerial = true;
 	
-	SPIFFS.remove(FILENAME_OLD);
-	SPIFFS.rename(FILENAME_ACT, FILENAME_OLD);
+	LittleFS.remove(FILENAME_OLD);
+	LittleFS.rename(FILENAME_ACT, FILENAME_OLD);
 
 }
 
@@ -59,12 +59,12 @@ size_t LogfileT::write(uint8_t character) {
  * rotate files when reaching max. size
  */
 void LogfileT::store(LogEntryStruct &entry) {
-		File f = SPIFFS.open(FILENAME_ACT, "a");
+		File f = LittleFS.open(FILENAME_ACT, "a");
 		if (f.size() > MAX_FILESIZE - sizeof(entry)) {
 			f.close();
-			SPIFFS.remove(FILENAME_OLD);
-			SPIFFS.rename(FILENAME_ACT, FILENAME_OLD);
-			f = SPIFFS.open(FILENAME_ACT, "a");
+			LittleFS.remove(FILENAME_OLD);
+			LittleFS.rename(FILENAME_ACT, FILENAME_OLD);
+			f = LittleFS.open(FILENAME_ACT, "a");
 		}
 		if (f) {
 			f << entry.timestamp << ';' << entry.message << '\r';
@@ -97,9 +97,9 @@ String LogfileT::getNext() {
 	String empty_string = String("");
 	
 	if (this->iterator_file == 0) 
-		f = SPIFFS.open(FILENAME_OLD, "r");
+		f = LittleFS.open(FILENAME_OLD, "r");
 	else
-		f = SPIFFS.open(FILENAME_ACT, "r");
+		f = LittleFS.open(FILENAME_ACT, "r");
 	
 	if (!f) {
 		if (this->iterator_file == 0) {

@@ -15,7 +15,7 @@ void Config::setFilename(const char *fn) {
 		strncpy(_filename, fn, sizeof(_filename));
 	else
 		strncpy(_filename, "config.ini", sizeof(_filename));
-	_ini = new SPIFFSIniFile(_filename);
+	_ini = new LittleFSIniFile(_filename);
 	Logger << "Config initialized (" << _filename << ")" << endl;
 }
 
@@ -24,7 +24,7 @@ void Config::setFilename(const char *fn) {
 // This will delete the file and write a new one.
 bool Config::save(){
 	if (_file) _file.close();
-	_file = SPIFFS.open(_filename, "w");
+	_file = LittleFS.open(_filename, "w");
 	if (!_file) return false;
 
 	writeRecipes();

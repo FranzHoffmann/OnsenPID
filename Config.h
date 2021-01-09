@@ -2,7 +2,7 @@
 #define config_h
 
 #include <Arduino.h>
-#include <SPIFFSIniFile.h>
+#include "src/LittleFSIniFile/src/LittleFSIniFile.h"
 
 #define CONFIG_MAX_FILENAME_LEN 26
 
@@ -33,7 +33,7 @@ class Config {
 //  Process _process;
   char _filename[CONFIG_MAX_FILENAME_LEN];
   mutable File _file;
-  SPIFFSIniFile *_ini;
+  LittleFSIniFile *_ini;
 
   void write(const char* section);
   void write(const char* key, const char* value);
