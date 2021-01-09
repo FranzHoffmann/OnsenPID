@@ -167,6 +167,7 @@ struct {
 	callback onChange;
 	String s;
 	int pos;
+  int offset;
 } editNumData;
 
 String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_.0123456789 ";
@@ -216,10 +217,15 @@ void disp_edit_number(ButtonEnum btn) {
 
 
 void start_edit_text(String value, EditMode mode, callback onChange) {
-	editNumData.s = value;
+  if (value.length() > 0) {
+	  editNumData.s = value;
+  } else {
+    editNumData.s = " ";    
+  }
 	editNumData.pos = 0;
 	editNumData.mode = mode;
 	editNumData.onChange = onChange;
+  editNumData.offset = 0;
 	screen = Screen::EDIT_TEXT;
 }
 
@@ -242,14 +248,19 @@ int findIndex(char c) {
 
 void disp_edit_text(ButtonEnum btn) {
 	int i = findIndex(editNumData.s.charAt(editNumData.pos));
-	cursor =  editNumData.pos + 2;
+	cursor =  editNumData.pos + 2 - editNumData.offset;
 	if (btn == BTN_LE) {
-		editNumData.pos = dec(editNumData.pos, 0, 13, false);
+		editNumData.pos = dec(editNumData.pos, 0, 99, false);
+    if (editNumData.pos < editNumData.offset) 
+      editNumData.offset = editNumData.pos;
 		return;
 	}
 	if (btn == BTN_RI) {
-		editNumData.pos = inc(editNumData.pos, 0, 13, false);
+		editNumData.pos = inc(editNumData.pos, 0, 99, false);
 		if (editNumData.pos >= editNumData.s.length()) editNumData.s += " ";
+    if (editNumData.pos - editNumData.offset > 13)
+      editNumData.offset = editNumData.pos - 13;
+      Serial << "Position: " << editNumData.pos << ", Offset: " << editNumData.offset << "\n";
 		return;
 	}
 	if (btn == BTN_UP) i = inc(i, 0, letters.length()-1, true);
@@ -257,7 +268,7 @@ void disp_edit_text(ButtonEnum btn) {
 	editNumData.s.setCharAt(editNumData.pos, letters.charAt(i));
 	line2.begin();
 	line2 = "x>";
-	line2 << editNumData.s;
+	line2 << editNumData.s.substring(editNumData.offset);
 	if (btn == BTN_SEL) {
 		editNumData.s.trim();
 		(editNumData.onChange)();
