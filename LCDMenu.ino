@@ -260,7 +260,7 @@ void disp_edit_text(ButtonEnum btn) {
 		if (editNumData.pos >= editNumData.s.length()) editNumData.s += " ";
     if (editNumData.pos - editNumData.offset > 13)
       editNumData.offset = editNumData.pos - 13;
-      Serial << "Position: " << editNumData.pos << ", Offset: " << editNumData.offset << "\n";
+      //Serial << "Position: " << editNumData.pos << ", Offset: " << editNumData.offset << "\n";
 		return;
 	}
 	if (btn == BTN_UP) i = inc(i, 0, letters.length()-1, true);
@@ -754,6 +754,7 @@ void disp_set_tz(ButtonEnum btn) {
 			// anonymous function, called when edit is complete
 			screen = Screen::SET_TIMEZONE;
 			// TODO: Uhr stellen geht nicht
+     Serial << "Set clock to " << (int)editNumData.v;
 			Clock.setTime((int)editNumData.v);
 		});
 	}

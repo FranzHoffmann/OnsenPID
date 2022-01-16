@@ -124,8 +124,9 @@ String Process::stateAsString(State s) {
 		case State::WAITING:	return String("wartet");
 		case State::COOKING:	return String("kocht");
 		case State::FINISHED:	return String("fertig");
-		case State::ERROR:		return String("Fehler");
+		case State::ERROR:   ; // fallthrough
 	}
+ return String("Fehler");
 }
 
 
