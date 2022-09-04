@@ -26,7 +26,7 @@ function read_state(cmd) {
 			document.getElementById('set').innerHTML = obj.set;
 			document.getElementById('out').innerHTML = obj.out;
 			document.getElementById('state').innerHTML = obj.state;
-			document.getElementById('time').innerHTML = Math.floor(obj.time / 60);
+			document.getElementById('time').innerHTML = Math.ceil(obj.time / 60);
 		}
 	};
 	req.open('GET', '/s'+arg, true);

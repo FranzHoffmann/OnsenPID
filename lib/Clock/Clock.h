@@ -14,15 +14,23 @@ class ClockT {
 	public:
 		ClockT();
 
-		void setTimeOffset(int timeOffset); // seconds
 		void setTime(int time); 			// seconds
-		unsigned long getEpochTime();
+		unsigned long getEpoch();		// epoch seconds
 		void update();
 		String getFormattedTime();
 		
+		// -- specific for Germany! --
+		bool isDST(time_t utc);
+		int getTZOffset(time_t utc);
+		time_t getEpochLocal();
+		time_t UtcToLocal(time_t utc);
+		time_t LocalToUtc(time_t local);
+		bool isLeapYear (int year);
+		int getDayNo(int md, int m, int y);
+
 	private:
-	NTPClient* _timeClient;
-	WiFiUDP* _ntpUDP;
+		NTPClient* _timeClient;
+		WiFiUDP* _ntpUDP;
 };
 
 extern ClockT Clock;

@@ -679,6 +679,8 @@ void disp_set_tz(ButtonEnum btn) {
 	if ((WiFi.status() == WL_CONNECTED)) {
 		// time comes from NTP
 		line1 = "Zeitzone:";
+		line2 = "Berlin";
+		/* Zeitzone ist fest auf Berlin eingestellt
 		line2.begin();
 		line2 << String(cfg.p.tzoffset);
 		if (btn == BTN_SEL)
@@ -691,12 +693,13 @@ void disp_set_tz(ButtonEnum btn) {
 			Clock.setTimeOffset(cfg.p.tzoffset * 3600);
 			cfg.save();
 		});
+		*/
 	} else {
 		line1 = "Uhr stellen";
 		line2.begin();
 		line2 << Clock.getFormattedTime();
 		if (btn == BTN_SEL)
-		start_edit_number(Clock.getEpochTime() % 86400, 0, EditMode::TIME,
+		start_edit_number(Clock.getEpoch() % 86400, 0, EditMode::TIME,
 		0.0, 86400.0, 60.0, "",
 		[](){
 			// anonymous function, called when edit is complete

@@ -5,7 +5,7 @@
 #include <LittleFS.h>
 
 #define MSG_LEN 255
-#define MAX_FILESIZE 1024*1024
+#define MAX_FILESIZE 65535
 #define FILENAME_ACT "/logfile"
 #define FILENAME_OLD "/logfile.0"
 

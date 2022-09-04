@@ -293,7 +293,7 @@ void setup() {
 	cfg.setFilename("/config.ini");
 	cfg.read();
 
-	Clock.setTimeOffset(cfg.p.tzoffset * 3600);
+	// Zeitzone fest Berlin Clock.setTimeOffset(cfg.p.tzoffset * 3600);
 
 	LCDMenu_setup();
 	Logger << "LCD initialisiert" << endl;

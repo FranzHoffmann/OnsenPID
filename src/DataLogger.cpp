@@ -54,7 +54,7 @@ void setup_dl() {
 int dl_log() {
   //Serial << "dl_log(" << dl.recording << ")" << endl;
   if (dl.recording) {
-    dl.last_ts = Clock.getEpochTime();  
+    dl.last_ts = Clock.getEpoch();  
     dl_data[dl.pointer].set = p.set;
     dl_data[dl.pointer].act = p.act;
     dl_data[dl.pointer].out = p.out;

@@ -367,12 +367,12 @@ void handleStart() {
 	// Convert to 0-86400 seconds
 	String t = server.arg("time");
 	long time = t.substring(0, 2).toInt() * 3600 + t.substring(3).toInt() * 60;
-	Logger << "startbefehl über Web (Rezept: " << rec;
+	Logger << "Startbefehl über Web (Rezept: " << rec;
 
 	String m = server.arg("mode");
 	if (m == "st") {
-		sm.startByStartTime(rec, time);
 		Logger << ", Startzeit: " << t << ")" << endl;
+		sm.startByStartTime(rec, time);
 	} else 
 	if (m == "et") {
 		Logger << ", Endzeit: " << t << ")" << endl;
@@ -543,15 +543,15 @@ void handleLog() {
 	bool first = true;
 	unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
 
-	Serial << "checkpoint 1" << endl;
+	Serial << millis() << " - checkpoint 1" << endl;
 	Logger.rewind(t);
 	if (!Logger.hasMore()) {
 		server.send(200, "text/json", "{\"log\":[]}");
-		Serial << "checkpoint 2" << endl;
+		Serial << millis() << " - checkpoint 2" << endl;
 		return;
 	}
 
-	Serial << "checkpoint 3" << endl;
+	Serial << millis() << " - checkpoint 3" << endl;
 
 	server.setContentLength(CONTENT_LENGTH_UNKNOWN);
 	server.send(200, "text/json", String(""));
@@ -563,7 +563,7 @@ void handleLog() {
 	unsigned long timeout = millis() + 1000;
 
 	while (Logger.hasMore() && millis() < timeout) {
-		Serial << "checkpoint 4" << endl;
+		Serial << millis() << " - checkpoint 4" << endl;
 
 		if (!first) server.sendContent(",");
 		first = false;
@@ -573,6 +573,7 @@ void handleLog() {
 			LogfileT::LogEntryStruct entry = Logger.strToEntry(entry_str);
 			String s = "{\"ts\":" + String(entry.timestamp) + ", \"msg\":\"" + String(entry.message) + "\"}\r";
 			server.sendContent(s);
+			delay(1);
 		}
 	}
 	Serial << "checkpoint 5" << endl;
@@ -585,9 +586,10 @@ void handleLog() {
 void handleConfig() {
 	logAccess();
 	if (server.hasArg("save")) {
-		changeParam("tz", "UTC Offset", &(cfg.p.tzoffset));
-		Clock.setTimeOffset(cfg.p.tzoffset * 3600);
-		cfg.save();
+		// Zeitzone fest Berlin
+		//changeParam("tz", "UTC Offset", &(cfg.p.tzoffset));
+		//Clock.setTimeOffset(cfg.p.tzoffset * 3600);
+		//cfg.save();
 	}
 	send_file("/cfg.html");
 }

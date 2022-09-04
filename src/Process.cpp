@@ -16,10 +16,10 @@ Process::Process(Config *cfg) {
 int Process::getRemainingTime() {
 	switch (state) {
 		case State::COOKING:
-			return (calcRecipeDuration(act_rec) - (Clock.getEpochTime() - startTime));
+			return (calcRecipeDuration(act_rec) - (Clock.getEpoch() - startTime));
 
 		case State::WAITING:
-			return (startTime - Clock.getEpochTime());
+			return (startTime - Clock.getEpoch());
 
 		default:
 			return 0;
@@ -46,24 +46,43 @@ void Process::startCooking(int recno) {
  * start cooking at specified time.
  * time is "seconds after midnight" today (or tomorrow)
  */
+
+#include <TimeLib.h>
+String f(int x) {
+	String s;
+	if (x < 10) s = '0';
+	s = s + x;
+	return s;
+}
+String formatTime(unsigned long local) {
+	String str;
+	str.reserve(20); // yyyy-mm-dd hh:mm:ss
+	int h = hour(local);
+	int m = minute(local);
+	int s = second(local);
+	int y = year(local);
+	int M = month(local);
+	int d = day(local);
+	str =  String(y) + '-' + f(M) + '-' + f(d) + ' ' + f(h) + ':' + f(m) + ':' + f(s);
+	return str;
+}
 void Process::startByStartTime(int recno, unsigned long t) {
-	unsigned long now = Clock.getEpochTime();
+	unsigned long now = Clock.getEpochLocal();
 	unsigned long midnight = now - (now % 86400L);
 	unsigned long starttime = midnight + t;
 	if (starttime < now) starttime += 86400;
 	
-	/* debug
 	Logger << "Process::startByStartTime(" << recno << ", " << t << ")" << endl;
-	Logger << "Now:       " << String(now) << endl;
-	Logger << "Midnight:  " << String(midnight) << endl;
-	Logger << "Starttime: " << String(starttime) << endl;
-	*/
+	Logger << "Now:       " << String(now) << " (" << formatTime(now) << ")" << endl;
+	Logger << "Midnight:  " << String(midnight) << " (" << formatTime(midnight) << ")" << endl;
+	Logger << "Starttime: " << String(starttime) << " (" << formatTime(starttime) << ")" << endl;
 	
 	switch (state) {
 		case State::IDLE:
 		case State::WAITING:
+		case State::FINISHED:
 			act_rec = recno;
-			startTime = starttime;
+			startTime = Clock.LocalToUtc(starttime);		// note: startTime is UTC
 			setState(State::WAITING);
 			break;
 	}
@@ -74,21 +93,22 @@ void Process::startByStartTime(int recno, unsigned long t) {
  * time is "seconds after midnight" today (or later)
  */
 void Process::startByEndTime(int recno, unsigned long t) {
-	unsigned long now = Clock.getEpochTime();
+	unsigned long now = Clock.getEpochLocal();
 	unsigned long midnight = now - (now % 86400L);
-	unsigned long starttime = midnight + t - calcRecipeDuration(act_rec);
+	unsigned long starttime = midnight + t - calcRecipeDuration(recno);
 	while (starttime < now) starttime += 86400;
 	
 	Logger << "Process::startByEndTime(" << recno << ", " << t << ")" << endl;
-	Logger << "Now:       " << String(now) << endl;
-	Logger << "Midnight:  " << String(midnight) << endl;
-	Logger << "Starttime: " << String(starttime) << endl;
+	Logger << "Now:       " << String(now) << " (" << formatTime(now) << ")" << endl;
+	Logger << "Midnight:  " << String(midnight) << " (" << formatTime(midnight) << ")" << endl;
+	Logger << "Starttime: " << String(starttime) << " (" << formatTime(starttime) << ")" << endl;
 	
 	switch (state) {
 		case State::IDLE:
 		case State::WAITING:
+		case State::FINISHED:
 			act_rec = recno;
-			startTime = starttime;
+			startTime = Clock.LocalToUtc(starttime);
 			setState(State::WAITING);
 			break;
 	}
@@ -132,7 +152,7 @@ void Process::setState(State newState) {
 	Logger << "Neuer Status:  '" << stateAsString(newState) << "' (vorher: '" << stateAsString(state) << "')"  << endl;
 
 	if (newState == State::COOKING) {
-		startTime = Clock.getEpochTime();
+		startTime = Clock.getEpoch();
 	}
 	state = newState;
 	if (_callback != NULL) _callback();
@@ -142,13 +162,13 @@ void Process::update() {
 	double set =0.0;
 	switch (state) {
 	case State::WAITING:
-		if (Clock.getEpochTime() >= startTime) {
+		if (Clock.getEpoch() >= startTime) {
 			setState(State::COOKING);
 		}
 		break;
 
 	case State::COOKING:
-		uint32_t actTime = Clock.getEpochTime() - startTime;
+		uint32_t actTime = Clock.getEpoch() - startTime;
 		if (actTime >= calcRecipeDuration(act_rec)) {
 			setState(State::FINISHED);
 		}
@@ -172,7 +192,7 @@ double Process::calcRecipeRamp(uint32_t actTime) {
 	}
 	for (int i=1; i<REC_STEPS; i++) {
 		actTime -= rec->times[i-1];
-		if (actTime < rec->times[i]) {
+		if (actTime <= rec->times[i]) {
 			// we are now ramping from setpoint i-1 to i
 			return (rec->temps[i-1] + (rec->temps[i] - rec->temps[i-1]) * actTime / rec->times[i]);
 		}

@@ -1,5 +1,6 @@
-boseji/PString-Arduino-lib@^3.0.2
-robtillaart/DS18B20@^0.1.12
-fmalpartida/LiquidCrystal@^1.5.0
 mikalhart/Streaming@^1.0.0
+fmalpartida/LiquidCrystal@^1.5.0
+Time
 Wire
+robtillaart/DS18B20@^0.1.12
+boseji/PString-Arduino-lib@^3.0.2

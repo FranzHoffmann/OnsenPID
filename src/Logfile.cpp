@@ -39,7 +39,7 @@ size_t LogfileT::write(uint8_t character) {
 	if (character == '\n') return 1;                     // ignore linefeed
 
 	if (entry.timestamp == 0) {                          // set timestamp when first character arrives
-		entry.timestamp = Clock.getEpochTime();
+		entry.timestamp = Clock.getEpoch();
 	}
 
 	if (character == '\r') {                            // write to logfile on endline character
@@ -152,6 +152,7 @@ String LogfileT::getNext() {
 
 /* simple Iterator-like interface reset readNextMessage to first message after t */
 void LogfileT::rewind(unsigned long t) {
+	Logger << "rewind " << t << " / " << latest_timestamp << endl;
 	if (t >= latest_timestamp) {
 		this->iterator_hasMore = false;    
 
@@ -159,7 +160,7 @@ void LogfileT::rewind(unsigned long t) {
 		this->iterator_hasMore = true;
 		this->iterator_file = 0;   // oldest
 		this->iterator_offset = 0;
-		while (this->hasMore()) {
+		while (this->iterator_hasMore) {
 			unsigned long last_offset = iterator_offset;
 			int last_file = iterator_file;
 			LogfileT::LogEntryStruct entry;
