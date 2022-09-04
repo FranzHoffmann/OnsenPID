@@ -82,7 +82,7 @@ String combineStrChar(const char *s, char c) {
 	String result;
 	result.reserve(16);
 	char si;
-	while (si = *s++) result += si;
+	while ((si = *s++)) result += si;
 	while (result.length() < 16) result += ' ';
 	result[15] = c;
 	return result;
@@ -104,8 +104,8 @@ struct {
 	EditMode mode;
 	callback onChange;
 	String s;
-	int pos;
-  int offset;
+	uint32_t pos;
+	uint32_t offset;
 } editNumData;
 
 String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_.0123456789 ";
@@ -147,6 +147,9 @@ void disp_edit_number(ButtonEnum btn) {
 			line2 = "T>";
 			line2 << secToTime(editNumData.v);
 			break;
+		default:
+			// can't happen?
+			break;
 	}
 	if (btn == BTN_SEL) {
 		(editNumData.onChange)();
@@ -173,7 +176,7 @@ int findIndex(char c) {
 	static int si;
 	
 	if (sc == c) return si;
-	for (int i=0; i<letters.length(); i++) {
+	for (uint32_t i=0; i<letters.length(); i++) {
 		if (letters.charAt(i) == c) {
 			sc = c;
 			si = i;
@@ -216,7 +219,6 @@ void disp_edit_text(ButtonEnum btn) {
 
 
 void disp_main_version(ButtonEnum btn) {
-	uint32_t ts = Clock.getEpochTime();
 	line1.begin();
 	line1 << "OnsenPID " << VERSION;
 	line2.begin();
@@ -228,6 +230,19 @@ void disp_main_version(ButtonEnum btn) {
 
 void disp_main_cook(ButtonEnum btn) {
 	switch (sm.getState()) {
+		case State::IDLE:
+			line1 = "Kochen...";
+			line2.begin();
+			if (btn == BTN_RI) screen = Screen::COOK_RECIPE;
+			break;
+			
+		case State::WAITING:
+			line1 = "Start in";
+			line2.begin();
+			line2 << sm.getRemainingTime()/60+1 << " min";
+			if (btn == BTN_RI) screen = Screen::COOK_ABORT;
+			break;
+
 		case State::COOKING:
 			line1.begin();
 			line1 << p.act << " / " << sm.out.set << degc;
@@ -236,21 +251,16 @@ void disp_main_cook(ButtonEnum btn) {
 			if (btn == BTN_RI) screen = Screen::COOK_ABORT;
 			break;
 
-		case State::WAITING:
-			line1 = "Start in";
-			line2.begin();
-			line2 << sm.getRemainingTime()/60+1 << " min";
-			if (btn == BTN_RI) screen = Screen::COOK_ABORT;
-			break;
-
-		case State::IDLE:
-			line1 = "Kochen...";
-			line2.begin();
-			if (btn == BTN_RI) screen = Screen::COOK_RECIPE;
-			break;
-
 		case State::FINISHED:
 			line1 = "Guten Appetit!";
+			line2.begin();
+			if (btn == BTN_SEL) {
+				sm.next();
+			}
+			break;
+
+		case State::ERROR:
+			line1 = "State::ERROR";
 			line2.begin();
 			if (btn == BTN_SEL) {
 				sm.next();

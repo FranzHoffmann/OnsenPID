@@ -13,13 +13,13 @@ struct task_t {
   task t;
   unsigned long nextrun;
   const char *taskname;
-  unsigned long tsum;
+  unsigned long tmin, tmax, tsum, count;
 };
 
 boolean start_task(task t, const char *name);
 void run_tasks(unsigned long t);
 
 void init_stats(task_t *t);
-int task_statistics();
+void print_statistics();
 
 #endif

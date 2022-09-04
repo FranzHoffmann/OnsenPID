@@ -28,6 +28,7 @@ double linearize(double x, double *xval, double *yval, int len);
  * simple limiter
  **/
 double limit(double x, double xmin, double xmax);
+int32_t limit(int32_t x, int32_t xmin, int32_t xmax);
 
 /**
  * convert seconds-since-midnight in hh:mm

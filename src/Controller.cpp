@@ -8,63 +8,97 @@
 #include <Global.h>
 
 int pwm_port;
-double Ta = 0.010;
-double Tpwm = 1.0;	// PWM cycle time
+uint32_t Ta = 10; 		// ms
+uint32_t Tpwm = 1000;	// ms PWM cycle time
 
+IRAM_ATTR struct param_int {
+  int32_t set;			// temperature setpoint, from recipe
+  int32_t kp, tn, tv, emax, pmax;
+  int32_t act;			// actual temperature, from thermometer
+  int32_t out;			// actual power, from controller
+} ip;
 
 /* PWM and PID controller */
 //
-// interrupt routine seems to crash if I call function in Process object?
-// so this communicates by global variables in p
-//
-ICACHE_RAM_ATTR void controllerISR() {
-	static double ipart = 0.0;
-	static double T = 0.0;
-	static double out;
-	static double eold = 0.0; 
+// ISR Rules:
+// - read access to variables should be no problem
+// - write access only to volatile variables
+// - only call functions from IRAM
+//   floating point library is NO LONGE in IRAM since Arduino core 3.0
+// 
+// TODO: change from double to integer!
+
+// scale everything to int32
+void controller_update(param *p) {
+	noInterrupts();
+	ip.act = p->act * 1000;
+	ip.set = p->set * 1000;
+	ip.emax = p->emax * 1e6;
+	ip.kp = p->kp * 1000;
+	ip.tn = p->tn * 1000; // ms
+	ip.pmax = p->pmax * 1e6;
+	ip.tv = p->tv * 1000;
+	p->out = ip.out / 1e6;
+	interrupts();
+}
+
+
+int32_t IRAM_ATTR limitIR(int32_t x, int32_t xmin, int32_t xmax) {
+  if (x < xmin) return xmin;
+  if (x > xmax) return xmax;
+  return x; 
+}
+
+void IRAM_ATTR controllerISR() {
+	static int32_t ipart = 0.0;
+	static uint32_t T = 0.0;
+	static int32_t out;
+	static int32_t eold = 0.0;
+ 
 
 	T += Ta;
 	if (T >= Tpwm) {
 		T -= Tpwm;
 		// controller - execute once per PWM cycle
-		double e = p.set - p.act;
-		double ppart, dpart;
+		int32_t e = ip.set - ip.act;
+		int32_t ppart, dpart;
 
-		if (abs(e) < abs(p.emax)) {
+		if (abs(e) < abs(ip.emax)) {
 			// normal PI(D) mode
-			ppart = p.kp * e;
-			ipart = limit(ipart + 100.0*Ta/p.tn * e, 0.0, p.pmax);
+			ppart = ip.kp * e;
+			//ipart = limit(ipart + 100.0*Ta/p.tn * e, 0.0, p.pmax);
+			ipart = limitIR(ipart + 100000 * Ta * e / ip.tn, 0, ip.pmax);
+			//dpart = p.tv * (e - eold);
 			dpart = p.tv * (e - eold);
-			out = limit(ppart + ipart + dpart, 0.0, p.pmax);
+			out = limitIR(ppart + ipart + dpart, 0, ip.pmax);
 		} else {
 			// error is very high, use to two-point/controller
-			out = (e < 0.0) ? 0.0 : 100.0;
-			ipart = 0.0;
+			out = (e < 0) ? 0 : 100000000;
+			ipart = 0;
 		}
 		eold = e;
 	}
 
 	// failsafe
 	if (!p.released) {
-		ipart = 0.0;
+		ipart = 0;
 	}
 	if (p.sensorOK && p.released) {
-		p.out = out;
+		ip.out = out;
 	} else {
-		p.out = 0.0;
+		ip.out = 0;
 	} 
 
 	// PWM
-	boolean bOut = T < (p.out / 100.0 * Tpwm);
+	boolean bOut = T < (ip.out / 10000 * Tpwm);
 	digitalWrite(pwm_port, bOut);
-
 }
 
 
 void setup_controller() {
-	Logger << "Stelle leistung über Port D" << cfg.p.pwm_port << endl;
-	Logger << "Abtastzeit: " << Ta*1000.0 << "ms" << ", ";
-	Logger << "PWM-Zykluszeit: " << Tpwm*1000.0 << "ms" << endl;
+	Logger << "Controller: Stelle leistung über Port D" << cfg.p.pwm_port << endl;
+	Logger << "Controller: Abtastzeit: " << Ta << "ms" << ", ";
+	Logger << "Controller: PWM-Zykluszeit: " << Tpwm << "ms" << endl;
 	switch (cfg.p.pwm_port) {
 	case 4: 
 		pwm_port = D4;
@@ -73,17 +107,17 @@ void setup_controller() {
 		pwm_port = D8;
 		break;
 	default:
-		Logger << "PWM-Port nicht unterstützt" << endl;
+		Logger << "Controller: PWM-Port nicht unterstützt" << endl;
 	}
 	pinMode(pwm_port, OUTPUT);
 
-	// TIM_DIV16: 80MHz/16 = 5MHz, Timer counts up every 0.2µs
-	unsigned int counts = Ta / 0.2e-6;
-	Logger << "Setze Interrupt auf " << counts << endl;
-	noInterrupts();
+	// TIM_DIV16: 80MHz/16 = 5MHz, Timer counts up by 5000 every ms
+	uint32_t counts = Ta * 5000;
+	Logger << "Controller: Setze Interrupt auf " << counts << endl;
+	/*noInterrupts();
 	timer1_isr_init();
 	timer1_attachInterrupt(controllerISR);
 	timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 	timer1_write(counts);
-	interrupts();
+	interrupts();*/
 }

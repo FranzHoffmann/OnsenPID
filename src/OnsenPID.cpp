@@ -38,7 +38,7 @@
 
 #define TMP_PORT D7
 
-FS filesystem = LittleFS;
+// remove? FS filesystem = LittleFS;
 OneWire oneWire(TMP_PORT);
 DS18B20 thermometer(&oneWire);
 Config cfg;
@@ -78,7 +78,7 @@ void start_WiFi() {
 
 	/* callback when somebody connects (in AP mode) */
 	OnStationConnected = WiFi.onSoftAPModeStationConnected([](const WiFiEventSoftAPModeStationConnected& event) {
-		Logger << "Client " << macToString(event.mac) << " verbunden" << endl;
+    Logger << "Client " << macToString(event.mac) << " verbunden" << endl;
 	});
 
 	/* callback when somebody disconnects (in AP mode) */
@@ -86,38 +86,30 @@ void start_WiFi() {
 		Logger << "Client " << macToString(event.mac) << " getrennt" << endl;
 	});
 
-  Logger << "Versuche verbindung mit '" << cfg.p.ssid << "'" << endl;
-  WiFi.mode(WIFI_STA);
-  WiFi.hostname(cfg.p.hostname);
-  WiFi.begin(cfg.p.ssid, cfg.p.pw);
-  for (int i=0; i<100; i++) {
-    if (WiFi.status() == WL_CONNECTED) {
-      Logger << "WiFi verbunden (IP: " << WiFi.localIP() << ")" << endl;
-      return;
-    }
-    delay(100);
-  }
-  Logger << "WiFi-Verbindung fehlgeschlagen" << endl;
+	Logger << "Versuche verbindung mit '" << cfg.p.ssid << "'" << endl;
+	WiFi.persistent(false);
+	if (!WiFi.mode(WIFI_STA) || !WiFi.begin(cfg.p.ssid, cfg.p.pw) || (WiFi.waitForConnectResult(10000) != WL_CONNECTED)) {
+		Logger << "WiFi-Verbindung fehlgeschlagen" << endl;
 
-  // open AP
-  uint8_t macAddr[6];
-  String ssid = "Onsenei-";
-  WiFi.softAPmacAddress(macAddr);
-  for (int i = 4; i < 6; i++) {
-    ssid += String(macAddr[i], HEX);
-  }
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(ssid);
-  Logger << "Access Point erstellt: '" << ssid << "'" << endl;
-  WiFi.printDiag(Logger);
-
-  return;
+		// open AP
+		uint8_t macAddr[6];
+		String ssid = "Onsenei-";
+		WiFi.softAPmacAddress(macAddr);
+		for (int i = 4; i < 6; i++) {
+			ssid += String(macAddr[i], HEX);
+		}
+		WiFi.mode(WIFI_AP);
+		WiFi.softAP(ssid);
+		Logger << "Access Point erstellt: '" << ssid << "'" << endl;
+		WiFi.printDiag(Logger);
+	} else {
+    	Logger << "WiFi verbunden (IP: " << WiFi.localIP() << ")" << endl;
+	}
+	return;
 }
 
 // ----------------------------------------------------------------- OTA
 void setup_OTA() {
-    Logger << "Starte OTA update service... ";
-    
     ArduinoOTA.setHostname(cfg.p.hostname.c_str());
   
 	ArduinoOTA.onStart([]() {
@@ -126,7 +118,7 @@ void setup_OTA() {
 			type = "sketch";
 		} else {
 			type = "filesystem";
-			filesystem.end();
+			LittleFS.end();
 		}
 		lcd.clear();
 		lcd.setCursor(0,0);
@@ -174,8 +166,6 @@ int task_recipe() {
   p.released = (sm.getState() == State::COOKING);
   interrupts();
 
-  // debug Serial << "Free RAM: " << getTotalAvailableMemory() << ", largest: " << getLargestAvailableBlock() << endl;
-
   return 1000;
 }
 
@@ -200,6 +190,7 @@ int task_read_temp() {
       }
       thermometer.requestTemperatures();
     }
+    controller_update(&p);
   }
 
   // simulation:
@@ -222,6 +213,32 @@ int task_webserver() {
   return 20;
 }
 
+// ----------------------------------------------------------- Alive Task
+int task_lifesign() {
+	Serial  << "Time: " << millis() << " - " << cfg.p.hostname << " is still alive" << endl;
+	const char* const states[] = {"IDLE", "NO NETWORK", "SCAN_COMPLETED", "CONNECTED",
+    "CONNECT FAILED", "CONNECTION LOST", "WRONG PASSWORD", "DISCONNECTED"};
+	Serial << "WiFi: " << states[WiFi.status()];
+	if (WiFi.status() == 3) {
+		Serial << " / " << WiFi.localIP();
+		Serial << " / " << WiFi.SSID();
+		const char* const modes[] = { "NULL", "STA", "AP", "STA+AP" };
+		Serial << " / " << modes[WiFi.getMode()];
+		const char* const phymodes[] = { "", "b", "g", "n" };
+		Serial << " / 802.11" << phymodes[(int) WiFi.getPhyMode()];
+		Serial << " / Ch" << WiFi.channel();
+		Serial << " / " << WiFi.RSSI() << "dBm" << endl;
+	}
+	Serial << "Mem:  " << ESP.getFreeHeap() << " / " << ESP.getMaxFreeBlockSize() << " / " << ESP.getHeapFragmentation() << endl;
+	print_statistics();
+	return 30000;
+}
+
+// ----------------------------------------------------------- Alive Task
+int task_misc() {
+	Logger.update();
+	return 95;
+}
 
 // ---------------------------------------------------------------- loop
 void loop() {
@@ -248,59 +265,70 @@ void onStateChanged() {
       break;
     case State::IDLE:
       dl_endBatch();
+      break;
+    default: 
+      // TODO
+      break;
   }
 }
 
 // --------------------------------------------------------------- setup
 void setup() {
-  Serial.begin(115200);
+	Serial.begin(115200);
+	LittleFS.begin();
+	Logger.begin();
 
-  filesystem.begin();
-  Logger << "------ REBOOT" << endl;
-  Dir dir = filesystem.openDir("/");
-  while (dir.next()) {
-    String fileName = dir.fileName();
-    size_t fileSize = dir.fileSize();
-    Serial << "- '" << fileName << "', " << fileSize << " bytes" << endl;
-  }
-  cfg.setFilename("/config.ini");
-  cfg.read();
+	Logger << "------ REBOOT" << endl;
 
-  Clock.setTimeOffset(cfg.p.tzoffset * 3600);
+	FSInfo fsinfo;
+	LittleFS.info(fsinfo);
+	Logger << "LittleFS blocksize: " << fsinfo.blockSize << endl;
 
-  LCDMenu_setup();
-  Logger << "LCD initialisiert" << endl;
+	Dir dir = LittleFS.openDir("/");
+	while (dir.next()) {
+		String fileName = dir.fileName();
+		size_t fileSize = dir.fileSize();
+		Serial << "- '" << fileName << "', " << fileSize << " bytes" << endl;
+	}
+	cfg.setFilename("/config.ini");
+	cfg.read();
 
-  start_WiFi();
-  Logger << "WiFi gestartet" << endl;
+	Clock.setTimeOffset(cfg.p.tzoffset * 3600);
 
-  setup_webserver(&server);
-  Logger << "Webserver gestartet" << endl;
+	LCDMenu_setup();
+	Logger << "LCD initialisiert" << endl;
 
-  MDNS.begin(cfg.p.hostname);
-  MDNS.addService("http", "tcp", 80);
-  Logger << "MDNS gestartet" << endl;
+	start_WiFi();
+	Logger << "WiFi gestartet" << endl;
 
-  setup_OTA();
-  Logger << "OTA gestartet" << endl;
+	setup_webserver(&server);
+	Logger << "Webserver gestartet" << endl;
 
-  setup_dl();
-  Logger << "DataLogger gestartet" << endl;
+	MDNS.begin(cfg.p.hostname);
+	MDNS.addService("http", "tcp", 80);
+	Logger << "MDNS gestartet" << endl;
 
-  setup_ds18b20();
-  Logger << "Thermometer initialisiert" << endl;
+	setup_OTA();
+	Logger << "OTA gestartet" << endl;
 
-  start_task(task_lcd, "lcd");
-  start_task(task_ntp, "ntp");
-  start_task(task_recipe, "recipe");
-  start_task(task_read_temp, "r_temp");
-  start_task(task_statistics, "stats");
-  start_task(task_webserver, "apache");
+	setup_dl();
+	Logger << "DataLogger gestartet" << endl;
 
-  // controller is running in timer interrupt
-  setup_controller();
+	setup_ds18b20();
+	Logger << "Thermometer initialisiert" << endl;
 
-  sm.setCallback(&onStateChanged);
+	start_task(task_lcd, "lcd");
+	start_task(task_ntp, "ntp");
+	start_task(task_recipe, "recipe");
+	start_task(task_read_temp, "r_temp");
+	start_task(task_webserver, "apache");
+	start_task(task_lifesign, "lifesign");
+	start_task(task_misc, "misc");
+
+	// controller is running in timer interrupt
+	setup_controller();
+
+	sm.setCallback(&onStateChanged);
 }
 
 

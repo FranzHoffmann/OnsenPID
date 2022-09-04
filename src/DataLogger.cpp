@@ -85,7 +85,7 @@ void dl_startBatch() {
   dl.pointer = 0;
   // TODO
   dl.filename = "/data.dat";
-  File f = filesystem.open(dl.filename, "w");
+  File f = LittleFS.open(dl.filename, "w");
   Logger << "Datalogger: beginne Logging in Datei '" << dl.filename << "'" << endl;
   f.write("TODO: Rezeptname\r");
   f.close();
@@ -103,7 +103,7 @@ void dl_endBatch() {
 
 
 void dl_flush() {
-  File f = filesystem.open(dl.filename, "a");
+  File f = LittleFS.open(dl.filename, "a");
   if (f) {
     for (int i=0; i<dl.pointer; i++) {
       f.write((char *)&dl_data[i], sizeof(dl_data_t)/sizeof(char));
@@ -127,7 +127,7 @@ void dl_rewind(String filename, unsigned long after) {
     readfile.close();
   }
 
-  readfile = filesystem.open(dl.it_filename, "r");
+  readfile = LittleFS.open(dl.it_filename, "r");
   if (!readfile) {
     Logger << "dl_rewind: file not found: '" << dl.it_filename << "'" << endl;
     return;

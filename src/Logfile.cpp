@@ -1,28 +1,36 @@
 #include "Logfile.h"
+
 #include <Arduino.h>
 #include <Streaming.h>
-#include <FS.h>
 #include <Clock.h>
+#include <LittleFS.h>
 
 
-/* constructor */
 LogfileT::LogfileT() {
-	latest_timestamp = 0;
 	_logToFile = true;
 	_logToSerial = true;
-	
-	LittleFS.remove(FILENAME_OLD);
-	LittleFS.rename(FILENAME_ACT, FILENAME_OLD);
-
 }
 
-	void LogfileT::enableLogToFile(bool b) {
-		_logToFile = b;
-	}
 
-	void LogfileT::enableLogToSerial(bool b) {
-		_logToSerial = b;
-	}
+void LogfileT::enableLogToFile(bool b) {
+	_logToFile = b;
+}
+
+
+void LogfileT::enableLogToSerial(bool b) {
+	_logToSerial = b;
+}
+
+
+void LogfileT::begin() {
+	// TODO: make sure begun has been called...
+	latest_timestamp = 0;
+	lastWriteTime = 0;
+	LittleFS.remove(FILENAME_OLD);
+	LittleFS.rename(FILENAME_ACT, FILENAME_OLD);
+	logfile = LittleFS.open(FILENAME_ACT, "a");
+}
+
 
 size_t LogfileT::write(uint8_t character) {
 	static int pos = 0;
@@ -38,7 +46,6 @@ size_t LogfileT::write(uint8_t character) {
 		entry.message[pos] = '\0';                        // make sure message is terminated
 		store(entry);    
 		latest_timestamp = entry.timestamp;
-		if (_logToSerial) Serial << entry.message << endl;
 		pos = 0;
 		entry.message[0] = '\0';
 		entry.timestamp = 0;
@@ -58,18 +65,29 @@ size_t LogfileT::write(uint8_t character) {
  * format: "timestamp;message\r"
  * rotate files when reaching max. size
  */
+
 void LogfileT::store(LogEntryStruct &entry) {
-		File f = LittleFS.open(FILENAME_ACT, "a");
-		if (f.size() > MAX_FILESIZE - sizeof(entry)) {
-			f.close();
+		if (logfile.size() > MAX_FILESIZE - sizeof(entry)) {
+			logfile.close();
 			LittleFS.remove(FILENAME_OLD);
 			LittleFS.rename(FILENAME_ACT, FILENAME_OLD);
-			f = LittleFS.open(FILENAME_ACT, "a");
+			logfile = LittleFS.open(FILENAME_ACT, "a");
 		}
-		if (f) {
-			f << entry.timestamp << ';' << entry.message << '\r';
-			f.close();
+		if (_logToSerial) 
+			Serial << entry.message << endl;
+		if (logfile) {
+			logfile << entry.timestamp << ';' << entry.message << endl;
 		}
+		lastWriteTime = millis();
+}
+
+
+void LogfileT::update() {
+	if(lastWriteTime != 0 && lastWriteTime + 1000 < millis()) {
+		logfile.flush();
+		Serial << "Flushing logfile" << endl;
+		lastWriteTime = 0;
+	}
 }
 
 /**

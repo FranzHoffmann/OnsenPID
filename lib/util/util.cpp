@@ -47,6 +47,11 @@ double limit(double x, double xmin, double xmax) {
   if (x > xmax) return xmax;
   return x; 
 }
+int32_t limit(int32_t x, int32_t xmin, int32_t xmax) {
+  if (x < xmin) return xmin;
+  if (x > xmax) return xmax;
+  return x; 
+}
 
 /**
  * convert seconds-since-midnight in hh:mm

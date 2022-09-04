@@ -4,9 +4,8 @@
 #include <Arduino.h>
 #include <LittleFS.h>
 
-#define MSG_LEN 80
-#define MSG_NUM 200
-#define MAX_FILESIZE 8192
+#define MSG_LEN 255
+#define MAX_FILESIZE 1024*1024
 #define FILENAME_ACT "/logfile"
 #define FILENAME_OLD "/logfile.0"
 
@@ -18,8 +17,10 @@ class LogfileT : public Print {							// extend Print to make Stream work
 			char message[MSG_LEN];
 		};
 
+		void begin();
 		void enableLogToFile(bool b);
 		void enableLogToSerial(bool b);
+		void update(); 									// to be called from loop()
 
 		size_t write(uint8_t character);				// write one character. needed for Stream (logfile << "foo")
 
@@ -35,12 +36,14 @@ class LogfileT : public Print {							// extend Print to make Stream work
 	private:
 		bool _logToFile;
 		bool _logToSerial;
+		File logfile;
 
 		void store(LogEntryStruct &entry);
 		bool iterator_hasMore = false;
 		uint8_t iterator_file = 0;   // oldest
 		size_t iterator_offset = 0;
 		unsigned long latest_timestamp;
+		unsigned int lastWriteTime;
 
 };
 

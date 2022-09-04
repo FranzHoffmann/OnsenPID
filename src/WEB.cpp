@@ -46,7 +46,7 @@ void redirect(String url) {
 String splitString(String s, char seperator, int column) {
 	int actCol = 0;
 	String result = "";
-	for (int i=0; i<s.length(); i++) {
+	for (unsigned int i=0; i<s.length(); i++) {
 		char c = s.charAt(i);
 		if (c != seperator) result += c;
 		if ((c == seperator) || i == s.length()-1) {
@@ -62,7 +62,7 @@ String splitString(String s, char seperator, int column) {
 }
 
 String directory() {
-	Dir dir = filesystem.openDir("/");
+	Dir dir = LittleFS.openDir("/");
 	String s = "<ul>";
 	while (dir.next()) {
 		String fileName = dir.fileName();
@@ -81,7 +81,7 @@ String directory() {
 String subst(String var, int par) {
 	String code = splitString(var, ':', 0);
 	int j = splitString(var, ':', 1).toInt();
-	int k = splitString(var, ':', 2).toInt();
+	// unused? int k = splitString(var, ':', 2).toInt();
 
 	if (code == "#")	return String(par);
 
@@ -122,7 +122,7 @@ String subst(String var, int par) {
  */
 String readAndSubstitute(File f, int par) {
 	String var, content;
-	enum {TEXT, ESCAPED, VAR1, VAR_START, VAR, VAR_END} state;
+	enum {TEXT, ESCAPED, VAR_START, VAR, VAR_END} state;
 	state = TEXT;
 	while (f.available()) {
 		char c = f.read();
@@ -214,7 +214,7 @@ void changeParam(String arg_name, String param_name, int *param) {
  * TODO: make this streaming...
  */
 void send_file(String filename, int par) {
-	File f = filesystem.open(filename, "r");
+	File f = LittleFS.open(filename, "r");
 	if (!f) {
 		Logger << "WEB: send_file(" << filename << "): Datei nicht gefunden." << endl;
 		fail("file not found: " + filename);
@@ -234,16 +234,16 @@ bool stream_file(String filename) {
 	String content_type = getContentType(filename);
 	String filename_gz = filename + ".gz";
 	String fn;
-	if (filesystem.exists(filename_gz)) {
+	if (LittleFS.exists(filename_gz)) {
 		fn = filename_gz;
-	} else if (filesystem.exists(filename)) {
+	} else if (LittleFS.exists(filename)) {
 		fn = filename;
 	} else {
 			Logger << "WEB: stream_file(" << filename << "): Datei nicht gefunden" << endl;
 			return false;
 	}
   Logger << "WEB: stream_file(" << fn << ')' << endl;
-	File f = filesystem.open(fn, "r");
+	File f = LittleFS.open(fn, "r");
 	if (!f) {
 		return false;
 	}
@@ -252,12 +252,20 @@ bool stream_file(String filename) {
 	return true;
 }
 
+void logAccess() {
+	Logger << "WEB: request '" << server.uri() << "'";
+	for(int i=0; i<server.args(); i++) {
+		Logger << ", " << server.argName(i) << "=" << server.arg(i);
+	}
+	Logger << endl;
+}
 
 // --------------------------------------------------------------------------------------------- not found
 // this is called when the URL is not one of the special URLs defined above.
 // 1) if the URL refers to a file, stream it
 // 2) 404
 void handleNotFound() {
+	logAccess();
 	String filename = server.uri();
 	if (stream_file(filename)) {
 		return;
@@ -277,6 +285,7 @@ void handleNotFound() {
 
 // --------------------------------------------------------------------------------------------- root
 void handleRoot() {
+	logAccess();
 	if (server.hasArg("rst")) {
 		ESP.restart();
 	}
@@ -285,6 +294,7 @@ void handleRoot() {
 
 // --------------------------------------------------------------------------------------------- Ajax (and commands)
 void handleAjax() {
+	//logAccess();
 	send_file("/ajax.json");
 }
 
@@ -297,6 +307,7 @@ void handleAjax() {
 ]}
 */
 void handleWifi()   {
+	logAccess();
 	if (server.hasArg("scan")) {
 		// TODO: make this async
 		Logger << "WiFi-Scan gestartet" << endl;
@@ -336,6 +347,7 @@ void handleWifi()   {
 
 // --------------------------------------------------------------------------------------------- recipe
 void handleStart() {
+	logAccess();
 	if (!server.hasArg("start")) {
 		send_file("/start.html");
 		return;
@@ -375,6 +387,7 @@ void handleStart() {
 
 // --------------------------------------------------------------------------------------------- recipe
 void handleRecipe() {
+	logAccess();
 	int rec = 0;
 	if (server.hasArg("rec")) {
 		rec = server.arg("rec").toInt();
@@ -491,6 +504,7 @@ void sendCSVData() {
 
 
 void handleData()   {
+	logAccess();
 	if (server.hasArg("t")) {
 		unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
 		sendJsonData(t);
@@ -516,6 +530,8 @@ int indexof(char c, char *s) {
 
 // --------------------------------------------------------------------------------------------- log
 void handleLog() {
+	logAccess();
+	Serial << " Free Heap: " << ESP.getFreeHeap() << endl;
 	if (!server.hasArg("t")) {
 		// send html page
 		send_file("/log.html");
@@ -527,17 +543,28 @@ void handleLog() {
 	bool first = true;
 	unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
 
+	Serial << "checkpoint 1" << endl;
 	Logger.rewind(t);
 	if (!Logger.hasMore()) {
 		server.send(200, "text/json", "{\"log\":[]}");
+		Serial << "checkpoint 2" << endl;
 		return;
 	}
+
+	Serial << "checkpoint 3" << endl;
 
 	server.setContentLength(CONTENT_LENGTH_UNKNOWN);
 	server.send(200, "text/json", String(""));
 	server.sendContent("{\"log\":[");
 
-	while (Logger.hasMore()) {
+
+	// TODO: this seems to be an endless loop sometimes?
+	// workaround: timeout
+	unsigned long timeout = millis() + 1000;
+
+	while (Logger.hasMore() && millis() < timeout) {
+		Serial << "checkpoint 4" << endl;
+
 		if (!first) server.sendContent(",");
 		first = false;
 
@@ -548,11 +575,15 @@ void handleLog() {
 			server.sendContent(s);
 		}
 	}
+	Serial << "checkpoint 5" << endl;
+
 	server.sendContent("]}");
+	Serial << " Free Heap: " << ESP.getFreeHeap() << endl;
 }
 
 // --------------------------------------------------------------------------------------------- config
 void handleConfig() {
+	logAccess();
 	if (server.hasArg("save")) {
 		changeParam("tz", "UTC Offset", &(cfg.p.tzoffset));
 		Clock.setTimeOffset(cfg.p.tzoffset * 3600);
@@ -564,6 +595,7 @@ void handleConfig() {
 // --------------------------------------------------------------------------------------------- File upload
 File uploadFile;
 void handleFileUpload() {
+	logAccess();
 	if (server.uri() != "/edit") {
 		return;
 	}
@@ -574,10 +606,10 @@ void handleFileUpload() {
 		if (uploadFile) {
 			uploadFile.close();
 		}
-		if (filesystem.exists(fn)) {
-			filesystem.remove(fn);
+		if (LittleFS.exists(fn)) {
+			LittleFS.remove(fn);
 		}
-		uploadFile = filesystem.open(fn, "w");
+		uploadFile = LittleFS.open(fn, "w");
 		Logger << "WEB upload gestartet, Datei: " << fn << endl;
 		if (!uploadFile) {
 			Logger << "Fehler: konnte Datei nicht öffnen" << endl;
@@ -602,10 +634,11 @@ void handleFileUpload() {
 }
 
 void handleFileDelete() {
+	logAccess();
 	if (server.hasArg("fn")) {
 		String fn = server.arg("fn");
 		Logger << "WEB: Datei '" << fn << "' gelöscht" << endl;
-		if (!filesystem.remove(fn)) {
+		if (!LittleFS.remove(fn)) {
 			Logger << "Datei löschen ist fehlgeschlagen" << endl;
 		}
 	}

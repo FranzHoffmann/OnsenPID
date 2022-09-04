@@ -79,12 +79,10 @@ void Process::startByEndTime(int recno, unsigned long t) {
 	unsigned long starttime = midnight + t - calcRecipeDuration(act_rec);
 	while (starttime < now) starttime += 86400;
 	
-	/* debug
 	Logger << "Process::startByEndTime(" << recno << ", " << t << ")" << endl;
 	Logger << "Now:       " << String(now) << endl;
 	Logger << "Midnight:  " << String(midnight) << endl;
 	Logger << "Starttime: " << String(starttime) << endl;
-	*/
 	
 	switch (state) {
 		case State::IDLE:
