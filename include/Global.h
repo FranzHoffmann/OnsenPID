@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define VERSION "0.920"
+#define VERSION "1.100"
 
 struct param {
   double set;			// temperature setpoint, from recipe

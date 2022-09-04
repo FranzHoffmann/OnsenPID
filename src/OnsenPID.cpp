@@ -172,26 +172,26 @@ int task_recipe() {
 // ---------------------------------------------------- Temperature Task
 /* task: read temperature */
 int task_read_temp() {
-  static uint32_t counter = 0;
-  if (thermometer.isConversionComplete()) {
-    p.act = thermometer.getTempC();
-    counter = 0;
-    if (!p.sensorOK) {
-      p.sensorOK = true;
-      Logger << "Thermometer ok" << endl;
-    }
-    thermometer.requestTemperatures();
-  } else {
-    counter++;
-    if (counter > 5) {
-      if (p.sensorOK) {
-        p.sensorOK = false;
-        Logger << "Thermometer gestört" << endl;
-      }
-      thermometer.requestTemperatures();
-    }
-    controller_update(&p);
-  }
+	static uint32_t counter = 0;
+	if (thermometer.isConversionComplete()) {
+		p.act = thermometer.getTempC();
+		counter = 0;
+		if (!p.sensorOK) {
+			p.sensorOK = true;
+			Logger << "Thermometer ok" << endl;
+		}
+		thermometer.requestTemperatures();
+	} else {
+		counter++;
+		if (counter > 5) {
+			if (p.sensorOK) {
+				p.sensorOK = false;
+				Logger << "Thermometer gestört" << endl;
+			}
+		thermometer.requestTemperatures();
+		}
+	}
+	controller_update(p);
 
   // simulation:
   //p.act = pt1((p.out_b ? 150.0 : 20.0), 200, cycle/1000.0);

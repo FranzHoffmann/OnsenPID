@@ -9,6 +9,8 @@
 #define FILENAME_ACT "/logfile"
 #define FILENAME_OLD "/logfile.0"
 
+typedef void (*streamCallback)(String);    // callback := void foo(String)
+
 
 class LogfileT : public Print {							// extend Print to make Stream work
 	public:
@@ -23,6 +25,9 @@ class LogfileT : public Print {							// extend Print to make Stream work
 		void update(); 									// to be called from loop()
 
 		size_t write(uint8_t character);				// write one character. needed for Stream (logfile << "foo")
+
+		void streamLog(streamCallback cb, unsigned long starttime);
+
 
 		// primitive iterator-like interface 
 		void rewind(unsigned long after);
@@ -44,6 +49,11 @@ class LogfileT : public Print {							// extend Print to make Stream work
 		size_t iterator_offset = 0;
 		unsigned long latest_timestamp;
 		unsigned int lastWriteTime;
+
+		File streamFile;
+		unsigned long streamFilePos;
+
+
 
 };
 

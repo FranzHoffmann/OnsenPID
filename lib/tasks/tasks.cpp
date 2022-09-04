@@ -48,15 +48,16 @@ void init_stats(task_t *t) {
 /* task: calculate debug statistics */
 void print_statistics() {
 	Serial << "Active tasks:" << endl;
-	Serial << "Tmin" << '\t' << "Tavg" << '\t' << "Tmax" << '\t' << "Name" << endl;
+	Serial << "Count" << "Tmin" << '\t' << "Tavg" << '\t' << "Tmax" << '\t' << "Name" << endl;
 	for (int i=0; i<MAX_TASKS; i++) {
 		if (tasklist[i].t != NULL) {
 			if (tasklist[i].count > 0) {
+				Serial << tasklist[i].count << '\t';
 				Serial << tasklist[i].tmin << '\t';
 				Serial << (double)(tasklist[i].tsum) / tasklist[i].count << '\t';
 				Serial << tasklist[i].tmax;
 			} else {
-				Serial << '-' << '\t' << '-' << '\t' << '-';
+				Serial << '0' << '\t' << '-' << '\t' << '-' << '\t' << '-';
 			}
 			Serial << '\t' << tasklist[i].taskname << endl;
 			init_stats(&tasklist[i]);

@@ -4,6 +4,6 @@
 #include <Global.h>
 
 void setup_controller();
-void controller_update(param *p);
+void controller_update(param &p);
 
 #endif

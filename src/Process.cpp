@@ -99,9 +99,10 @@ void Process::startByEndTime(int recno, unsigned long t) {
 	while (starttime < now) starttime += 86400;
 	
 	Logger << "Process::startByEndTime(" << recno << ", " << t << ")" << endl;
-	Logger << "Now:       " << String(now) << " (" << formatTime(now) << ")" << endl;
-	Logger << "Midnight:  " << String(midnight) << " (" << formatTime(midnight) << ")" << endl;
-	Logger << "Starttime: " << String(starttime) << " (" << formatTime(starttime) << ")" << endl;
+	Logger << "Uhrzeit:     " << String(now) << " (" << formatTime(now) << ")" << endl;
+	Logger << "Mitternacht: " << String(midnight) << " (" << formatTime(midnight) << ")" << endl;
+	Logger << "Rezeptlänge: " << calcRecipeDuration(recno) << endl;
+	Logger << "Startzeit:   " << String(starttime) << " (" << formatTime(starttime) << ")" << endl;
 	
 	switch (state) {
 		case State::IDLE:
@@ -149,7 +150,7 @@ String Process::stateAsString(State s) {
 
 
 void Process::setState(State newState) {
-	Logger << "Neuer Status:  '" << stateAsString(newState) << "' (vorher: '" << stateAsString(state) << "')"  << endl;
+	Logger << "Status:  '" << stateAsString(state) << "' -> '" << stateAsString(newState) << "'"  << endl;
 
 	if (newState == State::COOKING) {
 		startTime = Clock.getEpoch();

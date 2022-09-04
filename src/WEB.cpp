@@ -242,7 +242,6 @@ bool stream_file(String filename) {
 			Logger << "WEB: stream_file(" << filename << "): Datei nicht gefunden" << endl;
 			return false;
 	}
-  Logger << "WEB: stream_file(" << fn << ')' << endl;
 	File f = LittleFS.open(fn, "r");
 	if (!f) {
 		return false;
@@ -367,15 +366,15 @@ void handleStart() {
 	// Convert to 0-86400 seconds
 	String t = server.arg("time");
 	long time = t.substring(0, 2).toInt() * 3600 + t.substring(3).toInt() * 60;
-	Logger << "Startbefehl über Web (Rezept: " << rec;
+	Logger << "WEB: Startbefehl, Rezept: " << rec;
 
 	String m = server.arg("mode");
 	if (m == "st") {
-		Logger << ", Startzeit: " << t << ")" << endl;
+		Logger << ", Startzeit: " << t << endl;
 		sm.startByStartTime(rec, time);
 	} else 
 	if (m == "et") {
-		Logger << ", Endzeit: " << t << ")" << endl;
+		Logger << ", Endzeit: " << t << endl;
 		sm.startByEndTime(rec, time);
 	} else {
 		Logger << ")" << endl;
@@ -504,7 +503,7 @@ void sendCSVData() {
 
 
 void handleData()   {
-	logAccess();
+	// logAccess();
 	if (server.hasArg("t")) {
 		unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
 		sendJsonData(t);
@@ -527,10 +526,22 @@ int indexof(char c, char *s) {
 	return -1;
 }
 
-
+	// callback for streamLog
+	int linesSent = 0;
+	void cb(String s) {
+		if (linesSent > 0) {
+			server.sendContent(",");
+		}
+		// split line into timestamp and message, format and send
+		LogfileT::LogEntryStruct entry = Logger.strToEntry(s);
+		String line = "{\"ts\":" + String(entry.timestamp) + ", \"msg\":\"" + String(entry.message) + "\"}\r";
+		server.sendContent(line);
+		linesSent++;
+	}
+	
 // --------------------------------------------------------------------------------------------- log
 void handleLog() {
-	logAccess();
+	// logAccess();
 	Serial << " Free Heap: " << ESP.getFreeHeap() << endl;
 	if (!server.hasArg("t")) {
 		// send html page
@@ -538,49 +549,18 @@ void handleLog() {
 		return;
 	}
 
-	// else send data
-	String s;
-	bool first = true;
+
+	linesSent = 0;
 	unsigned long t = strtoul(server.arg("t").c_str(), NULL, 10);
-
-	Serial << millis() << " - checkpoint 1" << endl;
-	Logger.rewind(t);
-	if (!Logger.hasMore()) {
-		server.send(200, "text/json", "{\"log\":[]}");
-		Serial << millis() << " - checkpoint 2" << endl;
-		return;
-	}
-
-	Serial << millis() << " - checkpoint 3" << endl;
-
+	Serial << millis() << " - streamLog t=" << t << endl;
 	server.setContentLength(CONTENT_LENGTH_UNKNOWN);
 	server.send(200, "text/json", String(""));
 	server.sendContent("{\"log\":[");
-
-
-	// TODO: this seems to be an endless loop sometimes?
-	// workaround: timeout
-	unsigned long timeout = millis() + 1000;
-
-	while (Logger.hasMore() && millis() < timeout) {
-		Serial << millis() << " - checkpoint 4" << endl;
-
-		if (!first) server.sendContent(",");
-		first = false;
-
-		String entry_str = Logger.getNext();
-		if (entry_str.length() > 0) {
-			LogfileT::LogEntryStruct entry = Logger.strToEntry(entry_str);
-			String s = "{\"ts\":" + String(entry.timestamp) + ", \"msg\":\"" + String(entry.message) + "\"}\r";
-			server.sendContent(s);
-			delay(1);
-		}
-	}
-	Serial << "checkpoint 5" << endl;
-
+	Logger.streamLog(cb, t);
 	server.sendContent("]}");
-	Serial << " Free Heap: " << ESP.getFreeHeap() << endl;
+	Serial << millis() << " - lines sent: " << linesSent << endl;
 }
+
 
 // --------------------------------------------------------------------------------------------- config
 void handleConfig() {

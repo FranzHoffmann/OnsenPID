@@ -16,6 +16,7 @@ IRAM_ATTR struct param_int {
   int32_t kp, tn, tv, emax, pmax;
   int32_t act;			// actual temperature, from thermometer
   int32_t out;			// actual power, from controller
+  int32_t p, i, d;
 } ip;
 
 /* PWM and PID controller */
@@ -24,22 +25,22 @@ IRAM_ATTR struct param_int {
 // - read access to variables should be no problem
 // - write access only to volatile variables
 // - only call functions from IRAM
-//   floating point library is NO LONGE in IRAM since Arduino core 3.0
-// 
-// TODO: change from double to integer!
+//   floating point library is NO LONGER in IRAM since Arduino core 3.0
 
 // scale everything to int32
-void controller_update(param *p) {
+void controller_update(param &p) {
 	noInterrupts();
-	ip.act = p->act * 1000;
-	ip.set = p->set * 1000;
-	ip.emax = p->emax * 1e6;
-	ip.kp = p->kp * 1000;
-	ip.tn = p->tn * 1000; // ms
-	ip.pmax = p->pmax * 1e6;
-	ip.tv = p->tv * 1000;
-	p->out = ip.out / 1e6;
+	ip.act = p.act * 1000;
+	ip.set = p.set * 1000;
+	ip.emax = p.emax * 1e6;
+	ip.kp = p.kp * 1000;
+	ip.tn = p.tn * 1000; // ms
+	ip.pmax = p.pmax * 1e6;
+	ip.tv = p.tv * 1000;
+	p.out = ip.out / 1e6;
 	interrupts();
+	// debug
+	Logger << ip.p << " / " << ip.i << " - " << ip.d << endl;
 }
 
 
@@ -55,7 +56,6 @@ void IRAM_ATTR controllerISR() {
 	static int32_t out;
 	static int32_t eold = 0.0;
  
-
 	T += Ta;
 	if (T >= Tpwm) {
 		T -= Tpwm;
@@ -73,10 +73,13 @@ void IRAM_ATTR controllerISR() {
 			out = limitIR(ppart + ipart + dpart, 0, ip.pmax);
 		} else {
 			// error is very high, use to two-point/controller
-			out = (e < 0) ? 0 : 100000000;
+			out = (e < 0) ? 0 : 1000000;
 			ipart = 0;
 		}
 		eold = e;
+		ip.p = ppart;
+		ip.d = dpart;
+		ip.i = ipart;
 	}
 
 	// failsafe
@@ -89,8 +92,9 @@ void IRAM_ATTR controllerISR() {
 		ip.out = 0;
 	} 
 
+
 	// PWM
-	boolean bOut = T < (ip.out / 10000 * Tpwm);
+	boolean bOut = T < (ip.out / 1000000 * Tpwm);
 	digitalWrite(pwm_port, bOut);
 }
 
@@ -114,10 +118,10 @@ void setup_controller() {
 	// TIM_DIV16: 80MHz/16 = 5MHz, Timer counts up by 5000 every ms
 	uint32_t counts = Ta * 5000;
 	Logger << "Controller: Setze Interrupt auf " << counts << endl;
-	/*noInterrupts();
+	noInterrupts();
 	timer1_isr_init();
 	timer1_attachInterrupt(controllerISR);
 	timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 	timer1_write(counts);
-	interrupts();*/
+	interrupts();
 }

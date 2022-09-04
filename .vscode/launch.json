@@ -12,8 +12,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "/home/franz/workspace/OnsenPID/.pio/build/wemos_d1_mini/firmware.elf",
-            "projectEnvName": "wemos_d1_mini",
+            "executable": "/home/franz/workspace/OnsenPID/.pio/build/nodemcuv2/firmware.elf",
+            "projectEnvName": "nodemcuv2",
             "toolchainBinDir": "/home/franz/.platformio/packages/toolchain-xtensa/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": {
@@ -25,8 +25,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "/home/franz/workspace/OnsenPID/.pio/build/wemos_d1_mini/firmware.elf",
-            "projectEnvName": "wemos_d1_mini",
+            "executable": "/home/franz/workspace/OnsenPID/.pio/build/nodemcuv2/firmware.elf",
+            "projectEnvName": "nodemcuv2",
             "toolchainBinDir": "/home/franz/.platformio/packages/toolchain-xtensa/bin",
             "internalConsoleOptions": "openOnSessionStart"
         },
@@ -34,8 +34,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (without uploading)",
-            "executable": "/home/franz/workspace/OnsenPID/.pio/build/wemos_d1_mini/firmware.elf",
-            "projectEnvName": "wemos_d1_mini",
+            "executable": "/home/franz/workspace/OnsenPID/.pio/build/nodemcuv2/firmware.elf",
+            "projectEnvName": "nodemcuv2",
             "toolchainBinDir": "/home/franz/.platformio/packages/toolchain-xtensa/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "loadMode": "manual"

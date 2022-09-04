@@ -1,4 +1,4 @@
-#include "Logfile.h"
+#include <Logfile.h>
 
 #include <Arduino.h>
 #include <Streaming.h>
@@ -103,6 +103,31 @@ LogfileT::LogEntryStruct LogfileT::strToEntry(String s) {
 }
 
 
+
+void LogfileT::streamLog(streamCallback cb, unsigned long starttime) {
+	streamFile = LittleFS.open(FILENAME_ACT, "r");
+	if (!streamFile) {
+		Logger << "LogfileT::streamLog: could not open file" << endl;
+		return;
+	}
+
+	// for each line, call callback if needed
+	while (streamFile.available()) {
+		LogfileT::LogEntryStruct entry;
+		String s = streamFile.readStringUntil('\n');
+		s.remove(s.length()-1); // cut '/r'
+		entry = strToEntry(s);
+		if (entry.timestamp > starttime) {
+			streamFilePos = entry.timestamp;
+			cb(s);
+		}
+	}
+	streamFile.close();
+}
+
+
+
+// DEPRECATED - much too slow for larger files
 /* simple Iterator-like interface: check for more messages */
 bool LogfileT::hasMore() {
 	return this->iterator_hasMore;
