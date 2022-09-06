@@ -43,6 +43,37 @@ String ClockT::getFormattedTime() {
 
 
 // ----------------------------------------------------------- time stuff
+String ClockT::f(int x) {
+	String s;
+	if (x < 10) s = '0';
+	s = s + x;
+	return s;
+}
+
+/* returns yyyy-mm-dd hh:mm:ss */
+String ClockT::formatTime(unsigned long local) {
+	String str;
+	str.reserve(20); // yyyy-mm-dd hh:mm:ss
+	int h = hour(local);
+	int m = minute(local);
+	int s = second(local);
+	int y = year(local);
+	int M = month(local);
+	int d = day(local);
+	str =  String(y) + '-' + f(M) + '-' + f(d) + ' ' + f(h) + ':' + f(m) + ':' + f(s);
+	return str;
+}
+
+/* returns hh:mm:ss */
+String ClockT::formatTimeShort(unsigned long local) {
+	String str;
+	str.reserve(9); // hh:mm:ss
+	int h = hour(local);
+	int m = minute(local);
+	int s = second(local);
+	str = f(h) + ':' + f(m) + ':' + f(s);
+	return str;
+}
 
 /* 
  * this returns the number of seconds since1970-01-01 00:00 local time

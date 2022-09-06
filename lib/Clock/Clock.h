@@ -27,10 +27,14 @@ class ClockT {
 		time_t LocalToUtc(time_t local);
 		bool isLeapYear (int year);
 		int getDayNo(int md, int m, int y);
+		String formatTime(unsigned long local);
+		String formatTimeShort(unsigned long local);
 
 	private:
 		NTPClient* _timeClient;
 		WiFiUDP* _ntpUDP;
+		String f(int x);
+
 };
 
 extern ClockT Clock;

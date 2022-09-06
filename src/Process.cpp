@@ -47,25 +47,7 @@ void Process::startCooking(int recno) {
  * time is "seconds after midnight" today (or tomorrow)
  */
 
-#include <TimeLib.h>
-String f(int x) {
-	String s;
-	if (x < 10) s = '0';
-	s = s + x;
-	return s;
-}
-String formatTime(unsigned long local) {
-	String str;
-	str.reserve(20); // yyyy-mm-dd hh:mm:ss
-	int h = hour(local);
-	int m = minute(local);
-	int s = second(local);
-	int y = year(local);
-	int M = month(local);
-	int d = day(local);
-	str =  String(y) + '-' + f(M) + '-' + f(d) + ' ' + f(h) + ':' + f(m) + ':' + f(s);
-	return str;
-}
+
 void Process::startByStartTime(int recno, unsigned long t) {
 	unsigned long now = Clock.getEpochLocal();
 	unsigned long midnight = now - (now % 86400L);
@@ -73,9 +55,9 @@ void Process::startByStartTime(int recno, unsigned long t) {
 	if (starttime < now) starttime += 86400;
 	
 	Logger << "Process::startByStartTime(" << recno << ", " << t << ")" << endl;
-	Logger << "Now:       " << String(now) << " (" << formatTime(now) << ")" << endl;
-	Logger << "Midnight:  " << String(midnight) << " (" << formatTime(midnight) << ")" << endl;
-	Logger << "Starttime: " << String(starttime) << " (" << formatTime(starttime) << ")" << endl;
+	Logger << "Now:       " << String(now) << " (" << Clock.formatTime(now) << ")" << endl;
+	Logger << "Midnight:  " << String(midnight) << " (" << Clock.formatTime(midnight) << ")" << endl;
+	Logger << "Starttime: " << String(starttime) << " (" << Clock.formatTime(starttime) << ")" << endl;
 	
 	switch (state) {
 		case State::IDLE:
@@ -99,10 +81,10 @@ void Process::startByEndTime(int recno, unsigned long t) {
 	while (starttime < now) starttime += 86400;
 	
 	Logger << "Process::startByEndTime(" << recno << ", " << t << ")" << endl;
-	Logger << "Uhrzeit:     " << String(now) << " (" << formatTime(now) << ")" << endl;
-	Logger << "Mitternacht: " << String(midnight) << " (" << formatTime(midnight) << ")" << endl;
+	Logger << "Uhrzeit:     " << String(now) << " (" << Clock.formatTime(now) << ")" << endl;
+	Logger << "Mitternacht: " << String(midnight) << " (" << Clock.formatTime(midnight) << ")" << endl;
 	Logger << "Rezeptlänge: " << calcRecipeDuration(recno) << endl;
-	Logger << "Startzeit:   " << String(starttime) << " (" << formatTime(starttime) << ")" << endl;
+	Logger << "Startzeit:   " << String(starttime) << " (" << Clock.formatTime(starttime) << ")" << endl;
 	
 	switch (state) {
 		case State::IDLE:
@@ -212,7 +194,7 @@ double Process::calcRecipeRamp(uint32_t actTime) {
  */
 uint32_t Process::calcRecipeDuration(int recno) {
 	uint32_t d = 0;
-	if (recno < 0 | recno >= REC_COUNT) return 0;
+	if (recno < 0 | (recno >= REC_COUNT)) return 0;
 	for (int i=0; i<REC_STEPS; i++) d += recipe[recno].times[i];
 	return d; 
 }

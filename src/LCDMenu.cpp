@@ -222,7 +222,7 @@ void disp_main_version(ButtonEnum btn) {
 	line1.begin();
 	line1 << "OnsenPID " << VERSION;
 	line2.begin();
-	line2 << Clock.getFormattedTime();
+	line2 << Clock.formatTimeShort(Clock.getEpochLocal());
 	if (btn == BTN_DN) screen = Screen::MAIN_COOK;
 
 }
